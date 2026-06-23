@@ -11,8 +11,6 @@ COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir .
 
 COPY app app
-COPY alembic alembic
-COPY alembic.ini .
 COPY .env.example .env.example
 
 RUN mkdir -p /data/uploads

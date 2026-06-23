@@ -41,7 +41,6 @@ class Settings(BaseSettings):
     max_downloads_default: int = Field(default=10, alias="MAX_DOWNLOADS_DEFAULT")
     allow_local_login: bool = Field(default=True, alias="ALLOW_LOCAL_LOGIN")
     allow_user_share_emails: bool = Field(default=True, alias="ALLOW_USER_SHARE_EMAILS")
-    purge_grace_hours: int = Field(default=24, alias="PURGE_GRACE_HOURS")
     purge_grace_days: int = Field(default=7, alias="PURGE_GRACE_DAYS")
     purge_notify_days: int = Field(default=0, alias="PURGE_NOTIFY_DAYS")
 

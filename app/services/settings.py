@@ -32,7 +32,6 @@ async def get_app_settings(db: AsyncSession) -> AppSettings:
         smtp_use_tls=settings.smtp_use_tls,
         allow_local_login=settings.allow_local_login,
         allow_user_share_emails=settings.allow_user_share_emails,
-        purge_grace_hours=settings.purge_grace_hours,
         purge_grace_days=settings.purge_grace_days,
         purge_notify_days=settings.purge_notify_days,
         setup_completed=False,

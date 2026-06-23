@@ -259,7 +259,7 @@ uvicorn app.main:app --reload --port 8080
 pytest
 ```
 
-Schema migrations run automatically on startup via `ensure_schema` in the application lifespan.
+The database schema is created automatically on startup via `ensure_schema` in the application lifespan.
 
 ## License
 
