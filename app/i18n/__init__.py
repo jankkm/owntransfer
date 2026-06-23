@@ -29,6 +29,7 @@ JS_MESSAGE_KEYS = (
     "Ready",
     "Remove",
     "Network error",
+    "Sending…",
     "Could not remove file",
     "Could not show confirmation dialog.",
     "Remove file?",

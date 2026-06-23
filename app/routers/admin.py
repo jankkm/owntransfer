@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,6 +40,7 @@ from app.services.file_request import (
     regenerate_file_request_link,
     update_file_request,
 )
+from app.services.email import send_smtp_test_email
 from app.services.settings import get_app_settings
 from app.services.transfer import (
     add_transfer_file,
@@ -51,6 +53,7 @@ from app.services.transfer import (
 from app.templating import branding_context, templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+logger = logging.getLogger(__name__)
 
 
 def _shares_url(*, tab: str = "transfers", user: str = "", **extra: str) -> str:
@@ -573,6 +576,42 @@ async def save_smtp(
     app_settings.smtp_from = smtp_from or None
     await db.commit()
     return RedirectResponse("/admin", status_code=303)
+
+
+@router.post("/smtp/test")
+async def test_smtp(
+    smtp_host: str = Form(""),
+    smtp_port: int = Form(587),
+    smtp_user: str = Form(""),
+    smtp_password: str = Form(""),
+    smtp_from: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_admin),
+):
+    app_settings = await get_app_settings(db)
+    try:
+        await send_smtp_test_email(
+            app_settings,
+            to=user.email,
+            overrides={
+                "smtp_host": smtp_host,
+                "smtp_port": smtp_port,
+                "smtp_user": smtp_user,
+                "smtp_password": smtp_password,
+                "smtp_from": smtp_from,
+            },
+        )
+    except ValueError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+    except Exception as exc:
+        logger.exception("SMTP test failed")
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+    return JSONResponse(
+        {
+            "ok": True,
+            "message": _("Test email sent to %(email)s.") % {"email": user.email},
+        }
+    )
 
 
 @router.post("/legal")

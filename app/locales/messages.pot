@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-23 12:28+0200\n"
+"POT-Creation-Date: 2026-06-23 12:52+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,108 +25,113 @@ msgstr ""
 msgid "Admin access required"
 msgstr ""
 
-#: app/routers/admin.py:90
+#: app/routers/admin.py:93
 msgid "Branding saved."
 msgstr ""
 
-#: app/routers/admin.py:92
+#: app/routers/admin.py:95
 msgid "Legal pages saved."
 msgstr ""
 
-#: app/routers/admin.py:94
+#: app/routers/admin.py:97
 msgid "User added."
 msgstr ""
 
-#: app/routers/admin.py:96
+#: app/routers/admin.py:99
 msgid "User deleted."
 msgstr ""
 
-#: app/routers/admin.py:98
+#: app/routers/admin.py:101
 msgid "User promoted to admin."
 msgstr ""
 
-#: app/routers/admin.py:100
+#: app/routers/admin.py:103
 msgid "User demoted from admin."
 msgstr ""
 
-#: app/routers/admin.py:102 app/routers/profile.py:28
+#: app/routers/admin.py:105 app/routers/profile.py:28
 msgid "Password updated."
 msgstr ""
 
-#: app/routers/admin.py:149
+#: app/routers/admin.py:152
 msgid "Transfer updated."
 msgstr ""
 
-#: app/routers/admin.py:151
+#: app/routers/admin.py:154
 msgid "File request updated."
 msgstr ""
 
-#: app/routers/admin.py:153 app/routers/transfers.py:107
+#: app/routers/admin.py:156 app/routers/transfers.py:107
 msgid "Transfer deleted."
 msgstr ""
 
-#: app/routers/admin.py:155 app/routers/requests.py:66
+#: app/routers/admin.py:158 app/routers/requests.py:66
 msgid "File request deleted."
 msgstr ""
 
-#: app/routers/admin.py:189 app/routers/admin.py:348
+#: app/routers/admin.py:192 app/routers/admin.py:351
 #: app/routers/requests.py:138 app/routers/transfers.py:194
 msgid "Share link regenerated. The old link no longer works."
 msgstr ""
 
-#: app/routers/admin.py:517
+#: app/routers/admin.py:520
 msgid "Share link (outbound transfer)"
 msgstr ""
 
-#: app/routers/admin.py:518
+#: app/routers/admin.py:521
 msgid "File request link"
 msgstr ""
 
-#: app/routers/admin.py:519
+#: app/routers/admin.py:522
 msgid "Upload received notification"
 msgstr ""
 
-#: app/routers/admin.py:520
+#: app/routers/admin.py:523
 msgid "Download notification"
 msgstr ""
 
-#: app/routers/admin.py:521
+#: app/routers/admin.py:524
 msgid "Expired without activity"
 msgstr ""
 
-#: app/routers/admin.py:522
+#: app/routers/admin.py:525
 msgid "Deletion reminder before purge"
 msgstr ""
 
-#: app/routers/admin.py:534
+#: app/routers/admin.py:537
 msgid "Email templates saved."
 msgstr ""
 
-#: app/routers/admin.py:607
+#: app/routers/admin.py:612
+#, python-format
+msgid "Test email sent to %(email)s."
+msgstr ""
+
+#: app/routers/admin.py:646
 msgid "Email and password are required"
 msgstr ""
 
-#: app/routers/admin.py:611 app/routers/setup.py:46
+#: app/routers/admin.py:650 app/routers/setup.py:46
 msgid "User already exists"
 msgstr ""
 
-#: app/routers/admin.py:665
+#: app/routers/admin.py:704
 msgid "You cannot demote your own account"
 msgstr ""
 
-#: app/routers/admin.py:675
+#: app/routers/admin.py:714
 msgid "Cannot demote the last admin"
 msgstr ""
 
-#: app/routers/admin.py:700
+#: app/routers/admin.py:739
 msgid "Password is required"
 msgstr ""
 
-#: app/routers/admin.py:729
+#: app/routers/admin.py:768
 msgid "You cannot delete your own account"
 msgstr ""
 
-#: app/routers/admin.py:740
+#: app/routers/admin.py:779
 msgid "Cannot delete the last admin"
 msgstr ""
 
@@ -151,12 +156,12 @@ msgstr ""
 msgid "OAuth provider did not return email"
 msgstr ""
 
-#: app/routers/branding.py:38 app/templates/admin.html:53
+#: app/routers/branding.py:38 app/templates/admin.html:58
 #: app/templates/base.html:141
 msgid "Impressum"
 msgstr ""
 
-#: app/routers/branding.py:51 app/templates/admin.html:58
+#: app/routers/branding.py:51 app/templates/admin.html:63
 #: app/templates/base.html:144
 msgid "Privacy policy"
 msgstr ""
@@ -291,6 +296,19 @@ msgstr ""
 #: app/services/download_limits.py:26
 #, python-format
 msgid "%(count)s/%(max)s"
+msgstr ""
+
+#: app/services/email.py:139
+msgid "SMTP host is required"
+msgstr ""
+
+#: app/services/email.py:142
+#, python-format
+msgid "SMTP test — %(app_name)s"
+msgstr ""
+
+#: app/services/email.py:143
+msgid "This is a test email from your SMTP configuration."
 msgstr ""
 
 #: app/services/file_request.py:97 app/services/file_request.py:268
@@ -478,7 +496,7 @@ msgid "Upload limit"
 msgstr ""
 
 #: app/templates/_macros.html:91 app/templates/_macros.html:126
-#: app/templates/admin.html:68 app/templates/login.html:32
+#: app/templates/admin.html:73 app/templates/login.html:32
 #: app/templates/public_download.html:11 app/templates/public_upload.html:14
 msgid "Password"
 msgstr ""
@@ -521,7 +539,7 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: app/templates/_macros.html:163 app/templates/admin.html:114
+#: app/templates/_macros.html:163 app/templates/admin.html:119
 #: app/templates/admin_shares.html:100 app/templates/admin_shares.html:164
 msgid "Delete"
 msgstr ""
@@ -596,7 +614,7 @@ msgstr ""
 msgid "Confirm"
 msgstr ""
 
-#: app/templates/_macros.html:219 app/templates/admin.html:99
+#: app/templates/_macros.html:219 app/templates/admin.html:104
 msgid "Cancel"
 msgstr ""
 
@@ -627,7 +645,7 @@ msgid "Uncheck to temporarily disable this link without deleting it."
 msgstr ""
 
 #: app/templates/admin.html:3 app/templates/admin.html:5
-#: app/templates/admin.html:70 app/templates/admin_email.html:3
+#: app/templates/admin.html:75 app/templates/admin_email.html:3
 #: app/templates/admin_email.html:5 app/templates/admin_shares.html:3
 #: app/templates/admin_shares.html:5 app/templates/base.html:123
 msgid "Admin"
@@ -775,125 +793,134 @@ msgstr ""
 msgid "From address"
 msgstr ""
 
-#: app/templates/admin.html:48
+#: app/templates/admin.html:49
 msgid "Save SMTP"
 msgstr ""
 
-#: app/templates/admin.html:51
+#: app/templates/admin.html:50
+msgid "Send test email"
+msgstr ""
+
+#: app/templates/admin.html:52
+#, python-format
+msgid "Sends a test message to %(email)s using the values above (without saving)."
+msgstr ""
+
+#: app/templates/admin.html:56
 msgid "Legal pages"
 msgstr ""
 
-#: app/templates/admin.html:54
+#: app/templates/admin.html:59
 msgid "Show Impressum link in footer"
 msgstr ""
 
-#: app/templates/admin.html:55
+#: app/templates/admin.html:60
 msgid "Impressum text (Markdown)"
 msgstr ""
 
-#: app/templates/admin.html:55
+#: app/templates/admin.html:60
 msgid "Shown on /impressum when enabled."
 msgstr ""
 
-#: app/templates/admin.html:59
+#: app/templates/admin.html:64
 msgid "Show privacy policy link in footer"
 msgstr ""
 
-#: app/templates/admin.html:60
+#: app/templates/admin.html:65
 msgid "Privacy policy text (Markdown)"
 msgstr ""
 
-#: app/templates/admin.html:60
+#: app/templates/admin.html:65
 msgid "Shown on /privacy when enabled."
 msgstr ""
 
-#: app/templates/admin.html:62
+#: app/templates/admin.html:67
 msgid "Save legal pages"
 msgstr ""
 
-#: app/templates/admin.html:65
+#: app/templates/admin.html:70
 msgid "Users"
 msgstr ""
 
-#: app/templates/admin.html:67 app/templates/login.html:9
+#: app/templates/admin.html:72 app/templates/login.html:9
 #: app/templates/login.html:31
 msgid "Email"
 msgstr ""
 
-#: app/templates/admin.html:72
+#: app/templates/admin.html:77
 msgid "Add user"
 msgstr ""
 
-#: app/templates/admin.html:81
+#: app/templates/admin.html:86
 msgid "admin"
 msgstr ""
 
-#: app/templates/admin.html:84
+#: app/templates/admin.html:89
 #, python-format
 msgid "%(count)s transfers"
 msgstr ""
 
-#: app/templates/admin.html:86
+#: app/templates/admin.html:91
 #, python-format
 msgid "%(count)s requests"
 msgstr ""
 
-#: app/templates/admin.html:91
+#: app/templates/admin.html:96
 msgid "Set password"
 msgstr ""
 
-#: app/templates/admin.html:93
+#: app/templates/admin.html:98
 #, python-format
 msgid "New password for %(email)s"
 msgstr ""
 
-#: app/templates/admin.html:97
+#: app/templates/admin.html:102
 msgid "Save"
 msgstr ""
 
-#: app/templates/admin.html:105
+#: app/templates/admin.html:110
 msgid "Promote"
 msgstr ""
 
-#: app/templates/admin.html:109
+#: app/templates/admin.html:114
 msgid "Demote"
 msgstr ""
 
-#: app/templates/admin.html:117
+#: app/templates/admin.html:122
 msgid "Delete this user?"
 msgstr ""
 
-#: app/templates/admin.html:118
+#: app/templates/admin.html:123
 msgid ""
 "The account will be deactivated and can no longer sign in. Their "
 "transfers and file requests remain."
 msgstr ""
 
-#: app/templates/admin.html:119
+#: app/templates/admin.html:124
 msgid "Yes, delete user"
 msgstr ""
 
-#: app/templates/admin.html:127
+#: app/templates/admin.html:132
 msgid "No users yet."
 msgstr ""
 
-#: app/templates/admin.html:133
+#: app/templates/admin.html:138
 msgid "Recent audit log"
 msgstr ""
 
-#: app/templates/admin.html:136
+#: app/templates/admin.html:141
 msgid "Time"
 msgstr ""
 
-#: app/templates/admin.html:136
+#: app/templates/admin.html:141
 msgid "Action"
 msgstr ""
 
-#: app/templates/admin.html:136
+#: app/templates/admin.html:141
 msgid "Resource"
 msgstr ""
 
-#: app/templates/admin.html:136 app/templates/requests_edit.html:95
+#: app/templates/admin.html:141 app/templates/requests_edit.html:95
 msgid "IP"
 msgstr ""
 

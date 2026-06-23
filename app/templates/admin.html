@@ -38,14 +38,19 @@
     <p class="text-xs text-slate-500">{{ _('Internal notifications (download alerts, upload received) are always sent when enabled per transfer.') }}</p>
     <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save limits') }}</button>
   </form>
-  <form method="post" action="/admin/smtp" class="bg-white border rounded-xl p-6 space-y-4">
+  <form id="smtp-form" method="post" action="/admin/smtp" class="bg-white border rounded-xl p-6 space-y-4">
     <h2 class="font-semibold text-lg">{{ _('SMTP') }}</h2>
     {{ f.text_input("smtp_host", _("SMTP host"), app_settings.smtp_host or '') }}
     {{ f.text_input("smtp_port", _("SMTP port"), app_settings.smtp_port, type="number", required=true) }}
     {{ f.text_input("smtp_user", _("SMTP username"), app_settings.smtp_user or '') }}
     {{ f.text_input("smtp_password", _("SMTP password"), type="password", hint=_("Leave blank to keep the current password")) }}
     {{ f.text_input("smtp_from", _("From address"), app_settings.smtp_from or '') }}
-    <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save SMTP') }}</button>
+    <div class="flex flex-wrap gap-2 items-center">
+      <button type="submit" class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save SMTP') }}</button>
+      <button type="button" id="smtp-test-btn" class="rounded px-4 py-2 text-sm border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50">{{ _('Send test email') }}</button>
+    </div>
+    <p class="text-xs text-slate-500">{{ _('Sends a test message to %(email)s using the values above (without saving).') % {'email': user.email} }}</p>
+    <p id="smtp-test-status" class="hidden text-xs rounded p-2 border" role="status" aria-live="polite"></p>
   </form>
   <form method="post" action="/admin/legal" class="bg-white border rounded-xl p-6 space-y-4">
     <h2 class="font-semibold text-lg">{{ _('Legal pages') }}</h2>
@@ -142,4 +147,54 @@
     </table>
   </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const form = document.getElementById("smtp-form");
+  const btn = document.getElementById("smtp-test-btn");
+  const status = document.getElementById("smtp-test-status");
+  if (!form || !btn || !status) return;
+
+  const i18n = window.__i18n || {};
+  const sendingLabel = i18n["Sending…"] || "Sending…";
+  const defaultLabel = btn.textContent;
+
+  function showStatus(message, ok) {
+    status.textContent = message;
+    status.classList.remove("hidden", "bg-red-50", "text-red-700", "border-red-200", "bg-green-50", "text-green-700", "border-green-200");
+    if (ok) {
+      status.classList.add("bg-green-50", "text-green-700", "border-green-200");
+    } else {
+      status.classList.add("bg-red-50", "text-red-700", "border-red-200");
+    }
+  }
+
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    btn.textContent = sendingLabel;
+    status.classList.add("hidden");
+
+    try {
+      const response = await fetch("/admin/smtp/test", {
+        method: "POST",
+        body: new FormData(form),
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok && data.ok) {
+        showStatus(data.message || defaultLabel, true);
+      } else {
+        showStatus(data.error || i18n["Request failed"] || "Request failed", false);
+      }
+    } catch {
+      showStatus(i18n["Network error"] || "Network error", false);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = defaultLabel;
+    }
+  });
+})();
+</script>
 {% endblock %}

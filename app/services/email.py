@@ -1,14 +1,103 @@
 from __future__ import annotations
 
+import html
+import re
 from email.message import EmailMessage
-from typing import Optional
+from typing import Optional, TypedDict
 
 import aiosmtplib
 
 from app.config import settings
-from app.i18n import activate
+from app.i18n import _, activate
 from app.models import AppSettings
 from app.services.email_templates import render_email_subject, render_email_template
+
+
+class SmtpOverrides(TypedDict, total=False):
+    smtp_host: str
+    smtp_port: int
+    smtp_user: str
+    smtp_password: str
+    smtp_from: str
+
+
+def _resolve_smtp(
+    app_settings: AppSettings,
+    *,
+    overrides: SmtpOverrides | None = None,
+) -> tuple[str, int, str | None, str | None, str, bool] | None:
+    if overrides is not None:
+        host = (overrides.get("smtp_host") or "").strip() or None
+        port = overrides.get("smtp_port") or app_settings.smtp_port or settings.smtp_port
+        user = (overrides.get("smtp_user") or "").strip() or None
+        password = (
+            overrides.get("smtp_password")
+            or app_settings.smtp_password
+            or settings.smtp_password
+        )
+        from_addr = (
+            (overrides.get("smtp_from") or "").strip()
+            or app_settings.smtp_from
+            or settings.smtp_from
+            or "noreply@owntransfer.local"
+        )
+    else:
+        host = app_settings.smtp_host or settings.smtp_host
+        port = app_settings.smtp_port or settings.smtp_port
+        user = app_settings.smtp_user or settings.smtp_user
+        password = app_settings.smtp_password or settings.smtp_password
+        from_addr = app_settings.smtp_from or settings.smtp_from or "noreply@owntransfer.local"
+
+    if not host:
+        return None
+
+    return host, port, user, password, from_addr, app_settings.smtp_use_tls
+
+
+def _html_to_plain_text(html_body: str) -> str:
+    text = re.sub(
+        r'<a\s+[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+        r"\2 (\1)",
+        html_body,
+        flags=re.I | re.S,
+    )
+    text = re.sub(r"<br\s*/?>", "\n", text, flags=re.I)
+    text = re.sub(r"</p>\s*", "\n\n", text, flags=re.I)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = html.unescape(text)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+async def _deliver_email(
+    *,
+    to: str | list[str],
+    subject: str,
+    body_html: str,
+    body_text: Optional[str],
+    host: str,
+    port: int,
+    username: str | None,
+    password: str | None,
+    from_addr: str,
+    use_tls: bool,
+) -> None:
+    recipients = [to] if isinstance(to, str) else to
+    msg = EmailMessage()
+    msg["From"] = from_addr
+    msg["To"] = ", ".join(recipients)
+    msg["Subject"] = subject
+    plain = body_text if body_text is not None else _html_to_plain_text(body_html)
+    msg.set_content(plain)
+    msg.add_alternative(body_html, subtype="html")
+
+    await aiosmtplib.send(
+        msg,
+        hostname=host,
+        port=port,
+        username=username,
+        password=password,
+        start_tls=use_tls,
+    )
 
 
 async def send_email(
@@ -19,27 +108,51 @@ async def send_email(
     body_html: str,
     body_text: Optional[str] = None,
 ) -> bool:
-    host = app_settings.smtp_host or settings.smtp_host
-    if not host:
+    resolved = _resolve_smtp(app_settings)
+    if not resolved:
         return False
 
-    recipients = [to] if isinstance(to, str) else to
-    msg = EmailMessage()
-    msg["From"] = app_settings.smtp_from or settings.smtp_from or "noreply@owntransfer.local"
-    msg["To"] = ", ".join(recipients)
-    msg["Subject"] = subject
-    msg.set_content(body_text or body_html)
-    msg.add_alternative(body_html, subtype="html")
-
-    await aiosmtplib.send(
-        msg,
-        hostname=host,
-        port=app_settings.smtp_port or settings.smtp_port,
-        username=app_settings.smtp_user or settings.smtp_user,
-        password=app_settings.smtp_password or settings.smtp_password,
-        start_tls=app_settings.smtp_use_tls,
+    host, port, user, password, from_addr, use_tls = resolved
+    await _deliver_email(
+        to=to,
+        subject=subject,
+        body_html=body_html,
+        body_text=body_text,
+        host=host,
+        port=port,
+        username=user,
+        password=password,
+        from_addr=from_addr,
+        use_tls=use_tls,
     )
     return True
+
+
+async def send_smtp_test_email(
+    app_settings: AppSettings,
+    *,
+    to: str,
+    overrides: SmtpOverrides,
+) -> None:
+    resolved = _resolve_smtp(app_settings, overrides=overrides)
+    if not resolved:
+        raise ValueError(_("SMTP host is required"))
+
+    host, port, user, password, from_addr, use_tls = resolved
+    subject = _("SMTP test — %(app_name)s") % {"app_name": app_settings.app_name}
+    body_html = f"<p>{_('This is a test email from your SMTP configuration.')}</p>"
+    await _deliver_email(
+        to=to,
+        subject=subject,
+        body_html=body_html,
+        body_text=None,
+        host=host,
+        port=port,
+        username=user,
+        password=password,
+        from_addr=from_addr,
+        use_tls=use_tls,
+    )
 
 
 async def send_share_email(
