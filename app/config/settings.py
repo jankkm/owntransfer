@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     postgres_db: str = Field(default="owntransfer", alias="POSTGRES_DB")
     upload_dir: str = Field(default="/data/uploads", alias="UPLOAD_DIR")
     base_url: str = Field(default="http://localhost:8080", alias="BASE_URL")
+    public_scheme: Optional[Literal["http", "https"]] = Field(default=None, alias="PUBLIC_SCHEME")
     trust_proxy_headers: bool = Field(default=False, alias="TRUST_PROXY_HEADERS")
     trusted_proxy_hops: int = Field(default=1, alias="TRUSTED_PROXY_HOPS")
     trusted_proxy_ips: str = Field(default="", alias="TRUSTED_PROXY_IPS")
@@ -59,6 +60,16 @@ class Settings(BaseSettings):
     @classmethod
     def normalize_base_url(cls, value: str) -> str:
         return value.rstrip("/")
+
+    @field_validator("public_scheme", mode="before")
+    @classmethod
+    def normalize_public_scheme(cls, value: object) -> str | None:
+        if value is None or value == "":
+            return None
+        scheme = str(value).lower().strip()
+        if scheme not in ("http", "https"):
+            raise ValueError("PUBLIC_SCHEME must be http or https")
+        return scheme
 
     @field_validator("db_backend")
     @classmethod

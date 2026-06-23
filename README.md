@@ -110,6 +110,7 @@ See [.env.example](.env.example) for the full list. Important variables:
 |----------|---------|
 | `SECRET_KEY` | Session signing — **change in production** |
 | `BASE_URL` | Public URL used in share links and emails (e.g. `https://transfer.example.com`) |
+| `PUBLIC_SCHEME` | `http` or `https` — override scheme behind a TLS-terminating reverse proxy (OAuth callbacks) |
 | `DB_BACKEND` | `sqlite` (default) or `postgres` |
 | `SQLITE_PATH` | SQLite database file (default `/data/owntransfer.db`) |
 | `DATABASE_URL` | Optional full database URL override |
@@ -134,7 +135,7 @@ Any environment variable supports a `VAR_FILE` companion that points to a file w
 
 ### Reverse proxy
 
-Run OwnTransfer behind nginx, Caddy, or Traefik in production. Set `BASE_URL` to your public HTTPS URL and enable `TRUST_PROXY_HEADERS=true` so security logging and rate limiting see the real client IP.
+Run OwnTransfer behind nginx, Caddy, or Traefik in production. Set `BASE_URL` to your public HTTPS URL. If the app receives HTTP internally behind TLS termination, set `PUBLIC_SCHEME=https` so OAuth callbacks and other generated URLs use HTTPS. Enable `TRUST_PROXY_HEADERS=true` so security logging and rate limiting see the real client IP (and so `X-Forwarded-Proto` is honored when present).
 
 ## Microsoft Entra ID
 

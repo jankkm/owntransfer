@@ -14,6 +14,7 @@ from app.config import settings
 from app.database import async_session, engine
 from app.limiter import limiter
 from app.logging_config import configure_logging
+from app.middleware.public_scheme import PublicSchemeMiddleware
 from app.middleware.setup import SetupMiddleware
 from app.routers import admin, auth, branding, dashboard, profile, public, requests, setup, transfers
 from app.services.cleanup import run_cleanup
@@ -47,6 +48,13 @@ def create_app() -> FastAPI:
     app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
     app.add_middleware(SetupMiddleware)
     app.add_middleware(SlowAPIMiddleware)
+    if settings.public_scheme:
+        app.add_middleware(PublicSchemeMiddleware)
+    if settings.trust_proxy_headers:
+        from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
+        trusted = settings.trusted_proxy_ip_list or ["*"]
+        app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=trusted)
 
     app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

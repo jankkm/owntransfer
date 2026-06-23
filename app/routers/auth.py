@@ -17,6 +17,7 @@ from app.config.oauth_providers import get_oauth_providers
 from app.database import get_db
 from app.models import User
 from app.http.client_ip import get_client_ip
+from app.http.external_url import external_url
 from app.services.audit import log_audit
 from app.services.security_log import log_invalid_login
 from app.services.settings import get_app_settings
@@ -145,7 +146,7 @@ async def oauth_start(provider: str, request: Request):
     client = oauth.create_client(provider)
     if not client:
         raise HTTPException(status_code=404, detail="Provider not configured")
-    redirect_uri = request.url_for("oauth_callback", provider=provider)
+    redirect_uri = external_url(f"/auth/oauth/{provider}/callback")
     return await client.authorize_redirect(request, redirect_uri)
 
 
