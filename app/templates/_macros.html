@@ -165,6 +165,7 @@
   <div class="flex flex-wrap items-center gap-4 shrink-0 text-sm lg:pt-1">
     <a href="{{ edit_url }}" class="text-primary hover:underline font-medium">{{ _('Edit') }}</a>
     <form method="post" action="{{ delete_form_action }}" class="inline">
+      {{ csrf_input() }}
       {{ confirm_trigger(delete_panel_id, _("Delete"), "text-red-600 hover:underline font-medium") }}
       {{ confirm_panel(
         delete_panel_id,

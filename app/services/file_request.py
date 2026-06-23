@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import io
-import zipfile
-from datetime import datetime, timedelta, timezone
+import re
+from datetime import datetime
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import HTTPException, UploadFile
 from sqlalchemy import select
@@ -27,6 +26,11 @@ from app.services.storage import get_storage
 
 def _utcnow() -> datetime:
     return utc_now()
+
+
+def _safe_filename(name: str) -> str:
+    base = name.replace("\\", "/").split("/")[-1].strip()
+    return re.sub(r"[^\w.\- ()]", "_", base) or "file"
 
 
 async def create_file_request(
@@ -145,7 +149,7 @@ async def finalize_request_upload(
         total_size += staged.size_bytes
         if total_size > req.max_total_bytes:
             raise HTTPException(status_code=400, detail=_("Upload exceeds maximum allowed size for this request"))
-        rel_path = f"requests/{req.id}/{upload.id}/{staged.original_name}"
+        rel_path = f"requests/{req.id}/{upload.id}/{staged.id}/{_safe_filename(staged.original_name)}"
         content = storage.absolute_path(staged.storage_path).read_bytes()
         await storage.save_file(rel_path, content)
         db.add(
@@ -220,7 +224,7 @@ async def handle_public_upload(
         total_size += len(content)
         if total_size > req.max_total_bytes:
             raise HTTPException(status_code=400, detail=_("Upload exceeds maximum allowed size for this request"))
-        rel_path = f"requests/{req.id}/{upload.id}/{f.filename}"
+        rel_path = f"requests/{req.id}/{upload.id}/{uuid4()}/{_safe_filename(f.filename)}"
         await storage.save_file(rel_path, content)
         db.add(
             UploadFile(
@@ -363,22 +367,18 @@ def _unique_zip_name(name: str, used: dict[str, int]) -> str:
     return f"{path.stem}_{used[name]}{path.suffix}"
 
 
-async def stream_file_request_zip(req: FileRequest) -> bytes:
+def file_request_zip_entries(req: FileRequest) -> list[tuple[Path, str]]:
     storage = get_storage()
-    buffer = io.BytesIO()
     used: dict[str, int] = {}
-    file_count = 0
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        for upload in sorted(req.uploads, key=lambda item: item.created_at):
-            for upload_file in upload.files:
-                path = storage.absolute_path(upload_file.storage_path)
-                arcname = _unique_zip_name(upload_file.original_name, used)
-                zf.write(path, arcname=arcname)
-                file_count += 1
-    if file_count == 0:
+    entries: list[tuple[Path, str]] = []
+    for upload in sorted(req.uploads, key=lambda item: item.created_at):
+        for upload_file in upload.files:
+            path = storage.absolute_path(upload_file.storage_path)
+            arcname = _unique_zip_name(_safe_filename(upload_file.original_name), used)
+            entries.append((path, arcname))
+    if not entries:
         raise HTTPException(status_code=404, detail=_("No files to download"))
-    buffer.seek(0)
-    return buffer.read()
+    return entries
 
 
 async def list_user_requests(db: AsyncSession, user_id: UUID) -> list[FileRequest]:

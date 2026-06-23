@@ -35,9 +35,18 @@ def log_invalid_login(request: Request, email: str) -> None:
     _log_event("invalid_login", request, email=email.lower())
 
 
+def log_invalid_totp(request: Request, email: str | None = None) -> None:
+    _log_event("invalid_totp", request, email=(email or "").lower())
+
+
 def log_invalid_transfer_link(request: Request) -> None:
     _log_event("invalid_transfer_link", request)
 
 
 def log_invalid_request_link(request: Request) -> None:
     _log_event("invalid_request_link", request)
+
+
+def log_invalid_unlock(request: Request, kind: str) -> None:
+    """kind is 'transfer' or 'request' — a wrong password on a public share."""
+    _log_event("invalid_unlock", request, kind=kind)

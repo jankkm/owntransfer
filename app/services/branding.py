@@ -7,6 +7,7 @@ from fastapi import HTTPException, UploadFile
 
 from app.i18n import _
 from app.models import AppSettings
+from app.services.svg_sanitize import sanitize_svg
 
 ALLOWED_LOGO_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}
 MAX_LOGO_BYTES = 2 * 1024 * 1024
@@ -62,6 +63,9 @@ async def apply_logo_upload(app_settings: AppSettings, upload: UploadFile) -> No
         raise HTTPException(status_code=400, detail=_("Logo must be 2 MB or smaller"))
     if not content:
         raise HTTPException(status_code=400, detail=_("Uploaded logo file is empty"))
+
+    if ext == ".svg":
+        content = sanitize_svg(content)
 
     content_type = _EXTENSION_TO_MIME.get(ext) or mimetypes.guess_type(upload.filename)[0]
     app_settings.logo_data = content

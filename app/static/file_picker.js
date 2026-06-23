@@ -3,6 +3,11 @@
     return window.__(key);
   }
 
+  function csrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.content : "";
+  }
+
   function formatSize(bytes) {
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
@@ -148,6 +153,7 @@
 
       xhr.open("POST", uploadUrl);
       xhr.withCredentials = true;
+      xhr.setRequestHeader("X-CSRF-Token", csrfToken());
       xhr.send(formData);
     }
 
@@ -159,7 +165,11 @@
       }
       if (entry.serverId && deleteUrlTemplate) {
         const deleteUrl = deleteUrlTemplate.replace("{id}", encodeURIComponent(entry.serverId));
-        await fetch(deleteUrl, { method: "DELETE", credentials: "same-origin" });
+        await fetch(deleteUrl, {
+          method: "DELETE",
+          credentials: "same-origin",
+          headers: { "X-CSRF-Token": csrfToken() },
+        });
       }
       files.delete(clientId);
       const row = list.querySelector(`[data-client-id="${clientId}"]`);

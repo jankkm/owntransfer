@@ -3,8 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 
 from app.config import settings
+from app.http.csrf import get_csrf_token
 from app.models import AppSettings
 from app.services.branding import has_custom_logo, logo_url, favicon_type
 from app.services.datetime_display import (
@@ -39,6 +41,14 @@ TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.add_extension("jinja2.ext.i18n")
 templates.env.install_gettext_callables(gettext, ngettext)
+def _csrf_input() -> Markup:
+    return Markup(
+        f'<input type="hidden" name="csrf_token" value="{get_csrf_token()}">'
+    )
+
+
+templates.env.globals["csrf_token"] = get_csrf_token
+templates.env.globals["csrf_input"] = _csrf_input
 templates.env.globals["supported_locales"] = SUPPORTED_LOCALES
 templates.env.globals["locale_display_name"] = locale_display_name
 templates.env.globals["current_locale"] = get_locale

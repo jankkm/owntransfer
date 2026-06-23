@@ -96,6 +96,7 @@
               <a href="/admin/shares/transfers/{{ t.id }}/edit?tab={{ tab }}{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
                  class="text-primary hover:underline text-xs">{{ _('Edit') }}</a>
               <form method="post" action="/admin/shares/transfers/{{ t.id }}/delete" class="inline">
+                {{ csrf_input() }}
                 <input type="hidden" name="tab" value="{{ tab }}">
                 {% if filter_user_id %}<input type="hidden" name="user" value="{{ filter_user_id }}">{% endif %}
                 {{ f.confirm_trigger("delete-transfer-" ~ loop.index, _("Delete"), "text-red-600 hover:underline text-xs") }}
@@ -160,6 +161,7 @@
               <a href="/admin/shares/requests/{{ r.id }}/edit?tab={{ tab }}{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
                  class="text-primary hover:underline text-xs">{{ _('Edit') }}</a>
               <form method="post" action="/admin/shares/requests/{{ r.id }}/delete" class="inline">
+                {{ csrf_input() }}
                 <input type="hidden" name="tab" value="{{ tab }}">
                 {% if filter_user_id %}<input type="hidden" name="user" value="{{ filter_user_id }}">{% endif %}
                 {{ f.confirm_trigger("delete-request-" ~ loop.index, _("Delete"), "text-red-600 hover:underline text-xs") }}

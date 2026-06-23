@@ -12,6 +12,7 @@ from app.auth.deps import get_current_user_optional
 from app.auth.passwords import verify_password
 from app.auth.users import oauth_display_name
 from app.auth.sessions import SESSION_COOKIE, SESSION_MAX_AGE, create_session_token
+from app.config import settings
 from app.auth.totp import verify_totp
 from app.config.oauth_providers import get_oauth_providers
 from app.database import get_db
@@ -19,8 +20,9 @@ from app.i18n import _
 from app.models import User
 from app.http.client_ip import get_client_ip
 from app.http.external_url import external_url
+from app.limiter import limiter
 from app.services.audit import log_audit
-from app.services.security_log import log_invalid_login
+from app.services.security_log import log_invalid_login, log_invalid_totp
 from app.services.settings import get_app_settings
 from app.templating import branding_context, templates
 
@@ -40,7 +42,14 @@ for provider in get_oauth_providers():
 def _login_response(request: Request, user: User) -> RedirectResponse:
     token = create_session_token(user.id, user.is_admin)
     response = RedirectResponse("/dashboard", status_code=303)
-    response.set_cookie(SESSION_COOKIE, token, max_age=SESSION_MAX_AGE, httponly=True, samesite="lax")
+    response.set_cookie(
+        SESSION_COOKIE,
+        token,
+        max_age=SESSION_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+        secure=settings.cookies_secure,
+    )
     return response
 
 
@@ -71,6 +80,7 @@ async def login_page(
 
 
 @router.post("/login/local")
+@limiter.limit("10/minute")
 async def login_local(
     request: Request,
     email: str = Form(...),
@@ -117,6 +127,7 @@ async def login_totp_page(
 
 
 @router.post("/login/totp")
+@limiter.limit("10/minute")
 async def login_totp_verify(
     request: Request,
     totp_code: str = Form(...),
@@ -135,6 +146,7 @@ async def login_totp_verify(
     result = await db.execute(select(User).where(User.id == user_id, User.is_active.is_(True)))
     user = result.scalar_one_or_none()
     if not user or not user.totp_enabled or not verify_totp(user.totp_secret, totp_code):
+        log_invalid_totp(request, user.email if user else None)
         return RedirectResponse("/auth/login/totp?error=" + _("Invalid authentication code").replace(" ", "+"), status_code=303)
 
     request.session.pop("pending_totp_user_id", None)
@@ -171,28 +183,58 @@ async def oauth_callback(provider: str, request: Request, db: AsyncSession = Dep
         except Exception:
             pass
 
-    email = (userinfo.get("email") or userinfo.get("preferred_username") or "").lower()
+    # Only trust the verified `email` claim. `preferred_username` is not a
+    # verified email and must not be used to match accounts.
+    email = (userinfo.get("email") or "").strip().lower()
     sub = userinfo.get("sub")
     if not email or not sub:
-        raise HTTPException(status_code=400, detail=_("OAuth provider did not return email"))
+        raise HTTPException(status_code=400, detail=_("OAuth provider did not return an email address"))
 
-    result = await db.execute(select(User).where(User.email == email))
+    # Reject only when the provider explicitly says the email is unverified.
+    # (Providers such as Entra omit the claim for org-managed accounts.)
+    email_verified = userinfo.get("email_verified")
+    if email_verified is False or str(email_verified).strip().lower() == "false":
+        raise HTTPException(status_code=403, detail=_("Your email address is not verified with the identity provider"))
+
+    # Match on the stable provider + subject identifier first.
+    result = await db.execute(
+        select(User).where(User.oauth_provider == provider, User.oauth_sub == sub)
+    )
     user = result.scalar_one_or_none()
-    if not user:
-        user = User(
-            email=email,
-            oauth_provider=provider,
-            oauth_sub=sub,
-            display_name=display_name,
-            is_admin=False,
-            is_active=True,
-        )
-        db.add(user)
-    else:
-        user.oauth_provider = provider
-        user.oauth_sub = sub
+    if user:
         if display_name:
             user.display_name = display_name
+        if user.email != email:
+            user.email = email
+    else:
+        result = await db.execute(select(User).where(User.email == email))
+        existing = result.scalar_one_or_none()
+        if existing:
+            # Never silently link an OAuth identity to a pre-existing local
+            # (password) account or an account owned via a different provider —
+            # that would allow account takeover by anyone who can assert the email.
+            if existing.oauth_provider != provider:
+                raise HTTPException(
+                    status_code=403,
+                    detail=_(
+                        "An account with this email already exists. Sign in with your "
+                        "existing method, or ask an administrator to link your account."
+                    ),
+                )
+            user = existing
+            user.oauth_sub = sub
+            if display_name:
+                user.display_name = display_name
+        else:
+            user = User(
+                email=email,
+                oauth_provider=provider,
+                oauth_sub=sub,
+                display_name=display_name,
+                is_admin=False,
+                is_active=True,
+            )
+            db.add(user)
     await db.commit()
     await db.refresh(user)
 
@@ -200,8 +242,8 @@ async def oauth_callback(provider: str, request: Request, db: AsyncSession = Dep
     return _login_response(request, user)
 
 
-@router.get("/logout")
+@router.post("/logout")
 async def logout() -> RedirectResponse:
     response = RedirectResponse("/auth/login", status_code=303)
-    response.delete_cookie(SESSION_COOKIE)
+    response.delete_cookie(SESSION_COOKIE, samesite="lax", secure=settings.cookies_secure)
     return response

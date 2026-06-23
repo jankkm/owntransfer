@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   <link rel="icon" href="{{ logo_path }}" type="{{ favicon_type }}">
   <script src="/static/vendor/tailwindcss.js"></script>
@@ -120,7 +121,10 @@
             <div class="py-1">
               <a href="/auth/profile" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">{{ _('Profile') }}</a>
               {% if user.is_admin %}<a href="/admin" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">{{ _('Admin') }}</a>{% endif %}
-              <a href="/auth/logout" class="block px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-50 border-t border-slate-100 mt-1">{{ _('Logout') }}</a>
+              <form method="post" action="/auth/logout" class="border-t border-slate-100 mt-1">
+                {{ csrf_input() }}
+                <button type="submit" class="block w-full text-left px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-50">{{ _('Logout') }}</button>
+              </form>
             </div>
           </div>
         </div>
@@ -143,6 +147,7 @@
       <a href="/privacy" class="text-slate-600 hover:text-primary underline">{{ _('Privacy policy') }}</a>
       {% endif %}
       <form method="post" action="/locale" class="inline-flex items-center">
+        {{ csrf_input() }}
         <select id="locale-select" name="locale" onchange="this.form.submit()" aria-label="{{ _('Language') }}"
                 class="border border-slate-300 rounded-lg px-2 py-1 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
           {% for loc in supported_locales %}

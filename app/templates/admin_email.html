@@ -7,6 +7,7 @@
 {% include "_admin_nav.html" %}
 
 <form method="post" action="/admin/email" class="space-y-6">
+  {{ csrf_input() }}
   {% for key, label, variables in template_sections %}
   <div class="bg-white border rounded-xl p-6 space-y-3">
     <h2 class="font-semibold text-lg">{{ label }}</h2>

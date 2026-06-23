@@ -23,7 +23,15 @@ async def serve_logo(db: AsyncSession = Depends(get_db)) -> Response:
     return Response(
         content=app_settings.logo_data,
         media_type=app_settings.logo_content_type or "application/octet-stream",
-        headers={"Cache-Control": "private, max-age=300"},
+        headers={
+            "Cache-Control": "private, max-age=300",
+            # Defense in depth for SVG logos: even if active content survives
+            # sanitization, the sandbox + locked-down CSP prevents script
+            # execution when the asset is opened directly, and nosniff stops
+            # content-type confusion.
+            "Content-Security-Policy": "sandbox; default-src 'none'; style-src 'unsafe-inline'",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
 
 

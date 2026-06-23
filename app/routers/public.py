@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.download_grants import (
@@ -28,7 +28,11 @@ from app.services.file_request import (
     lookup_request_by_token,
     verify_request_password,
 )
-from app.services.security_log import log_invalid_request_link, log_invalid_transfer_link
+from app.services.security_log import (
+    log_invalid_request_link,
+    log_invalid_transfer_link,
+    log_invalid_unlock,
+)
 from app.services.settings import get_app_settings
 from app.services.staging import (
     add_staged_file,
@@ -44,9 +48,10 @@ from app.services.transfer import (
     log_transfer_download,
     lookup_transfer_by_token,
     record_download,
-    stream_transfer_zip,
+    transfer_zip_entries,
     verify_transfer_password,
 )
+from app.services.zip_stream import stream_zip
 from app.templating import branding_context, templates
 
 router = APIRouter(tags=["public"])
@@ -157,6 +162,7 @@ async def download_page(token: str, request: Request, db: AsyncSession = Depends
 
 
 @router.post("/d/{token}", response_class=HTMLResponse)
+@limiter.limit("10/minute")
 async def download_unlock(token: str, request: Request, password: str = Form(""), db: AsyncSession = Depends(get_db)):
     app_settings = await get_app_settings(db)
     transfer = await lookup_transfer_by_token(db, token)
@@ -166,6 +172,7 @@ async def download_unlock(token: str, request: Request, password: str = Form("")
     transfer = resolved
     ensure_transfer_accessible(transfer)
     if not verify_transfer_password(transfer, password):
+        log_invalid_unlock(request, "transfer")
         ctx = branding_context(app_settings)
         ctx.update({"transfer": transfer, "needs_password": True, "can_download": False, "error": _("Invalid password")})
         return templates.TemplateResponse(request, "public_download.html", ctx, status_code=401)
@@ -208,10 +215,10 @@ async def download_files_zip(token: str, request: Request, db: AsyncSession = De
         download_type="zip",
         file_name=f"{transfer.title or 'transfer'}.zip",
     )
-    zip_data = await stream_transfer_zip(transfer)
-    filename = f"{transfer.title or 'transfer'}.zip".replace("/", "-")
-    return Response(
-        content=zip_data,
+    entries = transfer_zip_entries(transfer)
+    filename = f"{transfer.title or 'transfer'}.zip".replace("/", "-").replace('"', "")
+    return StreamingResponse(
+        stream_zip(entries),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
@@ -347,6 +354,7 @@ async def upload_handler(
 
     if unlock:
         if not verify_request_password(file_request, password):
+            log_invalid_unlock(request, "request")
             ctx = branding_context(app_settings)
             ctx.update({"file_request": file_request, "needs_password": True, "error": _("Invalid password")})
             return templates.TemplateResponse(request, "public_upload.html", ctx, status_code=401)

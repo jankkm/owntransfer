@@ -6,6 +6,7 @@
   <h1 class="text-2xl font-bold mb-2">{{ _('Two-factor authentication') }}</h1>
   <p class="text-sm text-slate-500 mb-6">{{ _('Enter the 6-digit code from your authenticator app.') }}</p>
   <form method="post" action="/auth/login/totp" class="bg-white border rounded-xl p-6 space-y-4">
+    {{ csrf_input() }}
     {{ f.text_input("totp_code", _("Authentication code"), required=true, hint=_("6-digit code")) }}
     <button type="submit" class="w-full btn-primary text-white rounded-lg py-2 font-medium">{{ _('Continue') }}</button>
   </form>

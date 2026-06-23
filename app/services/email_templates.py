@@ -1,9 +1,14 @@
 from __future__ import annotations
 
-from jinja2 import Template
+from jinja2.sandbox import SandboxedEnvironment
 
 from app.i18n import _
 from app.models import AppSettings
+
+# Admin-editable templates are untrusted-ish: a compromised or careless admin
+# must not be able to escape into Python (SSTI -> RCE). The sandbox blocks
+# access to unsafe attributes and builtins.
+_sandbox = SandboxedEnvironment(autoescape=False)
 
 TEMPLATE_KEYS = (
     "share",
@@ -93,12 +98,12 @@ def get_subject_source(app_settings: AppSettings, key: str) -> str:
 
 def render_email_template(app_settings: AppSettings, key: str, **context) -> str:
     source = get_template_source(app_settings, key)
-    return Template(source).render(**context)
+    return _sandbox.from_string(source).render(**context)
 
 
 def render_email_subject(app_settings: AppSettings, key: str, **context) -> str:
     source = get_subject_source(app_settings, key)
-    return Template(source).render(**context).strip()
+    return _sandbox.from_string(source).render(**context).strip()
 
 
 def templates_for_admin(app_settings: AppSettings) -> dict[str, str]:

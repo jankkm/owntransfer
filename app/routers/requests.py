@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user
@@ -21,9 +21,10 @@ from app.services.file_request import (
     iter_upload_file,
     list_user_requests,
     regenerate_file_request_link,
-    stream_file_request_zip,
+    file_request_zip_entries,
     update_file_request,
 )
+from app.services.zip_stream import stream_zip
 from app.services.datetime_display import parse_expiry_date
 from app.services.settings import get_app_settings
 from app.services.share_list import apply_request_list_query, parse_share_list_query
@@ -240,10 +241,10 @@ async def download_request_zip(
     user: User = Depends(get_current_user),
 ):
     file_request = await get_user_request(db, request_id, user.id)
-    zip_data = await stream_file_request_zip(file_request)
-    filename = f"{file_request.title or 'file-request'}.zip".replace("/", "-")
-    return Response(
-        content=zip_data,
+    entries = file_request_zip_entries(file_request)
+    filename = f"{file_request.title or 'file-request'}.zip".replace("/", "-").replace('"', "")
+    return StreamingResponse(
+        stream_zip(entries),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

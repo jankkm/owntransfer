@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import tempfile
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
@@ -57,6 +58,14 @@ async def prepare_db():
     yield
 
 
+async def _csrf_token(client: AsyncClient, path: str = "/auth/login") -> str:
+    """Fetch a page to obtain a session cookie and its CSRF token."""
+    response = await client.get(path)
+    match = re.search(r'name="csrf-token" content="([^"]+)"', response.text)
+    assert match, "CSRF token meta tag not found"
+    return match.group(1)
+
+
 @pytest_asyncio.fixture
 async def client():
     async def override_get_db():
@@ -90,9 +99,10 @@ async def test_setup_redirect_when_not_complete(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_local_login(client: AsyncClient):
+    token = await _csrf_token(client)
     response = await client.post(
         "/auth/login/local",
-        data={"email": "admin@test.com", "password": "password123"},
+        data={"email": "admin@test.com", "password": "password123", "csrf_token": token},
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -195,14 +205,59 @@ async def test_concurrent_staging_adds_all_files():
 
 @pytest.mark.asyncio
 async def test_invalid_login_security_log(client: AsyncClient, caplog: pytest.LogCaptureFixture):
+    token = await _csrf_token(client)
     with caplog.at_level(logging.WARNING, logger=SECURITY_LOGGER_NAME):
         response = await client.post(
             "/auth/login/local",
-            data={"email": "nobody@test.com", "password": "wrong"},
+            data={"email": "nobody@test.com", "password": "wrong", "csrf_token": token},
             follow_redirects=False,
         )
     assert response.status_code == 401
     assert any("event=invalid_login" in record.message for record in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_login_without_csrf_is_rejected(client: AsyncClient):
+    response = await client.post(
+        "/auth/login/local",
+        data={"email": "admin@test.com", "password": "password123"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_password_protected_transfer_cannot_be_bypassed_with_forged_cookie(client: AsyncClient):
+    from app.auth.passwords import hash_password as _hash
+
+    async with async_session() as session:
+        user = (await session.execute(select(User))).scalar_one()
+        session.add(
+            Transfer(
+                public_token="protected-token",
+                created_by=user.id,
+                title="Secret",
+                password_hash=_hash("letmein"),
+                expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            )
+        )
+        await session.commit()
+
+    # Forging the old plaintext "1" unlock cookie must NOT unlock the transfer.
+    forged = await client.get(
+        "/d/protected-token",
+        cookies={"unlock_d_protected-token": "1"},
+        follow_redirects=False,
+    )
+    assert forged.status_code == 200
+    assert "needs_password" not in forged.text or 'name="password"' in forged.text
+    # The ZIP endpoint must reject because no valid signed unlock/grant exists.
+    blocked = await client.get(
+        "/d/protected-token/download",
+        cookies={"unlock_d_protected-token": "1"},
+        follow_redirects=False,
+    )
+    assert blocked.status_code == 403
 
 
 @pytest.mark.asyncio

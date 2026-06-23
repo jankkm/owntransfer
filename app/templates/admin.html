@@ -7,6 +7,7 @@
 {% include "_admin_nav.html" %}
 <div class="grid md:grid-cols-2 gap-6">
   <form method="post" action="/admin/branding" enctype="multipart/form-data" class="bg-white border rounded-xl p-6 space-y-4">
+    {{ csrf_input() }}
     <h2 class="font-semibold text-lg">{{ _('Branding') }}</h2>
     {{ f.text_input("app_name", _("App name"), app_settings.app_name, required=true) }}
     <div>
@@ -24,6 +25,7 @@
     <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save branding') }}</button>
   </form>
   <form method="post" action="/admin/limits" class="bg-white border rounded-xl p-6 space-y-4">
+    {{ csrf_input() }}
     <h2 class="font-semibold text-lg">{{ _('Limits') }}</h2>
     {{ f.text_input("max_file_size_mb", _("Max file size (MB)"), app_settings.max_file_size_bytes // (1024*1024), type="number", required=true) }}
     {{ f.text_input("default_expiry_days", _("Default expiry (days)"), app_settings.default_expiry_days, type="number", required=true) }}
@@ -38,6 +40,7 @@
     <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save limits') }}</button>
   </form>
   <form id="smtp-form" method="post" action="/admin/smtp" class="bg-white border rounded-xl p-6 space-y-4">
+    {{ csrf_input() }}
     <h2 class="font-semibold text-lg">{{ _('SMTP') }}</h2>
     {{ f.text_input("smtp_host", _("SMTP host"), app_settings.smtp_host or '') }}
     {{ f.text_input("smtp_port", _("SMTP port"), app_settings.smtp_port, type="number", required=true) }}
@@ -52,6 +55,7 @@
     <p id="smtp-test-status" class="hidden text-xs rounded p-2 border" role="status" aria-live="polite"></p>
   </form>
   <form method="post" action="/admin/legal" class="bg-white border rounded-xl p-6 space-y-4">
+    {{ csrf_input() }}
     <h2 class="font-semibold text-lg">{{ _('Legal pages') }}</h2>
     <div class="space-y-4 pb-4 border-b border-slate-200">
       <h3 class="text-sm font-medium text-slate-800">{{ _('Impressum') }}</h3>
@@ -68,6 +72,7 @@
   <div class="bg-white border rounded-xl p-6 md:col-span-2">
     <h2 class="font-semibold text-lg mb-4">{{ _('Users') }}</h2>
     <form method="post" action="/admin/users" class="grid md:grid-cols-4 gap-3 items-end mb-6 pb-6 border-b border-slate-200">
+      {{ csrf_input() }}
       {{ f.text_input("email", _("Email"), type="email", required=true) }}
       {{ f.text_input("password", _("Password"), type="password", required=true) }}
       <div class="flex items-end pb-1">
@@ -92,6 +97,7 @@
         </div>
         <div class="flex items-center gap-3 shrink-0">
           <form method="post" action="/admin/users/{{ u.id }}/password" class="text-right">
+            {{ csrf_input() }}
             {{ f.confirm_trigger("password-user-" ~ loop.index, _("Set password"), "text-xs hover:underline") }}
             <div id="password-user-{{ loop.index }}" class="hidden mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-left w-56">
               <p class="text-xs font-medium text-slate-700 mb-2">{{ _('New password for %(email)s') % {'email': u.email} }}</p>
@@ -106,15 +112,18 @@
           </form>
           {% if not u.is_admin %}
           <form method="post" action="/admin/users/{{ u.id }}/promote">
+            {{ csrf_input() }}
             <button type="submit" class="text-xs text-primary hover:underline">{{ _('Promote') }}</button>
           </form>
           {% elif u.id != user.id %}
           <form method="post" action="/admin/users/{{ u.id }}/demote">
+            {{ csrf_input() }}
             <button type="submit" class="text-xs text-slate-600 hover:underline">{{ _('Demote') }}</button>
           </form>
           {% endif %}
           {% if u.id != user.id %}
           <form method="post" action="/admin/users/{{ u.id }}/delete" class="text-right">
+            {{ csrf_input() }}
             {{ f.confirm_trigger("delete-user-" ~ loop.index, _("Delete"), "text-xs text-red-600 hover:underline") }}
             {{ f.confirm_panel(
               "delete-user-" ~ loop.index,
@@ -175,11 +184,12 @@
     status.classList.add("hidden");
 
     try {
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
       const response = await fetch("/admin/smtp/test", {
         method: "POST",
         body: new FormData(form),
         credentials: "same-origin",
-        headers: { Accept: "application/json" },
+        headers: { Accept: "application/json", "X-CSRF-Token": csrf },
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok && data.ok) {

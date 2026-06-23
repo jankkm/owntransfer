@@ -3,6 +3,11 @@
     return window.__(key, vars);
   }
 
+  function csrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.content : "";
+  }
+
   function inlineConfirm() {
     return window.InlineFileRemoveConfirm;
   }
@@ -214,7 +219,11 @@
       setError("");
 
       try {
-        const response = await fetch(deleteUrl, { method: "DELETE", credentials: "same-origin" });
+        const response = await fetch(deleteUrl, {
+          method: "DELETE",
+          credentials: "same-origin",
+          headers: { "X-CSRF-Token": csrfToken() },
+        });
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
           throw new Error(payload.detail || t("Could not remove file"));
@@ -278,6 +287,7 @@
 
       xhr.open("POST", uploadUrl);
       xhr.withCredentials = true;
+      xhr.setRequestHeader("X-CSRF-Token", csrfToken());
       xhr.send(formData);
     }
 

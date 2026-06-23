@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import io
 import re
-import zipfile
-from datetime import datetime, timedelta, timezone
-from typing import AsyncIterator, Optional
+from datetime import datetime
+from pathlib import Path
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException, UploadFile
@@ -78,7 +76,7 @@ async def create_transfer(
             total_size += staged.size_bytes
             if total_size > app_settings.max_file_size_bytes:
                 raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
-            rel_path = f"transfers/{transfer.id}/{staged.original_name}"
+            rel_path = f"transfers/{transfer.id}/{uuid4()}/{_safe_filename(staged.original_name)}"
             content = storage.absolute_path(staged.storage_path).read_bytes()
             await storage.save_file(rel_path, content)
             db.add(
@@ -101,7 +99,7 @@ async def create_transfer(
             total_size += len(content)
             if total_size > app_settings.max_file_size_bytes:
                 raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
-            rel_path = f"transfers/{transfer.id}/{upload.filename}"
+            rel_path = f"transfers/{transfer.id}/{uuid4()}/{_safe_filename(upload.filename)}"
             await storage.save_file(rel_path, content)
             db.add(
                 TransferFile(
@@ -219,15 +217,15 @@ async def record_download(
         )
 
 
-async def stream_transfer_zip(transfer: Transfer) -> bytes:
+def transfer_zip_entries(transfer: Transfer) -> list[tuple[Path, str]]:
     storage = get_storage()
-    buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        for tf in transfer.files:
-            path = storage.absolute_path(tf.storage_path)
-            zf.write(path, arcname=tf.original_name)
-    buffer.seek(0)
-    return buffer.read()
+    used: dict[str, int] = {}
+    entries: list[tuple[Path, str]] = []
+    for tf in transfer.files:
+        path = storage.absolute_path(tf.storage_path)
+        arcname = _unique_zip_name(_safe_filename(tf.original_name), used)
+        entries.append((path, arcname))
+    return entries
 
 
 async def get_transfer_file(transfer: Transfer, file_id: UUID) -> TransferFile:
@@ -240,6 +238,14 @@ async def get_transfer_file(transfer: Transfer, file_id: UUID) -> TransferFile:
 def _safe_filename(name: str) -> str:
     base = name.replace("\\", "/").split("/")[-1].strip()
     return re.sub(r"[^\w.\- ()]", "_", base) or "file"
+
+
+def _unique_zip_name(name: str, used: dict[str, int]) -> str:
+    used[name] = used.get(name, 0) + 1
+    if used[name] == 1:
+        return name
+    path = Path(name)
+    return f"{path.stem}_{used[name]}{path.suffix}"
 
 
 def _transfer_total_bytes(transfer: Transfer) -> int:

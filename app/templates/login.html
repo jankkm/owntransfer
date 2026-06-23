@@ -28,6 +28,7 @@
       <h1 class="text-xl font-bold mb-1">{{ _('Sign in') }}</h1>
       <p class="text-sm text-slate-500 mb-4">{% if oauth_providers %}{{ _('Backup sign-in for local accounts.') }}{% else %}{{ _('Enter your email and password.') }}{% endif %}</p>
       <form method="post" action="/auth/login/local" class="space-y-4">
+        {{ csrf_input() }}
         {{ f.text_input("email", _("Email"), type="email", required=true) }}
         {{ f.text_input("password", _("Password"), type="password", required=true) }}
         <button type="submit" class="btn-primary w-full text-white rounded-lg py-2">{{ _('Sign in') }}</button>

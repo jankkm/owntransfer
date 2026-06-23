@@ -12,6 +12,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
 from app.database import async_session, engine
+from app.http.csrf import CSRFMiddleware
 from app.limiter import limiter
 from app.logging_config import configure_logging
 from app.middleware.public_scheme import PublicSchemeMiddleware
@@ -46,7 +47,15 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
+    # Added first => innermost: runs after SessionMiddleware has populated
+    # scope["session"], which the CSRF token store relies on.
+    app.add_middleware(CSRFMiddleware)
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=settings.secret_key,
+        https_only=settings.cookies_secure,
+        same_site="lax",
+    )
     app.add_middleware(LocaleMiddleware)
     app.add_middleware(SetupMiddleware)
     app.add_middleware(SlowAPIMiddleware)

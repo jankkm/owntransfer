@@ -38,8 +38,12 @@ class LocalStorage(StorageBackend):
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
     def _resolve(self, relative_path: str) -> Path:
-        full = (self.base_dir / relative_path).resolve()
-        if not str(full).startswith(str(self.base_dir.resolve())):
+        base = self.base_dir.resolve()
+        full = (base / relative_path).resolve()
+        # Use proper path containment (not string prefix) so that sibling
+        # directories sharing a name prefix (e.g. /data/uploads vs
+        # /data/uploads_evil) cannot be reached via ".." traversal.
+        if full != base and base not in full.parents:
             raise ValueError("Invalid storage path")
         return full
 

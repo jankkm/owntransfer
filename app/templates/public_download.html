@@ -8,6 +8,7 @@
   <p class="text-sm text-slate-500 mb-6">{{ ngettext('%(count)s file · expires %(expires)s', '%(count)s files · expires %(expires)s', transfer.files|length) % {'count': transfer.files|length, 'expires': transfer.expires_at|format_datetime_with_tz} }}</p>
   {% if needs_password %}
   <form method="post" class="space-y-4 mb-6">
+    {{ csrf_input() }}
     {{ f.text_input("password", _("Password"), type="password", required=true) }}
     <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Unlock') }}</button>
   </form>

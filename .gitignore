@@ -54,3 +54,4 @@ docker-compose.override.yml
 
 uv.lock
 .cursor
+_audit_uploads

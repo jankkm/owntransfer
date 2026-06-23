@@ -10,12 +10,14 @@
   </p>
   {% if needs_password %}
   <form method="post" class="space-y-4 mb-6">
+    {{ csrf_input() }}
     <input type="hidden" name="unlock" value="1">
     {{ f.text_input("password", _("Password"), type="password", required=true) }}
     <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Unlock') }}</button>
   </form>
   {% else %}
   <form method="post" class="space-y-4">
+    {{ csrf_input() }}
     {{ f.text_input("uploader_name", _("Your name (optional)")) }}
     {{ f.text_input("uploader_email", _("Your email (optional)"), type="email") }}
     {{ f.file_picker("/r/" ~ file_request.public_token ~ "/staging", "/r/" ~ file_request.public_token ~ "/staging/{id}", required_files_message=_('Add at least one file to upload')) }}

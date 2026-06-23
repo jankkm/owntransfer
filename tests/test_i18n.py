@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 
 import pytest
@@ -116,9 +117,11 @@ async def test_locale_cookie_overrides_accept_language(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_post_locale_sets_cookie(client: AsyncClient):
+    page = await client.get("/auth/login")
+    token = re.search(r'name="csrf-token" content="([^"]+)"', page.text).group(1)
     response = await client.post(
         "/locale",
-        data={"locale": "de"},
+        data={"locale": "de", "csrf_token": token},
         headers={"Referer": "http://test/auth/login"},
         follow_redirects=False,
     )

@@ -25,6 +25,7 @@
 <div class="bg-white border rounded-xl p-6 space-y-4 mb-6">
   <h2 class="font-semibold text-lg">{{ _('Change password') }}</h2>
   <form method="post" action="/auth/profile/password" class="space-y-4 max-w-md">
+    {{ csrf_input() }}
     {{ f.text_input("current_password", _("Current password"), type="password", required=true) }}
     {{ f.text_input("new_password", _("New password"), type="password", required=true, hint=_("At least 8 characters")) }}
     {{ f.text_input("confirm_password", _("Confirm new password"), type="password", required=true) }}
@@ -38,6 +39,7 @@
   {% if user.totp_enabled %}
   <p class="text-sm text-slate-600">{{ _('Two-factor authentication is') }} <span class="font-medium text-green-700">{{ _('enabled') }}</span> {{ _('for your account.') }}</p>
   <form method="post" action="/auth/profile/totp/disable" class="space-y-4 max-w-md border-t border-slate-100 pt-4">
+    {{ csrf_input() }}
     <p class="text-xs text-slate-500">{{ _('Enter your password and a current authenticator code to disable 2FA.') }}</p>
     {{ f.text_input("current_password", _("Current password"), type="password", required=true) }}
     {{ f.text_input("totp_code", _("Authentication code"), required=true, hint=_("6-digit code from your authenticator app")) }}
@@ -48,6 +50,7 @@
   <p class="text-sm text-slate-600">{{ _('Scan this QR code with your authenticator app, then enter a code to finish setup.') }}</p>
   <img src="{{ totp_qr }}" alt="{{ _('TOTP QR code') }}" class="w-48 h-48 border border-slate-200 rounded-lg bg-white p-2">
   <form method="post" action="/auth/profile/totp/confirm" class="space-y-4 max-w-md">
+    {{ csrf_input() }}
     {{ f.text_input("totp_code", _("Authentication code"), required=true, hint=_("6-digit code from your authenticator app")) }}
     <div class="flex flex-wrap gap-3 items-center">
       <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">{{ _('Enable 2FA') }}</button>
@@ -58,6 +61,7 @@
   {% else %}
   <p class="text-sm text-slate-600">{{ _('Add an extra layer of security with an authenticator app (Google Authenticator, 1Password, etc.).') }}</p>
   <form method="post" action="/auth/profile/totp/start">
+    {{ csrf_input() }}
     <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">{{ _('Set up two-factor authentication') }}</button>
   </form>
   {% endif %}

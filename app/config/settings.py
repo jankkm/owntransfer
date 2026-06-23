@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     upload_dir: str = Field(default="/data/uploads", alias="UPLOAD_DIR")
     base_url: str = Field(default="http://localhost:8080", alias="BASE_URL")
     public_scheme: Optional[Literal["http", "https"]] = Field(default=None, alias="PUBLIC_SCHEME")
+    secure_cookies: Optional[bool] = Field(default=None, alias="SECURE_COOKIES")
     trust_proxy_headers: bool = Field(default=False, alias="TRUST_PROXY_HEADERS")
     trusted_proxy_hops: int = Field(default=1, alias="TRUSTED_PROXY_HOPS")
     trusted_proxy_ips: str = Field(default="", alias="TRUSTED_PROXY_IPS")
@@ -89,6 +90,24 @@ class Settings(BaseSettings):
         path = Path(self.sqlite_path)
         path.parent.mkdir(parents=True, exist_ok=True)
         return f"sqlite+aiosqlite:///{path}"
+
+    @property
+    def effective_scheme(self) -> str:
+        if self.public_scheme:
+            return self.public_scheme
+        scheme = self.base_url.split("://", 1)[0].lower() if "://" in self.base_url else ""
+        return scheme or "http"
+
+    @property
+    def cookies_secure(self) -> bool:
+        """Whether cookies should carry the Secure flag.
+
+        Defaults to True when the public scheme is HTTPS; can be forced via the
+        SECURE_COOKIES environment variable (useful for local HTTP development).
+        """
+        if self.secure_cookies is not None:
+            return self.secure_cookies
+        return self.effective_scheme == "https"
 
     @property
     def is_sqlite(self) -> bool:
