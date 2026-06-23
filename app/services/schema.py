@@ -52,6 +52,19 @@ async def ensure_schema(conn: AsyncConnection) -> None:
     if "impressum_markdown" not in columns:
         await conn.execute(text("ALTER TABLE app_settings ADD COLUMN impressum_markdown TEXT"))
 
+    columns = await conn.run_sync(_existing_columns)
+    if "privacy_policy_enabled" not in columns:
+        default = "0" if dialect == "sqlite" else "FALSE"
+        await conn.execute(
+            text(
+                f"ALTER TABLE app_settings "
+                f"ADD COLUMN privacy_policy_enabled BOOLEAN NOT NULL DEFAULT {default}"
+            )
+        )
+    columns = await conn.run_sync(_existing_columns)
+    if "privacy_policy_markdown" not in columns:
+        await conn.execute(text("ALTER TABLE app_settings ADD COLUMN privacy_policy_markdown TEXT"))
+
     if "max_share_expiry_days" not in columns:
         await conn.execute(
             text("ALTER TABLE app_settings ADD COLUMN max_share_expiry_days INTEGER NOT NULL DEFAULT 365")

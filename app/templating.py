@@ -65,5 +65,7 @@ def branding_context(app_settings: AppSettings) -> dict:
         "allow_user_share_emails": app_settings.allow_user_share_emails,
         "impressum_enabled": app_settings.impressum_enabled
         and bool((app_settings.impressum_markdown or "").strip()),
+        "privacy_policy_enabled": app_settings.privacy_policy_enabled
+        and bool((app_settings.privacy_policy_markdown or "").strip()),
         "display_timezone": settings.display_timezone,
     }

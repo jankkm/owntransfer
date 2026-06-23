@@ -47,11 +47,19 @@
     {{ f.text_input("smtp_from", "From address", app_settings.smtp_from or '') }}
     <button class="btn-primary text-white rounded px-4 py-2 text-sm">Save SMTP</button>
   </form>
-  <form method="post" action="/admin/impressum" class="bg-white border rounded-xl p-6 space-y-4">
-    <h2 class="font-semibold text-lg">Impressum</h2>
-    {{ f.checkbox_input("impressum_enabled", "Show Impressum link in footer on every page", checked=app_settings.impressum_enabled) }}
-    {{ f.textarea_input("impressum_markdown", "Impressum text (Markdown)", app_settings.impressum_markdown or '', hint="Shown on the /impressum page when visitors click the footer link.") }}
-    <button class="btn-primary text-white rounded px-4 py-2 text-sm">Save impressum</button>
+  <form method="post" action="/admin/legal" class="bg-white border rounded-xl p-6 space-y-4">
+    <h2 class="font-semibold text-lg">Legal pages</h2>
+    <div class="space-y-4 pb-4 border-b border-slate-200">
+      <h3 class="text-sm font-medium text-slate-800">Impressum</h3>
+      {{ f.checkbox_input("impressum_enabled", "Show Impressum link in footer", checked=app_settings.impressum_enabled) }}
+      {{ f.textarea_input("impressum_markdown", "Impressum text (Markdown)", app_settings.impressum_markdown or '', hint="Shown on /impressum when enabled.") }}
+    </div>
+    <div class="space-y-4">
+      <h3 class="text-sm font-medium text-slate-800">Privacy policy</h3>
+      {{ f.checkbox_input("privacy_policy_enabled", "Show privacy policy link in footer", checked=app_settings.privacy_policy_enabled) }}
+      {{ f.textarea_input("privacy_policy_markdown", "Privacy policy text (Markdown)", app_settings.privacy_policy_markdown or '', hint="Shown on /privacy when enabled.") }}
+    </div>
+    <button class="btn-primary text-white rounded px-4 py-2 text-sm">Save legal pages</button>
   </form>
   <div class="bg-white border rounded-xl p-6 md:col-span-2">
     <h2 class="font-semibold text-lg mb-4">Users</h2>

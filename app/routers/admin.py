@@ -87,8 +87,8 @@ async def admin_home(
     })
     if request.query_params.get("branding_saved"):
         ctx["success"] = "Branding saved."
-    if request.query_params.get("impressum_saved"):
-        ctx["success"] = "Impressum saved."
+    if request.query_params.get("impressum_saved") or request.query_params.get("legal_saved"):
+        ctx["success"] = "Legal pages saved."
     if request.query_params.get("user_added"):
         ctx["success"] = "User added."
     if request.query_params.get("user_deleted"):
@@ -574,18 +574,22 @@ async def save_smtp(
     return RedirectResponse("/admin", status_code=303)
 
 
-@router.post("/impressum")
-async def save_impressum(
+@router.post("/legal")
+async def save_legal_pages(
     impressum_enabled: str = Form(""),
     impressum_markdown: str = Form(""),
+    privacy_policy_enabled: str = Form(""),
+    privacy_policy_markdown: str = Form(""),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_admin),
 ):
     app_settings = await get_app_settings(db)
     app_settings.impressum_enabled = bool(impressum_enabled)
     app_settings.impressum_markdown = impressum_markdown or None
+    app_settings.privacy_policy_enabled = bool(privacy_policy_enabled)
+    app_settings.privacy_policy_markdown = privacy_policy_markdown or None
     await db.commit()
-    return RedirectResponse("/admin?impressum_saved=1", status_code=303)
+    return RedirectResponse("/admin?legal_saved=1", status_code=303)
 
 
 @router.post("/users")

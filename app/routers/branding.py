@@ -34,5 +34,19 @@ async def impressum_page(request: Request, db: AsyncSession = Depends(get_db)):
         return RedirectResponse("/", status_code=303)
 
     ctx = branding_context(app_settings)
-    ctx["impressum_html"] = render_markdown(markdown)
-    return templates.TemplateResponse(request, "impressum.html", ctx)
+    ctx["page_title"] = "Impressum"
+    ctx["content_html"] = render_markdown(markdown)
+    return templates.TemplateResponse(request, "legal_page.html", ctx)
+
+
+@router.get("/privacy", response_class=HTMLResponse)
+async def privacy_policy_page(request: Request, db: AsyncSession = Depends(get_db)):
+    app_settings = await get_app_settings(db)
+    markdown = (app_settings.privacy_policy_markdown or "").strip()
+    if not app_settings.privacy_policy_enabled or not markdown:
+        return RedirectResponse("/", status_code=303)
+
+    ctx = branding_context(app_settings)
+    ctx["page_title"] = "Privacy policy"
+    ctx["content_html"] = render_markdown(markdown)
+    return templates.TemplateResponse(request, "legal_page.html", ctx)

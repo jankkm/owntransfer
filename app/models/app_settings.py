@@ -36,6 +36,8 @@ class AppSettings(Base):
     setup_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     impressum_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     impressum_markdown: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    privacy_policy_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    privacy_policy_markdown: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     email_tpl_share: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     email_tpl_request: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     email_tpl_upload_notify: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

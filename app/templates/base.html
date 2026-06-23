@@ -35,22 +35,22 @@
       object-position: left center;
       flex-shrink: 0;
     }
-    .impressum-content a { color: var(--primary); text-decoration: underline; }
-    .impressum-content p { margin-bottom: 0.75rem; }
-    .impressum-content p:last-child { margin-bottom: 0; }
-    .impressum-content h1 { font-size: 1.875rem; font-weight: 700; line-height: 1.25; margin: 1.5rem 0 0.75rem; }
-    .impressum-content h2 { font-size: 1.5rem; font-weight: 700; line-height: 1.3; margin: 1.25rem 0 0.5rem; }
-    .impressum-content h3 { font-size: 1.25rem; font-weight: 600; line-height: 1.35; margin: 1rem 0 0.5rem; }
-    .impressum-content h4 { font-size: 1.125rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
-    .impressum-content h5 { font-size: 1rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
-    .impressum-content h6 { font-size: 0.875rem; font-weight: 600; margin: 0.75rem 0 0.5rem; color: #475569; }
-    .impressum-content > :first-child { margin-top: 0; }
-    .impressum-content ul { list-style: disc; margin: 0.5rem 0 0.75rem 1.25rem; }
-    .impressum-content ol { list-style: decimal; margin: 0.5rem 0 0.75rem 1.25rem; }
-    .impressum-content li { margin-bottom: 0.25rem; }
-    .impressum-content blockquote { border-left: 3px solid #cbd5e1; padding-left: 1rem; color: #475569; margin: 0.75rem 0; }
-    .impressum-content hr { border: 0; border-top: 1px solid #e2e8f0; margin: 1rem 0; }
-    .impressum-content strong { font-weight: 600; }
+    .legal-content a { color: var(--primary); text-decoration: underline; }
+    .legal-content p { margin-bottom: 0.75rem; }
+    .legal-content p:last-child { margin-bottom: 0; }
+    .legal-content h1 { font-size: 1.875rem; font-weight: 700; line-height: 1.25; margin: 1.5rem 0 0.75rem; }
+    .legal-content h2 { font-size: 1.5rem; font-weight: 700; line-height: 1.3; margin: 1.25rem 0 0.5rem; }
+    .legal-content h3 { font-size: 1.25rem; font-weight: 600; line-height: 1.35; margin: 1rem 0 0.5rem; }
+    .legal-content h4 { font-size: 1.125rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+    .legal-content h5 { font-size: 1rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+    .legal-content h6 { font-size: 0.875rem; font-weight: 600; margin: 0.75rem 0 0.5rem; color: #475569; }
+    .legal-content > :first-child { margin-top: 0; }
+    .legal-content ul { list-style: disc; margin: 0.5rem 0 0.75rem 1.25rem; }
+    .legal-content ol { list-style: decimal; margin: 0.5rem 0 0.75rem 1.25rem; }
+    .legal-content li { margin-bottom: 0.25rem; }
+    .legal-content blockquote { border-left: 3px solid #cbd5e1; padding-left: 1rem; color: #475569; margin: 0.75rem 0; }
+    .legal-content hr { border: 0; border-top: 1px solid #e2e8f0; margin: 1rem 0; }
+    .legal-content strong { font-weight: 600; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
@@ -119,10 +119,15 @@
     {% block content %}{% endblock %}
   </main>
   {% block scripts %}{% endblock %}
-  {% if impressum_enabled %}
+  {% if impressum_enabled or privacy_policy_enabled %}
   <footer class="border-t border-slate-200 bg-white mt-auto">
-    <div class="max-w-5xl mx-auto px-4 py-4 text-center text-sm">
+    <div class="max-w-5xl mx-auto px-4 py-4 text-center text-sm flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+      {% if impressum_enabled %}
       <a href="/impressum" class="text-slate-600 hover:text-primary underline">Impressum</a>
+      {% endif %}
+      {% if privacy_policy_enabled %}
+      <a href="/privacy" class="text-slate-600 hover:text-primary underline">Privacy policy</a>
+      {% endif %}
     </div>
   </footer>
   {% endif %}
