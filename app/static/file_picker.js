@@ -1,4 +1,8 @@
 (function () {
+  function t(key) {
+    return window.__(key);
+  }
+
   function formatSize(bytes) {
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
@@ -44,9 +48,9 @@
       }
 
       let statusText = "";
-      if (entry.status === "uploading") statusText = "Uploading…";
-      if (entry.status === "done") statusText = "Ready";
-      if (entry.status === "error") statusText = entry.error || "Upload failed";
+      if (entry.status === "uploading") statusText = t("Uploading…");
+      if (entry.status === "done") statusText = t("Ready");
+      if (entry.status === "error") statusText = entry.error || t("Upload failed");
 
       row.innerHTML = `
         <div class="flex items-start justify-between gap-3">
@@ -60,7 +64,7 @@
           </div>
           <button type="button" data-remove="${clientId}"
                   class="text-xs text-slate-500 hover:text-red-600 shrink-0"
-                  ${entry.status === "uploading" ? "disabled" : ""}>Remove</button>
+                  ${entry.status === "uploading" ? "disabled" : ""}>${t("Remove")}</button>
         </div>
       `;
 
@@ -102,7 +106,7 @@
           notifyChange();
           return;
         }
-        let message = "Upload failed";
+        let message = t("Upload failed");
         try {
           const payload = JSON.parse(xhr.responseText);
           if (typeof payload.detail === "string") {
@@ -121,7 +125,7 @@
 
       xhr.addEventListener("error", () => {
         entry.status = "error";
-        entry.error = "Network error";
+        entry.error = t("Network error");
         renderEntry(clientId, entry);
         notifyChange();
       });

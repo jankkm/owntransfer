@@ -1,75 +1,75 @@
 {% extends "base.html" %}
 {% import "_macros.html" as f %}
-{% block title %}Admin — {{ app_name }}{% endblock %}
+{% block title %}{{ _('Admin') }} — {{ app_name }}{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-2">Admin</h1>
+<h1 class="text-2xl font-bold mb-2">{{ _('Admin') }}</h1>
 {% set active = 'settings' %}
 {% include "_admin_nav.html" %}
 <div class="grid md:grid-cols-2 gap-6">
   <form method="post" action="/admin/branding" enctype="multipart/form-data" class="bg-white border rounded-xl p-6 space-y-4">
-    <h2 class="font-semibold text-lg">Branding</h2>
-    {{ f.text_input("app_name", "App name", app_settings.app_name, required=true) }}
+    <h2 class="font-semibold text-lg">{{ _('Branding') }}</h2>
+    {{ f.text_input("app_name", _("App name"), app_settings.app_name, required=true) }}
     <div>
-      {{ f.field_label("Logo", "logo") }}
+      {{ f.field_label(_("Logo"), "logo") }}
       <div class="flex items-center gap-4 mb-3 p-3 rounded-lg border border-slate-200 bg-slate-50">
-        <img src="{{ logo_path }}" alt="Current logo" class="app-logo">
-        <p class="text-xs text-slate-500">Shown in the header, scaled to fit.</p>
+        <img src="{{ logo_path }}" alt="{{ _('Current logo') }}" class="app-logo">
+        <p class="text-xs text-slate-500">{{ _('Shown in the header, scaled to fit.') }}</p>
       </div>
-      {{ f.file_input("logo", "Upload new logo", hint="PNG, JPG, SVG, GIF or WebP. Max 2 MB.", accept=".png,.jpg,.jpeg,.gif,.svg,.webp,image/*") }}
+      {{ f.file_input("logo", _("Upload new logo"), hint=_("PNG, JPG, SVG, GIF or WebP. Max 2 MB."), accept=".png,.jpg,.jpeg,.gif,.svg,.webp,image/*") }}
       {% if has_custom_logo %}
-      {{ f.checkbox_input("remove_logo", "Remove custom logo and use default") }}
+      {{ f.checkbox_input("remove_logo", _("Remove custom logo and use default")) }}
       {% endif %}
     </div>
-    {{ f.color_input("primary_color", "Primary color", app_settings.primary_color) }}
-    {{ f.color_input("accent_color", "Accent color", app_settings.accent_color) }}
-    <button class="btn-primary text-white rounded px-4 py-2 text-sm">Save branding</button>
+    {{ f.color_input("primary_color", _("Primary color"), app_settings.primary_color) }}
+    {{ f.color_input("accent_color", _("Accent color"), app_settings.accent_color) }}
+    <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save branding') }}</button>
   </form>
   <form method="post" action="/admin/limits" class="bg-white border rounded-xl p-6 space-y-4">
-    <h2 class="font-semibold text-lg">Limits</h2>
-    {{ f.text_input("max_file_size_mb", "Max file size (MB)", app_settings.max_file_size_bytes // (1024*1024), type="number", required=true) }}
-    {{ f.text_input("default_expiry_days", "Default expiry (days)", app_settings.default_expiry_days, type="number", required=true) }}
-    {{ f.text_input("max_share_expiry_days", "Max share lifetime (days)", app_settings.max_share_expiry_days, type="number", required=true, hint="How far in the future users can set expiry dates for transfers and file requests.") }}
-    {{ f.text_input("max_downloads_default", "Default max downloads", app_settings.max_downloads_default, type="number", required=true, hint="0 = unlimited downloads.") }}
-    {{ f.text_input("purge_grace_days", "Delete after expiry (days)", app_settings.purge_grace_days, type="number", required=true, hint="Expired shares are permanently deleted this many days after expiry. 0 = disabled (no auto-delete).") }}
-    {{ f.text_input("purge_notify_days", "Deletion reminder (days before purge)", app_settings.purge_notify_days, type="number", required=true, hint="Email owners this many days before auto-delete. 0 = disabled.") }}
-    {{ f.text_input("file_type_blocklist", "Blocked file extensions", app_settings.file_type_blocklist or '', hint="Comma-separated (e.g. .exe,.bat) or JSON array") }}
-    {{ f.checkbox_input("allow_local_login", "Allow local login", checked=app_settings.allow_local_login) }}
-    {{ f.checkbox_input("allow_user_share_emails", "Allow users to email share links to recipients", checked=app_settings.allow_user_share_emails) }}
-    <p class="text-xs text-slate-500">Internal notifications (download alerts, upload received) are always sent when enabled per transfer.</p>
-    <button class="btn-primary text-white rounded px-4 py-2 text-sm">Save limits</button>
+    <h2 class="font-semibold text-lg">{{ _('Limits') }}</h2>
+    {{ f.text_input("max_file_size_mb", _("Max file size (MB)"), app_settings.max_file_size_bytes // (1024*1024), type="number", required=true) }}
+    {{ f.text_input("default_expiry_days", _("Default expiry (days)"), app_settings.default_expiry_days, type="number", required=true) }}
+    {{ f.text_input("max_share_expiry_days", _("Max share lifetime (days)"), app_settings.max_share_expiry_days, type="number", required=true, hint=_("How far in the future users can set expiry dates for transfers and file requests.")) }}
+    {{ f.text_input("max_downloads_default", _("Default max downloads"), app_settings.max_downloads_default, type="number", required=true, hint=_("0 = unlimited downloads.")) }}
+    {{ f.text_input("purge_grace_days", _("Delete after expiry (days)"), app_settings.purge_grace_days, type="number", required=true, hint=_("Expired shares are permanently deleted this many days after expiry. 0 = disabled (no auto-delete).")) }}
+    {{ f.text_input("purge_notify_days", _("Deletion reminder (days before purge)"), app_settings.purge_notify_days, type="number", required=true, hint=_("Email owners this many days before auto-delete. 0 = disabled.")) }}
+    {{ f.text_input("file_type_blocklist", _("Blocked file extensions"), app_settings.file_type_blocklist or '', hint=_("Comma-separated (e.g. .exe,.bat) or JSON array")) }}
+    {{ f.checkbox_input("allow_local_login", _("Allow local login"), checked=app_settings.allow_local_login) }}
+    {{ f.checkbox_input("allow_user_share_emails", _("Allow users to email share links to recipients"), checked=app_settings.allow_user_share_emails) }}
+    <p class="text-xs text-slate-500">{{ _('Internal notifications (download alerts, upload received) are always sent when enabled per transfer.') }}</p>
+    <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save limits') }}</button>
   </form>
   <form method="post" action="/admin/smtp" class="bg-white border rounded-xl p-6 space-y-4">
-    <h2 class="font-semibold text-lg">SMTP</h2>
-    {{ f.text_input("smtp_host", "SMTP host", app_settings.smtp_host or '') }}
-    {{ f.text_input("smtp_port", "SMTP port", app_settings.smtp_port, type="number", required=true) }}
-    {{ f.text_input("smtp_user", "SMTP username", app_settings.smtp_user or '') }}
-    {{ f.text_input("smtp_password", "SMTP password", type="password", hint="Leave blank to keep the current password") }}
-    {{ f.text_input("smtp_from", "From address", app_settings.smtp_from or '') }}
-    <button class="btn-primary text-white rounded px-4 py-2 text-sm">Save SMTP</button>
+    <h2 class="font-semibold text-lg">{{ _('SMTP') }}</h2>
+    {{ f.text_input("smtp_host", _("SMTP host"), app_settings.smtp_host or '') }}
+    {{ f.text_input("smtp_port", _("SMTP port"), app_settings.smtp_port, type="number", required=true) }}
+    {{ f.text_input("smtp_user", _("SMTP username"), app_settings.smtp_user or '') }}
+    {{ f.text_input("smtp_password", _("SMTP password"), type="password", hint=_("Leave blank to keep the current password")) }}
+    {{ f.text_input("smtp_from", _("From address"), app_settings.smtp_from or '') }}
+    <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save SMTP') }}</button>
   </form>
   <form method="post" action="/admin/legal" class="bg-white border rounded-xl p-6 space-y-4">
-    <h2 class="font-semibold text-lg">Legal pages</h2>
+    <h2 class="font-semibold text-lg">{{ _('Legal pages') }}</h2>
     <div class="space-y-4 pb-4 border-b border-slate-200">
-      <h3 class="text-sm font-medium text-slate-800">Impressum</h3>
-      {{ f.checkbox_input("impressum_enabled", "Show Impressum link in footer", checked=app_settings.impressum_enabled) }}
-      {{ f.textarea_input("impressum_markdown", "Impressum text (Markdown)", app_settings.impressum_markdown or '', hint="Shown on /impressum when enabled.") }}
+      <h3 class="text-sm font-medium text-slate-800">{{ _('Impressum') }}</h3>
+      {{ f.checkbox_input("impressum_enabled", _("Show Impressum link in footer"), checked=app_settings.impressum_enabled) }}
+      {{ f.textarea_input("impressum_markdown", _("Impressum text (Markdown)"), app_settings.impressum_markdown or '', hint=_("Shown on /impressum when enabled.")) }}
     </div>
     <div class="space-y-4">
-      <h3 class="text-sm font-medium text-slate-800">Privacy policy</h3>
-      {{ f.checkbox_input("privacy_policy_enabled", "Show privacy policy link in footer", checked=app_settings.privacy_policy_enabled) }}
-      {{ f.textarea_input("privacy_policy_markdown", "Privacy policy text (Markdown)", app_settings.privacy_policy_markdown or '', hint="Shown on /privacy when enabled.") }}
+      <h3 class="text-sm font-medium text-slate-800">{{ _('Privacy policy') }}</h3>
+      {{ f.checkbox_input("privacy_policy_enabled", _("Show privacy policy link in footer"), checked=app_settings.privacy_policy_enabled) }}
+      {{ f.textarea_input("privacy_policy_markdown", _("Privacy policy text (Markdown)"), app_settings.privacy_policy_markdown or '', hint=_("Shown on /privacy when enabled.")) }}
     </div>
-    <button class="btn-primary text-white rounded px-4 py-2 text-sm">Save legal pages</button>
+    <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save legal pages') }}</button>
   </form>
   <div class="bg-white border rounded-xl p-6 md:col-span-2">
-    <h2 class="font-semibold text-lg mb-4">Users</h2>
+    <h2 class="font-semibold text-lg mb-4">{{ _('Users') }}</h2>
     <form method="post" action="/admin/users" class="grid md:grid-cols-4 gap-3 items-end mb-6 pb-6 border-b border-slate-200">
-      {{ f.text_input("email", "Email", type="email", required=true) }}
-      {{ f.text_input("password", "Password", type="password", required=true) }}
+      {{ f.text_input("email", _("Email"), type="email", required=true) }}
+      {{ f.text_input("password", _("Password"), type="password", required=true) }}
       <div class="flex items-end pb-1">
-        {{ f.checkbox_input("is_admin", "Admin") }}
+        {{ f.checkbox_input("is_admin", _("Admin")) }}
       </div>
-      <button type="submit" class="btn-primary text-white rounded px-4 py-2 text-sm h-[42px]">Add user</button>
+      <button type="submit" class="btn-primary text-white rounded px-4 py-2 text-sm h-[42px]">{{ _('Add user') }}</button>
     </form>
     <ul class="space-y-3 text-sm">
       {% for u in users %}
@@ -78,45 +78,45 @@
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2">
             <span class="font-medium">{{ u.email }}</span>
-            {% if u.is_admin %}<span class="text-xs text-primary font-medium">admin</span>{% endif %}
+            {% if u.is_admin %}<span class="text-xs text-primary font-medium">{{ _('admin') }}</span>{% endif %}
           </div>
           <p class="text-xs text-slate-500 mt-1">
-            <a href="/admin/shares?tab=transfers&user={{ u.id }}" class="hover:text-primary">{{ c.transfers if c else 0 }} transfers</a>
+            <a href="/admin/shares?tab=transfers&user={{ u.id }}" class="hover:text-primary">{{ _('%(count)s transfers') % {'count': c.transfers if c else 0} }}</a>
             ·
-            <a href="/admin/shares?tab=requests&user={{ u.id }}" class="hover:text-primary">{{ c.requests if c else 0 }} requests</a>
+            <a href="/admin/shares?tab=requests&user={{ u.id }}" class="hover:text-primary">{{ _('%(count)s requests') % {'count': c.requests if c else 0} }}</a>
           </p>
         </div>
         <div class="flex items-center gap-3 shrink-0">
           <form method="post" action="/admin/users/{{ u.id }}/password" class="text-right">
-            {{ f.confirm_trigger("password-user-" ~ loop.index, "Set password", "text-xs hover:underline") }}
+            {{ f.confirm_trigger("password-user-" ~ loop.index, _("Set password"), "text-xs hover:underline") }}
             <div id="password-user-{{ loop.index }}" class="hidden mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-left w-56">
-              <p class="text-xs font-medium text-slate-700 mb-2">New password for {{ u.email }}</p>
+              <p class="text-xs font-medium text-slate-700 mb-2">{{ _('New password for %(email)s') % {'email': u.email} }}</p>
               <input type="password" name="password" required autocomplete="new-password"
                      class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm mb-2">
               <div class="flex gap-2">
-                <button type="submit" class="rounded-lg px-3 py-1.5 text-white text-xs btn-primary">Save</button>
+                <button type="submit" class="rounded-lg px-3 py-1.5 text-white text-xs btn-primary">{{ _('Save') }}</button>
                 <button type="button" data-cancel-for="password-user-{{ loop.index }}"
-                        class="rounded-lg px-3 py-1.5 border border-slate-300 bg-white text-xs hover:bg-slate-50">Cancel</button>
+                        class="rounded-lg px-3 py-1.5 border border-slate-300 bg-white text-xs hover:bg-slate-50">{{ _('Cancel') }}</button>
               </div>
             </div>
           </form>
           {% if not u.is_admin %}
           <form method="post" action="/admin/users/{{ u.id }}/promote">
-            <button type="submit" class="text-xs text-primary hover:underline">Promote</button>
+            <button type="submit" class="text-xs text-primary hover:underline">{{ _('Promote') }}</button>
           </form>
           {% elif u.id != user.id %}
           <form method="post" action="/admin/users/{{ u.id }}/demote">
-            <button type="submit" class="text-xs text-slate-600 hover:underline">Demote</button>
+            <button type="submit" class="text-xs text-slate-600 hover:underline">{{ _('Demote') }}</button>
           </form>
           {% endif %}
           {% if u.id != user.id %}
           <form method="post" action="/admin/users/{{ u.id }}/delete" class="text-right">
-            {{ f.confirm_trigger("delete-user-" ~ loop.index, "Delete", "text-xs text-red-600 hover:underline") }}
+            {{ f.confirm_trigger("delete-user-" ~ loop.index, _("Delete"), "text-xs text-red-600 hover:underline") }}
             {{ f.confirm_panel(
               "delete-user-" ~ loop.index,
-              "Delete this user?",
-              "The account will be deactivated and can no longer sign in. Their transfers and file requests remain.",
-              "Yes, delete user",
+              _("Delete this user?"),
+              _("The account will be deactivated and can no longer sign in. Their transfers and file requests remain."),
+              _("Yes, delete user"),
               variant="red"
             ) }}
           </form>
@@ -124,16 +124,16 @@
         </div>
       </li>
       {% else %}
-      <li class="text-slate-500">No users yet.</li>
+      <li class="text-slate-500">{{ _('No users yet.') }}</li>
       {% endfor %}
     </ul>
   </div>
 </div>
 <div class="mt-6 bg-white border rounded-xl p-6">
-  <h2 class="font-semibold text-lg mb-3">Recent audit log</h2>
+  <h2 class="font-semibold text-lg mb-3">{{ _('Recent audit log') }}</h2>
   <div class="overflow-x-auto text-sm">
     <table class="w-full">
-      <thead><tr class="text-left border-b"><th class="py-2">Time</th><th>Action</th><th>Resource</th><th>IP</th></tr></thead>
+      <thead><tr class="text-left border-b"><th class="py-2">{{ _('Time') }}</th><th>{{ _('Action') }}</th><th>{{ _('Resource') }}</th><th>{{ _('IP') }}</th></tr></thead>
       <tbody>
         {% for log in audit_logs %}
         <tr class="border-b"><td class="py-2">{{ log.created_at|format_datetime }}</td><td>{{ log.action }}</td><td>{{ log.resource_type }}</td><td>{{ log.ip_address or '-' }}</td></tr>

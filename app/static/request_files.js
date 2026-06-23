@@ -1,4 +1,8 @@
 (function () {
+  function t(key, vars) {
+    return window.__(key, vars);
+  }
+
   function inlineConfirm() {
     return window.InlineFileRemoveConfirm;
   }
@@ -69,7 +73,7 @@
 
     function fileNameForRow(row) {
       const nameEl = row.querySelector("[data-file-name]");
-      return nameEl ? nameEl.textContent.trim() : "this file";
+      return nameEl ? nameEl.textContent.trim() : t("this file");
     }
 
     async function removeFile(row) {
@@ -79,13 +83,13 @@
       const fileName = fileNameForRow(row);
       const ic = inlineConfirm();
       if (!ic) {
-        setError("Could not show confirmation dialog.");
+        setError(t("Could not show confirmation dialog."));
         return;
       }
 
       const confirmed = await ic.ask(row, {
-        title: "Remove file?",
-        message: `"${fileName}" will be permanently removed. This cannot be undone.`,
+        title: t("Remove file?"),
+        message: t('"%(name)s" will be permanently removed. This cannot be undone.', { name: fileName }),
       });
       if (!confirmed) return;
 
@@ -96,7 +100,7 @@
         const response = await fetch(deleteUrl, { method: "DELETE", credentials: "same-origin" });
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.detail || "Could not remove file");
+          throw new Error(payload.detail || t("Could not remove file"));
         }
 
         const uploadGroup = row.closest("[data-upload-id]");
@@ -111,7 +115,7 @@
         updateTitle();
       } catch (err) {
         ic.restore(row);
-        setError(err.message || "Could not remove file");
+        setError(err.message || t("Could not remove file"));
       }
     }
 

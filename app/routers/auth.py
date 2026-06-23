@@ -15,6 +15,7 @@ from app.auth.sessions import SESSION_COOKIE, SESSION_MAX_AGE, create_session_to
 from app.auth.totp import verify_totp
 from app.config.oauth_providers import get_oauth_providers
 from app.database import get_db
+from app.i18n import _
 from app.models import User
 from app.http.client_ip import get_client_ip
 from app.http.external_url import external_url
@@ -78,14 +79,14 @@ async def login_local(
 ):
     app_settings = await get_app_settings(db)
     if not app_settings.allow_local_login:
-        raise HTTPException(status_code=403, detail="Local login disabled")
+        raise HTTPException(status_code=403, detail=_("Local login disabled"))
 
     result = await db.execute(select(User).where(User.email == email.lower(), User.is_active.is_(True)))
     user = result.scalar_one_or_none()
     if not user or not verify_password(password, user.password_hash):
         log_invalid_login(request, email)
         ctx = branding_context(app_settings)
-        ctx.update({"tab": "local", "error": "Invalid credentials", "oauth_providers": get_oauth_providers(), "allow_local_login": app_settings.allow_local_login})
+        ctx.update({"tab": "local", "error": _("Invalid credentials"), "oauth_providers": get_oauth_providers(), "allow_local_login": app_settings.allow_local_login})
         return templates.TemplateResponse(request, "login.html", ctx, status_code=401)
 
     if user.totp_enabled:
@@ -134,7 +135,7 @@ async def login_totp_verify(
     result = await db.execute(select(User).where(User.id == user_id, User.is_active.is_(True)))
     user = result.scalar_one_or_none()
     if not user or not user.totp_enabled or not verify_totp(user.totp_secret, totp_code):
-        return RedirectResponse("/auth/login/totp?error=Invalid+authentication+code", status_code=303)
+        return RedirectResponse("/auth/login/totp?error=" + _("Invalid authentication code").replace(" ", "+"), status_code=303)
 
     request.session.pop("pending_totp_user_id", None)
     await log_audit(db, action="user.login", resource_type="user", actor_id=user.id, ip_address=get_client_ip(request))
@@ -145,7 +146,7 @@ async def login_totp_verify(
 async def oauth_start(provider: str, request: Request):
     client = oauth.create_client(provider)
     if not client:
-        raise HTTPException(status_code=404, detail="Provider not configured")
+        raise HTTPException(status_code=404, detail=_("Provider not configured"))
     redirect_uri = external_url(f"/auth/oauth/{provider}/callback")
     return await client.authorize_redirect(request, redirect_uri)
 
@@ -154,7 +155,7 @@ async def oauth_start(provider: str, request: Request):
 async def oauth_callback(provider: str, request: Request, db: AsyncSession = Depends(get_db)):
     client = oauth.create_client(provider)
     if not client:
-        raise HTTPException(status_code=404, detail="Provider not configured")
+        raise HTTPException(status_code=404, detail=_("Provider not configured"))
     token = await client.authorize_access_token(request)
     userinfo = token.get("userinfo")
     if not userinfo:
@@ -173,7 +174,7 @@ async def oauth_callback(provider: str, request: Request, db: AsyncSession = Dep
     email = (userinfo.get("email") or userinfo.get("preferred_username") or "").lower()
     sub = userinfo.get("sub")
     if not email or not sub:
-        raise HTTPException(status_code=400, detail="OAuth provider did not return email")
+        raise HTTPException(status_code=400, detail=_("OAuth provider did not return email"))
 
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()

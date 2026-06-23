@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.i18n import _
 from app.services.branding import DEFAULT_LOGO_URL
 from app.services.markdown_render import render_markdown
 from app.services.settings import get_app_settings
@@ -34,7 +35,7 @@ async def impressum_page(request: Request, db: AsyncSession = Depends(get_db)):
         return RedirectResponse("/", status_code=303)
 
     ctx = branding_context(app_settings)
-    ctx["page_title"] = "Impressum"
+    ctx["page_title"] = _("Impressum")
     ctx["content_html"] = render_markdown(markdown)
     return templates.TemplateResponse(request, "legal_page.html", ctx)
 
@@ -47,6 +48,6 @@ async def privacy_policy_page(request: Request, db: AsyncSession = Depends(get_d
         return RedirectResponse("/", status_code=303)
 
     ctx = branding_context(app_settings)
-    ctx["page_title"] = "Privacy policy"
+    ctx["page_title"] = _("Privacy policy")
     ctx["content_html"] = render_markdown(markdown)
     return templates.TemplateResponse(request, "legal_page.html", ctx)

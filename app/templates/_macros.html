@@ -45,9 +45,9 @@
 
 {% macro share_active_badge(is_active, inactive_reason='') -%}
 {% if is_active %}
-<span class="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">Active</span>
+<span class="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">{{ _('Active') }}</span>
 {% else %}
-<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium"{% if inactive_reason %} title="{{ inactive_reason }}"{% endif %}>Inactive</span>
+<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium"{% if inactive_reason %} title="{{ inactive_reason }}"{% endif %}>{{ _('Inactive') }}</span>
 {% endif %}
 {%- endmacro %}
 
@@ -70,25 +70,25 @@
 {% macro share_status_badges(is_active, inactive_reason='', has_password=false, deletion_pending=false) -%}
 <div class="flex flex-wrap gap-1">
   {% if is_active %}
-  {{ status_badge('Active', 'green') }}
-  {% elif inactive_reason == 'Expired' %}
-  {{ status_badge('Expired', 'red') }}
-  {% elif inactive_reason == 'Link disabled' %}
-  {{ status_badge('Disabled', 'slate') }}
-  {% elif inactive_reason == 'Download limit reached' %}
-  {{ status_badge('Download limit', 'slate') }}
-  {% elif inactive_reason == 'Upload limit reached' %}
-  {{ status_badge('Upload limit', 'slate') }}
+  {{ status_badge(_('Active'), 'green') }}
+  {% elif inactive_reason == 'expired' %}
+  {{ status_badge(_('Expired'), 'red') }}
+  {% elif inactive_reason == 'disabled' %}
+  {{ status_badge(_('Disabled'), 'slate') }}
+  {% elif inactive_reason == 'download_limit' %}
+  {{ status_badge(_('Download limit'), 'slate') }}
+  {% elif inactive_reason == 'upload_limit' %}
+  {{ status_badge(_('Upload limit'), 'slate') }}
   {% elif inactive_reason %}
-  {{ status_badge('Inactive', 'slate') }}
+  {{ status_badge(_('Inactive'), 'slate') }}
   {% else %}
-  {{ status_badge('Inactive', 'slate') }}
+  {{ status_badge(_('Inactive'), 'slate') }}
   {% endif %}
   {% if deletion_pending %}
-  {{ status_badge('Deletion pending', 'orange') }}
+  {{ status_badge(_('Deletion pending'), 'orange') }}
   {% endif %}
   {% if has_password %}
-  {{ status_badge('Password', 'blue') }}
+  {{ status_badge(_('Password'), 'blue') }}
   {% endif %}
 </div>
 {%- endmacro %}
@@ -102,15 +102,15 @@
     {{ notice.title }}
   </p>
   <p class="text-sm mt-1 {% if notice.variant == 'deletion' %}text-orange-800{% else %}text-amber-800{% endif %}">
-  <span class="font-medium">{{ notice.time_left }}</span> remaining
+  <span class="font-medium">{{ notice.time_left }}</span> {{ _('remaining') }}
     {% if notice.variant == 'deletion' %}
-    — permanently deleted on {{ notice.deadline }}
+    — {{ _('permanently deleted on') }} {{ notice.deadline }}
     {% else %}
-    — expires on {{ notice.deadline }}
+    — {{ _('expires on') }} {{ notice.deadline }}
     {% endif %}
   </p>
   {% if notice.variant == 'deletion' %}
-  <p class="text-xs mt-2 text-orange-700">Extend the expiry date below to keep this share.</p>
+  <p class="text-xs mt-2 text-orange-700">{{ _('Extend the expiry date below to keep this share.') }}</p>
   {% endif %}
 </div>
 {% endif %}
@@ -118,12 +118,12 @@
 
 {% macro password_protection_fields(has_password=false) -%}
 <div class="space-y-3" data-password-toggle data-has-password="{{ 'true' if has_password else 'false' }}">
-  {{ checkbox_input("use_password", "Password protection", checked=has_password) }}
+  {{ checkbox_input("use_password", _("Password protection"), checked=has_password) }}
   <div data-password-field class="{% if not has_password %}hidden{% endif %}">
     {% if has_password %}
-    {{ text_input("password", "New password", type="password", hint="Leave blank to keep the current password") }}
+    {{ text_input("password", _("New password"), type="password", hint=_("Leave blank to keep the current password")) }}
     {% else %}
-    {{ text_input("password", "Password", type="password", hint="Required when password protection is enabled") }}
+    {{ text_input("password", _("Password"), type="password", hint=_("Required when password protection is enabled")) }}
     {% endif %}
   </div>
 </div>
@@ -158,14 +158,14 @@
     {{ share_link_field(share_url) }}
   </div>
   <div class="flex flex-wrap items-center gap-4 shrink-0 text-sm lg:pt-1">
-    <a href="{{ edit_url }}" class="text-primary hover:underline font-medium">Edit</a>
+    <a href="{{ edit_url }}" class="text-primary hover:underline font-medium">{{ _('Edit') }}</a>
     <form method="post" action="{{ delete_form_action }}" class="inline">
-      {{ confirm_trigger(delete_panel_id, "Delete", "text-red-600 hover:underline font-medium") }}
+      {{ confirm_trigger(delete_panel_id, _("Delete"), "text-red-600 hover:underline font-medium") }}
       {{ confirm_panel(
         delete_panel_id,
-        "Delete this share?",
-        "All files will be permanently removed. This cannot be undone.",
-        "Yes, delete",
+        _("Delete this share?"),
+        _("All files will be permanently removed. This cannot be undone."),
+        _("Yes, delete"),
         variant="red"
       ) }}
     </form>
@@ -177,44 +177,46 @@
 <form method="get" action="{{ action_url }}" class="bg-white border border-slate-200 rounded-xl p-4 mb-4 shadow-sm">
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
     <div class="sm:col-span-2 lg:col-span-1">
-      <label for="list-q" class="block text-xs font-medium text-slate-700 mb-1">Search</label>
+      <label for="list-q" class="block text-xs font-medium text-slate-700 mb-1">{{ _('Search') }}</label>
       <input id="list-q" name="q" type="search" value="{{ list_query.q }}"
-             placeholder="Title or description…"
+             placeholder="{{ _('Title or description…') }}"
              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
     </div>
     <div>
-      <label for="list-status" class="block text-xs font-medium text-slate-700 mb-1">Filter</label>
+      <label for="list-status" class="block text-xs font-medium text-slate-700 mb-1">{{ _('Filter') }}</label>
       <select id="list-status" name="status" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
-        <option value="all" {% if list_query.status == 'all' %}selected{% endif %}>All statuses</option>
-        <option value="active" {% if list_query.status == 'active' %}selected{% endif %}>Active</option>
-        <option value="inactive" {% if list_query.status == 'inactive' %}selected{% endif %}>Inactive</option>
-        <option value="expired" {% if list_query.status == 'expired' %}selected{% endif %}>Expired</option>
-        <option value="disabled" {% if list_query.status == 'disabled' %}selected{% endif %}>Disabled</option>
-        <option value="deletion_pending" {% if list_query.status == 'deletion_pending' %}selected{% endif %}>Deletion pending</option>
+        <option value="all" {% if list_query.status == 'all' %}selected{% endif %}>{{ _('All statuses') }}</option>
+        <option value="active" {% if list_query.status == 'active' %}selected{% endif %}>{{ _('Active') }}</option>
+        <option value="inactive" {% if list_query.status == 'inactive' %}selected{% endif %}>{{ _('Inactive') }}</option>
+        <option value="expired" {% if list_query.status == 'expired' %}selected{% endif %}>{{ _('Expired') }}</option>
+        <option value="disabled" {% if list_query.status == 'disabled' %}selected{% endif %}>{{ _('Disabled') }}</option>
+        <option value="deletion_pending" {% if list_query.status == 'deletion_pending' %}selected{% endif %}>{{ _('Deletion pending') }}</option>
       </select>
     </div>
     <div>
-      <label for="list-sort" class="block text-xs font-medium text-slate-700 mb-1">Sort</label>
+      <label for="list-sort" class="block text-xs font-medium text-slate-700 mb-1">{{ _('Sort') }}</label>
       <select id="list-sort" name="sort" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
-        <option value="created_desc" {% if list_query.sort == 'created_desc' %}selected{% endif %}>Newest first</option>
-        <option value="created_asc" {% if list_query.sort == 'created_asc' %}selected{% endif %}>Oldest first</option>
-        <option value="expires_asc" {% if list_query.sort == 'expires_asc' %}selected{% endif %}>Expires soonest</option>
-        <option value="expires_desc" {% if list_query.sort == 'expires_desc' %}selected{% endif %}>Expires latest</option>
-        <option value="title_asc" {% if list_query.sort == 'title_asc' %}selected{% endif %}>Title A–Z</option>
-        <option value="title_desc" {% if list_query.sort == 'title_desc' %}selected{% endif %}>Title Z–A</option>
+        <option value="created_desc" {% if list_query.sort == 'created_desc' %}selected{% endif %}>{{ _('Newest first') }}</option>
+        <option value="created_asc" {% if list_query.sort == 'created_asc' %}selected{% endif %}>{{ _('Oldest first') }}</option>
+        <option value="expires_asc" {% if list_query.sort == 'expires_asc' %}selected{% endif %}>{{ _('Expires soonest') }}</option>
+        <option value="expires_desc" {% if list_query.sort == 'expires_desc' %}selected{% endif %}>{{ _('Expires latest') }}</option>
+        <option value="title_asc" {% if list_query.sort == 'title_asc' %}selected{% endif %}>{{ _('Title A–Z') }}</option>
+        <option value="title_desc" {% if list_query.sort == 'title_desc' %}selected{% endif %}>{{ _('Title Z–A') }}</option>
       </select>
     </div>
     <div class="flex flex-wrap gap-2">
-      <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">Apply</button>
+      <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">{{ _('Apply') }}</button>
       {% if list_query.is_filtered %}
-      <a href="{{ action_url }}" class="rounded-lg px-4 py-2 text-sm border border-slate-300 bg-white hover:bg-slate-50">Clear</a>
+      <a href="{{ action_url }}" class="rounded-lg px-4 py-2 text-sm border border-slate-300 bg-white hover:bg-slate-50">{{ _('Clear') }}</a>
       {% endif %}
     </div>
   </div>
 </form>
 {%- endmacro %}
 
-{% macro confirm_panel(panel_id, title, message, confirm_text='Confirm', cancel_text='Cancel', variant='amber') -%}
+{% macro confirm_panel(panel_id, title, message, confirm_text='', cancel_text='', variant='amber') -%}
+{% if not confirm_text %}{% set confirm_text = _('Confirm') %}{% endif %}
+{% if not cancel_text %}{% set cancel_text = _('Cancel') %}{% endif %}
 <div id="{{ panel_id }}" class="hidden mt-3 rounded-lg border p-4 text-sm
   {% if variant == 'red' %}border-red-200 bg-red-50{% else %}border-amber-200 bg-amber-50{% endif %}">
   <p class="font-medium mb-1 {% if variant == 'red' %}text-red-900{% else %}text-amber-900{% endif %}">{{ title }}</p>
@@ -242,14 +244,14 @@
      data-delete-url-template="{{ delete_url_template }}"
      data-require-files="{{ 'true' if require_files else 'false' }}"
      class="space-y-3">
-  <label class="block text-sm font-medium text-slate-700">Files</label>
+  <label class="block text-sm font-medium text-slate-700">{{ _('Files') }}</label>
   <div data-dropzone
        class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-slate-400 transition-colors">
-    <p class="text-sm font-medium text-slate-700">Drop files here or click to browse</p>
-    <p class="text-xs text-slate-500 mt-1">Files upload automatically. You can remove them before submitting.</p>
+    <p class="text-sm font-medium text-slate-700">{{ _('Drop files here or click to browse') }}</p>
+    <p class="text-xs text-slate-500 mt-1">{{ _('Files upload automatically. You can remove them before submitting.') }}</p>
     <input data-file-input type="file" multiple class="hidden">
   </div>
-  <p data-empty-state class="text-xs text-slate-500">No files added yet.</p>
+  <p data-empty-state class="text-xs text-slate-500">{{ _('No files added yet.') }}</p>
   <ul data-file-list class="space-y-2"></ul>
 </div>
 {%- endmacro %}

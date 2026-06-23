@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% import "_macros.html" as f %}
-{% block title %}My transfers — {{ app_name }}{% endblock %}
+{% block title %}{{ _('My transfers') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-  <h1 class="text-2xl font-bold">My transfers</h1>
-  <a href="/transfers/new" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">New transfer</a>
+  <h1 class="text-2xl font-bold">{{ _('My transfers') }}</h1>
+  <a href="/transfers/new" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">{{ _('New transfer') }}</a>
 </div>
 {{ f.share_list_controls("/transfers", list_query) }}
 <div class="space-y-3">
@@ -16,17 +16,17 @@
       </div>
       {{ f.share_status_badges(
         transfer_is_active(t, now),
-        transfer_inactive_reason(t, now),
+        transfer_inactive_reason_code(t, now),
         t.password_hash,
         transfer_deletion_pending(t, purge_grace_days, now)
       ) }}
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-      {{ f.share_meta_item("Created", t.created_at|format_date) }}
-      {{ f.share_meta_item("Expires", t.expires_at|format_date) }}
-      {{ f.share_meta_item("Files", t.files|length ~ " file" ~ ("s" if t.files|length != 1 else "")) }}
-      {{ f.share_meta_item("Downloads", t.download_count|format_download_limit(t.max_downloads)) }}
+      {{ f.share_meta_item(_("Created"), t.created_at|format_date) }}
+      {{ f.share_meta_item(_("Expires"), t.expires_at|format_date) }}
+      {{ f.share_meta_item(_("Files"), ngettext('%(count)s file', '%(count)s files', t.files|length) % {'count': t.files|length}) }}
+      {{ f.share_meta_item(_("Downloads"), t.download_count|format_download_limit(t.max_downloads)) }}
     </div>
 
     {% if t.message %}
@@ -43,11 +43,11 @@
   {% else %}
   <div class="bg-white border border-dashed border-slate-200 rounded-xl p-10 text-center">
     {% if list_query.is_filtered %}
-    <p class="text-slate-600">No transfers match your search or filters.</p>
-    <a href="/transfers" class="inline-block mt-3 text-sm text-primary hover:underline font-medium">Clear filters</a>
+    <p class="text-slate-600">{{ _('No transfers match your search or filters.') }}</p>
+    <a href="/transfers" class="inline-block mt-3 text-sm text-primary hover:underline font-medium">{{ _('Clear filters') }}</a>
     {% else %}
-    <p class="text-slate-600">No transfers yet.</p>
-    <a href="/transfers/new" class="inline-block mt-3 text-sm text-primary hover:underline font-medium">Create your first transfer</a>
+    <p class="text-slate-600">{{ _('No transfers yet.') }}</p>
+    <a href="/transfers/new" class="inline-block mt-3 text-sm text-primary hover:underline font-medium">{{ _('Create your first transfer') }}</a>
     {% endif %}
   </div>
   {% endfor %}

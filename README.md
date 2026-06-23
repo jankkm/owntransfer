@@ -220,6 +220,27 @@ bantime = 3600
 
 Point `logpath` at your application log file. With Docker, forward container stdout to a file or use your platform's log shipping. Enable `TRUST_PROXY_HEADERS` behind a reverse proxy so `ip=` is the real client address.
 
+## Localization
+
+The UI supports **English** (`en`) and **German** (`de`). More languages can be added by extending `SUPPORTED_LOCALES` in `app/i18n/__init__.py` and creating a new catalog under `app/locales/`.
+
+**How the active language is chosen:**
+
+1. `locale` cookie — set when a user picks a language in the footer switcher
+2. `Accept-Language` browser header — used on first visit
+3. `DEFAULT_LOCALE` environment variable — fallback (default `en`)
+
+Admin-editable legal pages and custom email template overrides are not localized; built-in UI strings and default email templates are.
+
+**Developer workflow** (after changing user-facing strings):
+
+```bash
+pybabel extract -F babel.cfg -o app/locales/messages.pot .
+pybabel update -i app/locales/messages.pot -d app/locales -l de
+# Edit app/locales/de/LC_MESSAGES/messages.po (or run scripts/fill_de_translations.py)
+pybabel compile -d app/locales
+```
+
 ## Development
 
 Requirements: Python 3.11+

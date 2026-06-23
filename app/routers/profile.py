@@ -11,6 +11,7 @@ from app.auth.passwords import hash_password, verify_password
 from app.auth.totp import generate_totp_secret, totp_qr_data_uri, verify_totp
 from app.auth.users import uses_local_auth
 from app.database import get_db
+from app.i18n import _
 from app.http.client_ip import get_client_ip
 from app.models import User
 from app.services.audit import log_audit
@@ -24,11 +25,11 @@ def _profile_ctx(request: Request, app_settings, user: User, **extra) -> dict:
     ctx = branding_context(app_settings)
     ctx.update({"user": user, "uses_local_auth": uses_local_auth(user), **extra})
     if request.query_params.get("password_changed"):
-        ctx["success"] = "Password updated."
+        ctx["success"] = _("Password updated.")
     if request.query_params.get("totp_enabled"):
-        ctx["success"] = "Two-factor authentication enabled."
+        ctx["success"] = _("Two-factor authentication enabled.")
     if request.query_params.get("totp_disabled"):
-        ctx["success"] = "Two-factor authentication disabled."
+        ctx["success"] = _("Two-factor authentication disabled.")
     error = request.query_params.get("error")
     if error:
         ctx["error"] = error.replace("+", " ")
@@ -69,14 +70,14 @@ async def change_password(
     user: User = Depends(get_current_user),
 ):
     if not uses_local_auth(user):
-        raise HTTPException(status_code=403, detail="OAuth accounts cannot change password here")
+        raise HTTPException(status_code=403, detail=_("OAuth accounts cannot change password here"))
 
     if len(new_password) < 8:
-        return RedirectResponse("/auth/profile?error=Password+must+be+at+least+8+characters", status_code=303)
+        return RedirectResponse("/auth/profile?error=" + _("Password must be at least 8 characters").replace(" ", "+"), status_code=303)
     if new_password != confirm_password:
-        return RedirectResponse("/auth/profile?error=New+passwords+do+not+match", status_code=303)
+        return RedirectResponse("/auth/profile?error=" + _("New passwords do not match").replace(" ", "+"), status_code=303)
     if not verify_password(current_password, user.password_hash):
-        return RedirectResponse("/auth/profile?error=Current+password+is+incorrect", status_code=303)
+        return RedirectResponse("/auth/profile?error=" + _("Current password is incorrect").replace(" ", "+"), status_code=303)
 
     user.password_hash = hash_password(new_password)
     await db.commit()
@@ -98,7 +99,7 @@ async def start_totp_setup(
     user: User = Depends(get_current_user),
 ):
     if not uses_local_auth(user):
-        raise HTTPException(status_code=403, detail="OAuth accounts cannot enable 2FA here")
+        raise HTTPException(status_code=403, detail=_("OAuth accounts cannot enable 2FA here"))
     if user.totp_enabled:
         return RedirectResponse("/auth/profile", status_code=303)
 
@@ -116,10 +117,10 @@ async def confirm_totp_setup(
     user: User = Depends(get_current_user),
 ):
     if not uses_local_auth(user) or not user.totp_secret:
-        raise HTTPException(status_code=403, detail="2FA setup not available")
+        raise HTTPException(status_code=403, detail=_("2FA setup not available"))
 
     if not verify_totp(user.totp_secret, totp_code):
-        return RedirectResponse("/auth/profile?error=Invalid+authentication+code", status_code=303)
+        return RedirectResponse("/auth/profile?error=" + _("Invalid authentication code").replace(" ", "+"), status_code=303)
 
     user.totp_enabled = True
     await db.commit()
@@ -143,12 +144,12 @@ async def disable_totp(
     user: User = Depends(get_current_user),
 ):
     if not uses_local_auth(user) or not user.totp_enabled:
-        raise HTTPException(status_code=403, detail="2FA is not enabled")
+        raise HTTPException(status_code=403, detail=_("2FA is not enabled"))
 
     if not verify_password(current_password, user.password_hash):
-        return RedirectResponse("/auth/profile?error=Current+password+is+incorrect", status_code=303)
+        return RedirectResponse("/auth/profile?error=" + _("Current password is incorrect").replace(" ", "+"), status_code=303)
     if not verify_totp(user.totp_secret, totp_code):
-        return RedirectResponse("/auth/profile?error=Invalid+authentication+code", status_code=303)
+        return RedirectResponse("/auth/profile?error=" + _("Invalid authentication code").replace(" ", "+"), status_code=303)
 
     user.totp_secret = None
     user.totp_enabled = False

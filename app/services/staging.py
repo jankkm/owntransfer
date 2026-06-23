@@ -11,6 +11,7 @@ from typing import Callable, TypeVar
 
 from fastapi import HTTPException, UploadFile
 
+from app.i18n import _
 from app.models import AppSettings
 from app.services.settings import is_extension_blocked, parse_blocklist
 from app.services.storage import get_storage
@@ -127,19 +128,20 @@ async def add_staged_file(
     max_total_bytes: int | None = None,
 ) -> StagedFile:
     if not upload.filename:
-        raise HTTPException(status_code=400, detail="Missing filename")
+        raise HTTPException(status_code=400, detail=_("Missing filename"))
 
     blocklist = parse_blocklist(app_settings.file_type_blocklist)
     if is_extension_blocked(upload.filename, blocklist):
-        raise HTTPException(status_code=400, detail=f"File type not allowed: {upload.filename}")
+        raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": upload.filename})
 
     content = await upload.read()
     if not content:
-        raise HTTPException(status_code=400, detail="Empty file")
+        raise HTTPException(status_code=400, detail=_("Empty file"))
     if len(content) > app_settings.max_file_size_bytes:
         raise HTTPException(
             status_code=400,
-            detail=f"File exceeds maximum size ({app_settings.max_file_size_bytes // (1024 * 1024)} MB)",
+            detail=_("File exceeds maximum size (%(max_mb)s MB)")
+            % {"max_mb": app_settings.max_file_size_bytes // (1024 * 1024)},
         )
 
     file_id = str(uuid.uuid4())
@@ -153,7 +155,7 @@ async def add_staged_file(
     def updater(staged: list[StagedFile]) -> tuple[list[StagedFile], StagedFile]:
         total_size = sum(f.size_bytes for f in staged) + len(content)
         if total_size > limit:
-            raise HTTPException(status_code=400, detail="Total upload exceeds maximum allowed size")
+            raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum allowed size"))
 
         staged_file = StagedFile(
             id=file_id,
@@ -176,7 +178,7 @@ async def remove_staged_file(scope: str, file_id: str) -> None:
     def updater(staged: list[StagedFile]) -> tuple[list[StagedFile], StagedFile]:
         match = next((f for f in staged if f.id == file_id), None)
         if not match:
-            raise HTTPException(status_code=404, detail="Staged file not found")
+            raise HTTPException(status_code=404, detail=_("Staged file not found"))
         return [f for f in staged if f.id != file_id], match
 
     removed = await _with_manifest_lock(scope, updater)

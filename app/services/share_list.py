@@ -7,10 +7,11 @@ from typing import Callable, TypeVar
 from app.models import FileRequest, Transfer
 from app.services.share_lifecycle import file_request_deletion_pending, transfer_deletion_pending
 from app.services.share_status import (
+    REASON_EXPIRED,
     file_request_is_active,
-    file_request_inactive_reason,
+    file_request_inactive_reason_code,
     transfer_is_active,
-    transfer_inactive_reason,
+    transfer_inactive_reason_code,
 )
 
 DEFAULT_SORT = "created_desc"
@@ -87,7 +88,7 @@ def _matches_status_transfer(
     if status == "inactive":
         return not transfer_is_active(transfer, now)
     if status == "expired":
-        return transfer_inactive_reason(transfer, now) == "Expired"
+        return transfer_inactive_reason_code(transfer, now) == REASON_EXPIRED
     if status == "disabled":
         return transfer.is_disabled
     if status == "deletion_pending":
@@ -109,7 +110,7 @@ def _matches_status_request(
     if status == "inactive":
         return not file_request_is_active(req, now)
     if status == "expired":
-        return file_request_inactive_reason(req, now) == "Expired"
+        return file_request_inactive_reason_code(req, now) == REASON_EXPIRED
     if status == "disabled":
         return req.is_disabled
     if status == "deletion_pending":

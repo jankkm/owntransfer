@@ -41,7 +41,6 @@ async def prepare_db():
                 max_file_size_bytes=10 * 1024 * 1024,
                 default_expiry_days=7,
                 max_share_expiry_days=365,
-                max_share_expiry_days=365,
                 max_downloads_default=5,
                 purge_grace_days=7,
                 setup_completed=True,

@@ -6,6 +6,7 @@ from typing import Optional
 import aiosmtplib
 
 from app.config import settings
+from app.i18n import activate
 from app.models import AppSettings
 from app.services.email_templates import render_email_subject, render_email_template
 
@@ -146,6 +147,7 @@ async def send_expired_unused(
     expires_at: str,
     edit_link: str,
 ) -> bool:
+    activate(settings.default_locale)
     ctx = {
         "app_name": app_settings.app_name,
         "title": title,
@@ -172,6 +174,7 @@ async def send_purge_reminder(
     purge_at: str,
     days_until_purge: int,
 ) -> bool:
+    activate(settings.default_locale)
     ctx = {
         "app_name": app_settings.app_name,
         "title": title,

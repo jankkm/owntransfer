@@ -1,26 +1,25 @@
 {% extends "base.html" %}
 {% import "_macros.html" as f %}
-{% block title %}Upload — {{ app_name }}{% endblock %}
+{% block title %}{{ _('Upload') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <div class="max-w-lg mx-auto bg-white border rounded-xl p-8">
   <h1 class="text-2xl font-bold mb-2">{{ file_request.title }}</h1>
   {% if file_request.instructions %}<p class="text-slate-600 mb-4">{{ file_request.instructions }}</p>{% endif %}
   <p class="text-sm text-slate-500 mb-6">
-    Expires {{ file_request.expires_at|format_datetime_with_tz }}
-    · up to {{ (file_request.max_total_bytes / 1024 / 1024)|int }} MB per upload
+    {{ _('Expires %(expires)s · up to %(max_mb)s MB per upload') % {'expires': file_request.expires_at|format_datetime_with_tz, 'max_mb': (file_request.max_total_bytes / 1024 / 1024)|int} }}
   </p>
   {% if needs_password %}
   <form method="post" class="space-y-4 mb-6">
     <input type="hidden" name="unlock" value="1">
-    {{ f.text_input("password", "Password", type="password", required=true) }}
-    <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">Unlock</button>
+    {{ f.text_input("password", _("Password"), type="password", required=true) }}
+    <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Unlock') }}</button>
   </form>
   {% else %}
   <form method="post" class="space-y-4">
-    {{ f.text_input("uploader_name", "Your name (optional)") }}
-    {{ f.text_input("uploader_email", "Your email (optional)", type="email") }}
+    {{ f.text_input("uploader_name", _("Your name (optional)")) }}
+    {{ f.text_input("uploader_email", _("Your email (optional)"), type="email") }}
     {{ f.file_picker("/r/" ~ file_request.public_token ~ "/staging", "/r/" ~ file_request.public_token ~ "/staging/{id}") }}
-    <button type="submit" data-submit-btn class="btn-primary text-white rounded-lg px-4 py-2" disabled>Complete upload</button>
+    <button type="submit" data-submit-btn class="btn-primary text-white rounded-lg px-4 py-2" disabled>{{ _('Complete upload') }}</button>
   </form>
   {% endif %}
 </div>

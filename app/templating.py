@@ -16,9 +16,18 @@ from app.services.datetime_display import (
     max_expiry_date,
     today_date,
 )
-from app.auth.users import uses_local_auth, user_initials
+from app.i18n import (
+    SUPPORTED_LOCALES,
+    get_locale,
+    gettext,
+    js_messages,
+    locale_display_name,
+    ngettext,
+)
 from app.services import share_status
 from app.services.download_limits import format_download_limit, format_download_limit_short
+from app.auth.users import uses_local_auth, user_initials
+
 from app.services.share_lifecycle import (
     file_request_deletion_pending,
     share_timeline_notice,
@@ -27,6 +36,11 @@ from app.services.share_lifecycle import (
 
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+templates.env.add_extension("jinja2.ext.i18n")
+templates.env.install_gettext_callables(gettext, ngettext)
+templates.env.globals["supported_locales"] = SUPPORTED_LOCALES
+templates.env.globals["locale_display_name"] = locale_display_name
+templates.env.globals["current_locale"] = get_locale
 templates.env.filters["format_datetime"] = format_datetime
 templates.env.filters["format_date"] = format_date
 templates.env.filters["format_datetime_with_tz"] = format_datetime_with_tz
@@ -34,9 +48,11 @@ templates.env.globals["user_uses_local_auth"] = uses_local_auth
 templates.env.globals["transfer_is_active"] = share_status.transfer_is_active
 templates.env.globals["transfer_can_toggle"] = share_status.transfer_can_toggle
 templates.env.globals["transfer_inactive_reason"] = share_status.transfer_inactive_reason
+templates.env.globals["transfer_inactive_reason_code"] = share_status.transfer_inactive_reason_code
 templates.env.globals["file_request_is_active"] = share_status.file_request_is_active
 templates.env.globals["file_request_can_toggle"] = share_status.file_request_can_toggle
 templates.env.globals["file_request_inactive_reason"] = share_status.file_request_inactive_reason
+templates.env.globals["file_request_inactive_reason_code"] = share_status.file_request_inactive_reason_code
 templates.env.globals["transfer_deletion_pending"] = transfer_deletion_pending
 templates.env.globals["file_request_deletion_pending"] = file_request_deletion_pending
 templates.env.globals["share_timeline_notice"] = share_timeline_notice
@@ -68,4 +84,6 @@ def branding_context(app_settings: AppSettings) -> dict:
         "privacy_policy_enabled": app_settings.privacy_policy_enabled
         and bool((app_settings.privacy_policy_markdown or "").strip()),
         "display_timezone": settings.display_timezone,
+        "locale": get_locale(),
+        "js_messages": js_messages(),
     }

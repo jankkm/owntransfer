@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +7,18 @@
   <link rel="icon" href="{{ logo_path }}" type="{{ favicon_type }}">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script>
+    window.__i18n = {{ js_messages | tojson }};
+    window.__ = (k, vars) => {
+      let s = (window.__i18n && window.__i18n[k]) || k;
+      if (vars) {
+        Object.entries(vars).forEach(([key, val]) => {
+          s = s.replace(new RegExp("%\\(" + key + "\\)s", "g"), val);
+        });
+      }
+      return s;
+    };
+  </script>
   <style>
     :root {
       --primary: {{ primary_color }};
@@ -52,6 +64,10 @@
     .legal-content hr { border: 0; border-top: 1px solid #e2e8f0; margin: 1rem 0; }
     .legal-content strong { font-weight: 600; }
   </style>
+  <script>
+    window.__i18n = {{ js_messages | tojson }};
+    window.__ = (k) => window.__i18n[k] ?? k;
+  </script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
   <header class="bg-white border-b border-slate-200">
@@ -62,13 +78,13 @@
       </a>
       {% if user %}
       <nav class="flex items-center gap-1 sm:gap-5 text-sm min-w-0">
-        <a href="/dashboard" class="nav-link px-1 py-1">Dashboard</a>
-        <a href="/transfers" class="nav-link hidden md:inline px-1 py-1">Transfers</a>
-        <a href="/requests" class="nav-link hidden md:inline px-1 py-1">File requests</a>
+        <a href="/dashboard" class="nav-link px-1 py-1">{{ _('Dashboard') }}</a>
+        <a href="/transfers" class="nav-link hidden md:inline px-1 py-1">{{ _('Transfers') }}</a>
+        <a href="/requests" class="nav-link hidden md:inline px-1 py-1">{{ _('File requests') }}</a>
         <div class="relative shrink-0 ml-1 sm:ml-2 sm:pl-4 sm:border-l sm:border-slate-200" data-profile-menu>
           <button type="button" data-profile-menu-toggle
                   class="profile-menu-btn flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-1 pr-2.5 sm:pr-3 py-1 max-w-[11rem] sm:max-w-[15rem]"
-                  aria-label="Profile menu" aria-expanded="false" aria-haspopup="true">
+                  aria-label="{{ _('Profile menu') }}" aria-expanded="false" aria-haspopup="true">
             <span class="profile-avatar flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold shrink-0">
               {{ (user.display_name or user.email)|user_initials }}
             </span>
@@ -103,9 +119,9 @@
               </div>
             </div>
             <div class="py-1">
-              <a href="/auth/profile" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">Profile</a>
-              {% if user.is_admin %}<a href="/admin" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">Admin</a>{% endif %}
-              <a href="/auth/logout" class="block px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-50 border-t border-slate-100 mt-1">Logout</a>
+              <a href="/auth/profile" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">{{ _('Profile') }}</a>
+              {% if user.is_admin %}<a href="/admin" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">{{ _('Admin') }}</a>{% endif %}
+              <a href="/auth/logout" class="block px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-50 border-t border-slate-100 mt-1">{{ _('Logout') }}</a>
             </div>
           </div>
         </div>
@@ -119,18 +135,24 @@
     {% block content %}{% endblock %}
   </main>
   {% block scripts %}{% endblock %}
-  {% if impressum_enabled or privacy_policy_enabled %}
   <footer class="border-t border-slate-200 bg-white mt-auto">
-    <div class="max-w-5xl mx-auto px-4 py-4 text-center text-sm flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+    <div class="max-w-5xl mx-auto px-4 py-4 text-center text-sm flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
       {% if impressum_enabled %}
-      <a href="/impressum" class="text-slate-600 hover:text-primary underline">Impressum</a>
+      <a href="/impressum" class="text-slate-600 hover:text-primary underline">{{ _('Impressum') }}</a>
       {% endif %}
       {% if privacy_policy_enabled %}
-      <a href="/privacy" class="text-slate-600 hover:text-primary underline">Privacy policy</a>
+      <a href="/privacy" class="text-slate-600 hover:text-primary underline">{{ _('Privacy policy') }}</a>
       {% endif %}
+      <form method="post" action="/locale" class="inline-flex items-center">
+        <select id="locale-select" name="locale" onchange="this.form.submit()" aria-label="{{ _('Language') }}"
+                class="border border-slate-300 rounded-lg px-2 py-1 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
+          {% for loc in supported_locales %}
+          <option value="{{ loc }}" {% if locale == loc %}selected{% endif %}>{{ locale_display_name(loc) }}</option>
+          {% endfor %}
+        </select>
+      </form>
     </div>
   </footer>
-  {% endif %}
   <script>
     document.querySelectorAll('[data-show-confirm]').forEach((btn) => {
       btn.addEventListener('click', () => {

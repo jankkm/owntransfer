@@ -1,23 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Setup — {{ app_name }}{% endblock %}
+{% block title %}{{ _('Setup') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <div class="max-w-md mx-auto bg-white rounded-xl shadow-sm border p-8">
-  <h1 class="text-2xl font-bold mb-2">Welcome to {{ app_name }}</h1>
-  <p class="text-slate-600 mb-6">Create the initial admin account to get started.</p>
+  <h1 class="text-2xl font-bold mb-2">{{ _('Welcome to %(app_name)s') % {'app_name': app_name} }}</h1>
+  <p class="text-slate-600 mb-6">{{ _('Create the initial admin account to get started.') }}</p>
   <form method="post" class="space-y-4">
     <div>
-      <label class="block text-sm font-medium mb-1">App name</label>
+      <label class="block text-sm font-medium mb-1">{{ _('App name') }}</label>
       <input name="app_name" value="{{ app_name }}" class="w-full border rounded-lg px-3 py-2" required>
     </div>
     <div>
-      <label class="block text-sm font-medium mb-1">Admin email</label>
+      <label class="block text-sm font-medium mb-1">{{ _('Admin email') }}</label>
       <input type="email" name="email" class="w-full border rounded-lg px-3 py-2" required>
     </div>
     <div>
-      <label class="block text-sm font-medium mb-1">Admin password</label>
+      <label class="block text-sm font-medium mb-1">{{ _('Admin password') }}</label>
       <input type="password" name="password" minlength="8" class="w-full border rounded-lg px-3 py-2" required>
     </div>
-    <button type="submit" class="btn-primary w-full text-white rounded-lg py-2 font-medium">Create admin & continue</button>
+    <button type="submit" class="btn-primary w-full text-white rounded-lg py-2 font-medium">{{ _('Create admin & continue') }}</button>
   </form>
 </div>
 {% endblock %}

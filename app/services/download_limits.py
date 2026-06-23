@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.i18n import _
 from app.models import Transfer
 
 
@@ -15,11 +16,11 @@ def transfer_download_limit_reached(transfer: Transfer) -> bool:
 
 def format_download_limit(download_count: int, max_downloads: int) -> str:
     if downloads_unlimited(max_downloads):
-        return f"{download_count} / ∞ downloads"
-    return f"{download_count}/{max_downloads} downloads"
+        return _("%(count)s / ∞ downloads") % {"count": download_count}
+    return _("%(count)s/%(max)s downloads") % {"count": download_count, "max": max_downloads}
 
 
 def format_download_limit_short(download_count: int, max_downloads: int) -> str:
     if downloads_unlimited(max_downloads):
-        return f"{download_count} / ∞"
-    return f"{download_count}/{max_downloads}"
+        return _("%(count)s / ∞") % {"count": download_count}
+    return _("%(count)s/%(max)s") % {"count": download_count, "max": max_downloads}

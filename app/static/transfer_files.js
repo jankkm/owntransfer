@@ -1,4 +1,8 @@
 (function () {
+  function t(key, vars) {
+    return window.__(key, vars);
+  }
+
   function inlineConfirm() {
     return window.InlineFileRemoveConfirm;
   }
@@ -10,7 +14,7 @@
   }
 
   function parseErrorResponse(xhr) {
-    let message = "Request failed";
+    let message = t("Request failed");
     try {
       const payload = JSON.parse(xhr.responseText);
       if (typeof payload.detail === "string") {
@@ -104,7 +108,7 @@
       removeBtn.type = "button";
       removeBtn.dataset.fileRemove = "";
       removeBtn.className = "text-xs text-slate-500 hover:text-red-600 shrink-0 hidden";
-      removeBtn.textContent = "Remove";
+      removeBtn.textContent = t("Remove");
 
       wrap.appendChild(info);
       wrap.appendChild(removeBtn);
@@ -122,12 +126,12 @@
       const removeBtn = row.querySelector("[data-file-remove]");
 
       if (uploading) {
-        metaEl.textContent = `${formatSize(sizeBytes || 0)} · Uploading…`;
+        metaEl.textContent = `${formatSize(sizeBytes || 0)} · ${t("Uploading…")}`;
         progressWrap.classList.remove("hidden");
         if (progressBar) progressBar.style.width = `${progress}%`;
         removeBtn.disabled = true;
       } else if (error) {
-        metaEl.textContent = `${formatSize(sizeBytes || 0)} · Upload failed`;
+        metaEl.textContent = `${formatSize(sizeBytes || 0)} · ${t("Upload failed")}`;
         progressWrap.classList.add("hidden");
         errorElRow.textContent = error;
         errorElRow.classList.remove("hidden");
@@ -166,7 +170,7 @@
 
     function fileNameForRow(row) {
       const nameEl = row.querySelector("[data-file-name]");
-      return nameEl ? nameEl.textContent.trim() : "this file";
+      return nameEl ? nameEl.textContent.trim() : t("this file");
     }
 
     function rowFileId(row) {
@@ -179,14 +183,14 @@
 
       const fileName = fileNameForRow(row);
       const isServer = row.dataset.serverFile === "true";
-      const title = isServer ? "Remove file from transfer?" : "Remove file?";
+      const title = isServer ? t("Remove file from transfer?") : t("Remove file?");
       const message = isServer
-        ? `"${fileName}" will be permanently removed from this transfer. This cannot be undone.`
-        : `Remove "${fileName}" from the list?`;
+        ? t('"%(name)s" will be permanently removed from this transfer. This cannot be undone.', { name: fileName })
+        : t('Remove "%(name)s" from the list?', { name: fileName });
 
       const ic = inlineConfirm();
       if (!ic) {
-        setError("Could not show confirmation dialog.");
+        setError(t("Could not show confirmation dialog."));
         return;
       }
 
@@ -195,7 +199,7 @@
 
       if (isServer && fileCount() <= 1) {
         ic.restore(row);
-        setError("Transfer must have at least one file.");
+        setError(t("Transfer must have at least one file."));
         return;
       }
 
@@ -213,14 +217,14 @@
         const response = await fetch(deleteUrl, { method: "DELETE", credentials: "same-origin" });
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.detail || "Could not remove file");
+          throw new Error(payload.detail || t("Could not remove file"));
         }
         ic.clear(row);
         row.remove();
         updateTitle();
       } catch (err) {
         ic.restore(row);
-        setError(err.message || "Could not remove file");
+        setError(err.message || t("Could not remove file"));
       }
     }
 
@@ -269,7 +273,7 @@
         pendingUploads.delete(clientId);
         updateDoneState();
         row.dataset.uploading = "false";
-        updateRowState(row, { error: "Network error", sizeBytes: file.size });
+        updateRowState(row, { error: t("Network error"), sizeBytes: file.size });
       });
 
       xhr.open("POST", uploadUrl);

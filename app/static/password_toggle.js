@@ -1,4 +1,8 @@
 (function () {
+  function t(key) {
+    return window.__(key);
+  }
+
   document.querySelectorAll("[data-password-toggle]").forEach((root) => {
     const checkbox = root.querySelector('input[name="use_password"]');
     const field = root.querySelector("[data-password-field]");
@@ -30,7 +34,7 @@
         }
         if (!hasPassword && !passwordInput.value.trim()) {
           event.preventDefault();
-          passwordInput.setCustomValidity("Enter a password to enable protection");
+          passwordInput.setCustomValidity(t("Enter a password to enable protection"));
           passwordInput.reportValidity();
           return;
         }

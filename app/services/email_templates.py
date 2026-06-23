@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from jinja2 import Template
 
+from app.i18n import _
 from app.models import AppSettings
 
 TEMPLATE_KEYS = (
@@ -79,7 +80,7 @@ def get_template_source(app_settings: AppSettings, key: str) -> str:
     custom = getattr(app_settings, field, None)
     if custom and custom.strip():
         return custom
-    return DEFAULTS[key]
+    return _(DEFAULTS[key])
 
 
 def get_subject_source(app_settings: AppSettings, key: str) -> str:
@@ -87,7 +88,7 @@ def get_subject_source(app_settings: AppSettings, key: str) -> str:
     custom = getattr(app_settings, field, None)
     if custom and custom.strip():
         return custom
-    return DEFAULT_SUBJECTS[key]
+    return _(DEFAULT_SUBJECTS[key])
 
 
 def render_email_template(app_settings: AppSettings, key: str, **context) -> str:

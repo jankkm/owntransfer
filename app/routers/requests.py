@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user
 from app.database import get_db
+from app.i18n import _
 from app.http.client_ip import get_client_ip
 from app.models import User
 from app.services.file_request import (
@@ -58,11 +59,11 @@ async def list_requests(
         "now": now,
     })
     if request.query_params.get("updated"):
-        ctx["success"] = "File request updated successfully."
+        ctx["success"] = _("File request updated successfully.")
     if request.query_params.get("created"):
-        ctx["success"] = "File request created successfully."
+        ctx["success"] = _("File request created successfully.")
     if request.query_params.get("deleted"):
-        ctx["success"] = "File request deleted."
+        ctx["success"] = _("File request deleted.")
     return templates.TemplateResponse(request, "requests_list.html", ctx)
 
 
@@ -100,7 +101,7 @@ async def create_request_route(
         ctx = branding_context(app_settings)
         ctx.update({
             "user": user,
-            "error": "Enter a password to enable protection",
+            "error": _("Enter a password to enable protection"),
         })
         return templates.TemplateResponse(request, "requests_new.html", ctx, status_code=400)
     await create_file_request(
@@ -134,7 +135,7 @@ async def edit_request_page(
         "file_request": file_request,
         "has_password": bool(file_request.password_hash),
         "now": datetime.now(timezone.utc),
-        "success": "Share link regenerated. The old link no longer works."
+        "success": _("Share link regenerated. The old link no longer works.")
         if request.query_params.get("link_regenerated")
         else None,
     })

@@ -1,32 +1,32 @@
 {% extends "base.html" %}
 {% import "_macros.html" as f %}
-{% block title %}Download — {{ app_name }}{% endblock %}
+{% block title %}{{ _('Download') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <div class="max-w-lg mx-auto bg-white border rounded-xl p-8">
   <h1 class="text-2xl font-bold mb-2">{{ transfer.title }}</h1>
   {% if transfer.message %}<p class="text-slate-600 mb-4">{{ transfer.message }}</p>{% endif %}
-  <p class="text-sm text-slate-500 mb-6">{{ transfer.files|length }} file(s) · expires {{ transfer.expires_at|format_datetime_with_tz }}</p>
+  <p class="text-sm text-slate-500 mb-6">{{ ngettext('%(count)s file · expires %(expires)s', '%(count)s files · expires %(expires)s', transfer.files|length) % {'count': transfer.files|length, 'expires': transfer.expires_at|format_datetime_with_tz} }}</p>
   {% if needs_password %}
   <form method="post" class="space-y-4 mb-6">
-    {{ f.text_input("password", "Password", type="password", required=true) }}
-    <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">Unlock</button>
+    {{ f.text_input("password", _("Password"), type="password", required=true) }}
+    <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Unlock') }}</button>
   </form>
   {% elif can_download %}
   <div class="mb-6">
-    <p class="text-sm font-medium text-slate-700 mb-3">Files</p>
+    <p class="text-sm font-medium text-slate-700 mb-3">{{ _('Files') }}</p>
     <ul class="space-y-2">
       {% for file in transfer.files %}
       <li class="flex items-center justify-between gap-3 text-sm border border-slate-200 rounded-lg px-3 py-2">
         <span class="truncate">{{ file.original_name }} <span class="text-slate-500">({{ (file.size_bytes / 1024 / 1024)|round(2) }} MB)</span></span>
         <a href="/d/{{ transfer.public_token }}/files/{{ file.id }}"
-           class="shrink-0 text-primary hover:underline font-medium">Download</a>
+           class="shrink-0 text-primary hover:underline font-medium">{{ _('Download') }}</a>
       </li>
       {% endfor %}
     </ul>
-    <p class="text-xs text-slate-500 mt-3">Downloads are tied to this browser session and cannot be shared as direct links.</p>
+    <p class="text-xs text-slate-500 mt-3">{{ _('Downloads are tied to this browser session and cannot be shared as direct links.') }}</p>
   </div>
   {% if transfer.files|length > 1 %}
-  <a href="/d/{{ transfer.public_token }}/download" class="btn-primary inline-block text-white rounded-lg px-4 py-2">Download all (ZIP)</a>
+  <a href="/d/{{ transfer.public_token }}/download" class="btn-primary inline-block text-white rounded-lg px-4 py-2">{{ _('Download all (ZIP)') }}</a>
   {% endif %}
   {% endif %}
 </div>

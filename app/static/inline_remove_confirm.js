@@ -1,4 +1,8 @@
 (function () {
+  function t(key) {
+    return window.__(key);
+  }
+
   const backups = new WeakMap();
   let activeRow = null;
 
@@ -17,11 +21,11 @@
       <div class="flex gap-2">
         <button type="button" data-inline-confirm-yes
                 class="rounded-lg px-3 py-1.5 text-white text-sm bg-red-600 hover:bg-red-700 disabled:opacity-60">
-          Yes, remove file
+          ${t("Yes, remove file")}
         </button>
         <button type="button" data-inline-confirm-cancel
                 class="rounded-lg px-3 py-1.5 border border-slate-300 bg-white text-sm hover:bg-slate-50 disabled:opacity-60">
-          Cancel
+          ${t("Cancel")}
         </button>
       </div>
     `;
@@ -46,7 +50,7 @@
     const cancelBtn = row.querySelector("[data-inline-confirm-cancel]");
     if (yesBtn) {
       yesBtn.disabled = busy;
-      yesBtn.textContent = busy ? "Removing…" : "Yes, remove file";
+      yesBtn.textContent = busy ? t("Removing…") : t("Yes, remove file");
     }
     if (cancelBtn) cancelBtn.disabled = busy;
   }

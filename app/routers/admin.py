@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.deps import get_current_admin
 from app.auth.passwords import hash_password
 from app.database import get_db
+from app.i18n import _
 from app.http.client_ip import get_client_ip
 from app.models import AuditLog, User
 from app.services.admin_overview import (
@@ -86,19 +87,19 @@ async def admin_home(
         "active": "settings",
     })
     if request.query_params.get("branding_saved"):
-        ctx["success"] = "Branding saved."
+        ctx["success"] = _("Branding saved.")
     if request.query_params.get("impressum_saved") or request.query_params.get("legal_saved"):
-        ctx["success"] = "Legal pages saved."
+        ctx["success"] = _("Legal pages saved.")
     if request.query_params.get("user_added"):
-        ctx["success"] = "User added."
+        ctx["success"] = _("User added.")
     if request.query_params.get("user_deleted"):
-        ctx["success"] = "User deleted."
+        ctx["success"] = _("User deleted.")
     if request.query_params.get("user_promoted"):
-        ctx["success"] = "User promoted to admin."
+        ctx["success"] = _("User promoted to admin.")
     if request.query_params.get("user_demoted"):
-        ctx["success"] = "User demoted from admin."
+        ctx["success"] = _("User demoted from admin.")
     if request.query_params.get("user_password_set"):
-        ctx["success"] = "Password updated."
+        ctx["success"] = _("Password updated.")
     error = request.query_params.get("error")
     if error:
         ctx["error"] = error
@@ -145,13 +146,13 @@ async def admin_shares(
     })
     saved = request.query_params.get("saved")
     if saved == "transfer":
-        ctx["success"] = "Transfer updated."
+        ctx["success"] = _("Transfer updated.")
     elif saved == "request":
-        ctx["success"] = "File request updated."
+        ctx["success"] = _("File request updated.")
     elif saved == "deleted_transfer":
-        ctx["success"] = "Transfer deleted."
+        ctx["success"] = _("Transfer deleted.")
     elif saved == "deleted_request":
-        ctx["success"] = "File request deleted."
+        ctx["success"] = _("File request deleted.")
     error = request.query_params.get("error")
     if error:
         ctx["error"] = error.replace("+", " ")
@@ -185,7 +186,7 @@ async def admin_edit_transfer_page(
         "shares_tab": tab,
         "shares_user": user,
         "now": datetime.now(timezone.utc),
-        "success": "Share link regenerated. The old link no longer works."
+        "success": _("Share link regenerated. The old link no longer works.")
         if request.query_params.get("link_regenerated")
         else None,
     })
@@ -344,7 +345,7 @@ async def admin_edit_request_page(
         "shares_tab": tab,
         "shares_user": user,
         "now": datetime.now(timezone.utc),
-        "success": "Share link regenerated. The old link no longer works."
+        "success": _("Share link regenerated. The old link no longer works.")
         if request.query_params.get("link_regenerated")
         else None,
     })
@@ -513,12 +514,12 @@ async def admin_email_templates(
     template_sections = [
         (key, label, TEMPLATE_VARIABLES[key])
         for key, label in (
-            ("share", "Share link (outbound transfer)"),
-            ("request", "File request link"),
-            ("upload_notify", "Upload received notification"),
-            ("download_notify", "Download notification"),
-            ("expired_unused", "Expired without activity"),
-            ("purge_reminder", "Deletion reminder before purge"),
+            ("share", _("Share link (outbound transfer)")),
+            ("request", _("File request link")),
+            ("upload_notify", _("Upload received notification")),
+            ("download_notify", _("Download notification")),
+            ("expired_unused", _("Expired without activity")),
+            ("purge_reminder", _("Deletion reminder before purge")),
         )
     ]
     ctx = branding_context(app_settings)
@@ -530,7 +531,7 @@ async def admin_email_templates(
         "template_sections": template_sections,
     })
     if request.query_params.get("saved"):
-        ctx["success"] = "Email templates saved."
+        ctx["success"] = _("Email templates saved.")
     return templates.TemplateResponse(request, "admin_email.html", ctx)
 
 
@@ -603,11 +604,11 @@ async def create_user(
 ):
     normalized_email = email.strip().lower()
     if not normalized_email or not password:
-        return RedirectResponse("/admin?error=Email+and+password+are+required", status_code=303)
+        return RedirectResponse("/admin?error=" + _("Email and password are required").replace(" ", "+"), status_code=303)
 
     existing = await db.execute(select(User).where(User.email == normalized_email))
     if existing.scalar_one_or_none():
-        return RedirectResponse("/admin?error=User+already+exists", status_code=303)
+        return RedirectResponse("/admin?error=" + _("User already exists").replace(" ", "+"), status_code=303)
 
     user = User(
         email=normalized_email,
@@ -661,7 +662,7 @@ async def demote_user(
     admin: User = Depends(get_current_admin),
 ):
     if user_id == admin.id:
-        return RedirectResponse("/admin?error=You+cannot+demote+your+own+account", status_code=303)
+        return RedirectResponse("/admin?error=" + _("You cannot demote your own account").replace(" ", "+"), status_code=303)
 
     user = await db.get(User, user_id)
     if not user or not user.is_active or not user.is_admin:
@@ -671,7 +672,7 @@ async def demote_user(
         select(func.count()).select_from(User).where(User.is_admin.is_(True), User.is_active.is_(True))
     )
     if admin_count and admin_count <= 1:
-        return RedirectResponse("/admin?error=Cannot+demote+the+last+admin", status_code=303)
+        return RedirectResponse("/admin?error=" + _("Cannot demote the last admin").replace(" ", "+"), status_code=303)
 
     user.is_admin = False
     await db.commit()
@@ -696,7 +697,7 @@ async def set_user_password(
     admin: User = Depends(get_current_admin),
 ):
     if not password:
-        return RedirectResponse("/admin?error=Password+is+required", status_code=303)
+        return RedirectResponse("/admin?error=" + _("Password is required").replace(" ", "+"), status_code=303)
 
     user = await db.get(User, user_id)
     if not user or not user.is_active:
@@ -725,7 +726,7 @@ async def delete_user(
     admin: User = Depends(get_current_admin),
 ):
     if user_id == admin.id:
-        return RedirectResponse("/admin?error=You+cannot+delete+your+own+account", status_code=303)
+        return RedirectResponse("/admin?error=" + _("You cannot delete your own account").replace(" ", "+"), status_code=303)
 
     user = await db.get(User, user_id)
     if not user:
@@ -736,7 +737,7 @@ async def delete_user(
             select(func.count()).select_from(User).where(User.is_admin.is_(True), User.is_active.is_(True))
         )
         if admin_count and admin_count <= 1:
-            return RedirectResponse("/admin?error=Cannot+delete+the+last+admin", status_code=303)
+            return RedirectResponse("/admin?error=" + _("Cannot delete the last admin").replace(" ", "+"), status_code=303)
 
     user_email = user.email
     user_id_str = str(user.id)

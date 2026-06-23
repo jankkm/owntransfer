@@ -15,8 +15,9 @@ from app.database import async_session, engine
 from app.limiter import limiter
 from app.logging_config import configure_logging
 from app.middleware.public_scheme import PublicSchemeMiddleware
+from app.middleware.locale import LocaleMiddleware
 from app.middleware.setup import SetupMiddleware
-from app.routers import admin, auth, branding, dashboard, profile, public, requests, setup, transfers
+from app.routers import admin, auth, branding, dashboard, locale, profile, public, requests, setup, transfers
 from app.services.cleanup import run_cleanup
 from app.services.schema import ensure_schema
 
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
+    app.add_middleware(LocaleMiddleware)
     app.add_middleware(SetupMiddleware)
     app.add_middleware(SlowAPIMiddleware)
     if settings.public_scheme:
@@ -58,6 +60,7 @@ def create_app() -> FastAPI:
 
     app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+    app.include_router(locale.router)
     app.include_router(branding.router)
     app.include_router(setup.router)
     app.include_router(auth.router)

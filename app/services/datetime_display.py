@@ -4,9 +4,14 @@ from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from babel.dates import format_date as babel_format_date
+from babel.dates import format_datetime as babel_format_datetime
 from fastapi import HTTPException
 
 from app.config import settings
+from app.i18n import _, get_locale
+
+_EMPTY = "—"
 
 
 @lru_cache(maxsize=1)
@@ -35,24 +40,27 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def format_datetime(value: datetime | None, fmt: str = "%Y-%m-%d %H:%M") -> str:
+def format_datetime(value: datetime | None, fmt: str = "medium") -> str:
     if value is None:
-        return "—"
-    return _to_local(value).strftime(fmt)
+        return _(_EMPTY)
+    return babel_format_datetime(_to_local(value), format=fmt, locale=get_locale())
 
 
-def format_date(value: datetime | None, fmt: str = "%Y-%m-%d") -> str:
+def format_date(value: datetime | None, fmt: str = "medium") -> str:
     if value is None:
-        return "—"
-    return _to_local(value).strftime(fmt)
+        return _(_EMPTY)
+    return babel_format_date(_to_local(value), format=fmt, locale=get_locale())
 
 
-def format_datetime_with_tz(value: datetime | None, fmt: str = "%Y-%m-%d %H:%M") -> str:
+def format_datetime_with_tz(value: datetime | None, fmt: str = "medium") -> str:
     if value is None:
-        return "—"
+        return _(_EMPTY)
     local = _to_local(value)
     tz_label = local.tzname() or settings.display_timezone
-    return f"{local.strftime(fmt)} {tz_label}"
+    return _("%(when)s %(tz)s") % {
+        "when": babel_format_datetime(local, format=fmt, locale=get_locale()),
+        "tz": tz_label,
+    }
 
 
 def default_expiry_date(default_days: int) -> str:
@@ -76,7 +84,8 @@ def ensure_expiry_within_limit(expires_at: datetime, max_days: int) -> None:
     if expires_local > limit_local:
         raise HTTPException(
             status_code=400,
-            detail=f"Expiry cannot be more than {max_days} days in the future",
+            detail=_("Expiry cannot be more than %(max_days)s days in the future")
+            % {"max_days": max_days},
         )
 
 

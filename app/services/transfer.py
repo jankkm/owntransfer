@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 
 from app.auth.passwords import hash_password, verify_password
 from app.config import settings
+from app.i18n import _
 from app.models import AppSettings, Transfer, TransferDownloadLog, TransferFile, User
 from app.services.audit import log_audit
 from app.services.email import send_download_notify, send_share_email
@@ -48,7 +49,7 @@ async def create_transfer(
 ) -> Transfer:
     ensure_expiry_within_limit(expires_at, app_settings.max_share_expiry_days)
     if max_downloads < 0:
-        raise HTTPException(status_code=400, detail="Max downloads cannot be negative")
+        raise HTTPException(status_code=400, detail=_("Max downloads cannot be negative"))
     blocklist = parse_blocklist(app_settings.file_type_blocklist)
     transfer = Transfer(
         public_token=generate_public_token(),
@@ -72,11 +73,11 @@ async def create_transfer(
         for staged in staged_files:
             if is_extension_blocked(staged.original_name, blocklist):
                 raise HTTPException(
-                    status_code=400, detail=f"File type not allowed: {staged.original_name}"
+                    status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": staged.original_name}
                 )
             total_size += staged.size_bytes
             if total_size > app_settings.max_file_size_bytes:
-                raise HTTPException(status_code=400, detail="Total upload exceeds maximum file size")
+                raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
             rel_path = f"transfers/{transfer.id}/{staged.original_name}"
             content = storage.absolute_path(staged.storage_path).read_bytes()
             await storage.save_file(rel_path, content)
@@ -95,11 +96,11 @@ async def create_transfer(
             if not upload.filename:
                 continue
             if is_extension_blocked(upload.filename, blocklist):
-                raise HTTPException(status_code=400, detail=f"File type not allowed: {upload.filename}")
+                raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": upload.filename})
             content = await upload.read()
             total_size += len(content)
             if total_size > app_settings.max_file_size_bytes:
-                raise HTTPException(status_code=400, detail="Total upload exceeds maximum file size")
+                raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
             rel_path = f"transfers/{transfer.id}/{upload.filename}"
             await storage.save_file(rel_path, content)
             db.add(
@@ -114,7 +115,7 @@ async def create_transfer(
             saved_count += 1
 
     if saved_count == 0:
-        raise HTTPException(status_code=400, detail="Add at least one file")
+        raise HTTPException(status_code=400, detail=_("Add at least one file"))
 
     await db.commit()
     await db.refresh(transfer)
@@ -155,17 +156,17 @@ async def lookup_transfer_by_token(db: AsyncSession, token: str) -> Transfer | N
 async def get_transfer_by_token(db: AsyncSession, token: str) -> Transfer:
     transfer = await lookup_transfer_by_token(db, token)
     if not transfer:
-        raise HTTPException(status_code=404, detail="Transfer not found")
+        raise HTTPException(status_code=404, detail=_("Transfer not found"))
     return transfer
 
 
 def ensure_transfer_accessible(transfer: Transfer) -> None:
     if transfer.is_disabled:
-        raise HTTPException(status_code=403, detail="This link has been disabled")
+        raise HTTPException(status_code=403, detail=_("This link has been disabled"))
     if is_past_expiry(is_expired=transfer.is_expired, expires_at=transfer.expires_at):
-        raise HTTPException(status_code=410, detail="This link has expired")
+        raise HTTPException(status_code=410, detail=_("This link has expired"))
     if transfer_download_limit_reached(transfer):
-        raise HTTPException(status_code=410, detail="Download limit reached")
+        raise HTTPException(status_code=410, detail=_("Download limit reached"))
 
 
 def verify_transfer_password(transfer: Transfer, password: str | None) -> bool:
@@ -233,7 +234,7 @@ async def get_transfer_file(transfer: Transfer, file_id: UUID) -> TransferFile:
     for tf in transfer.files:
         if tf.id == file_id:
             return tf
-    raise HTTPException(status_code=404, detail="File not found")
+    raise HTTPException(status_code=404, detail=_("File not found"))
 
 
 def _safe_filename(name: str) -> str:
@@ -255,24 +256,25 @@ async def add_transfer_file(
     ip_address: str | None,
 ) -> TransferFile:
     if not upload.filename:
-        raise HTTPException(status_code=400, detail="Missing filename")
+        raise HTTPException(status_code=400, detail=_("Missing filename"))
 
     blocklist = parse_blocklist(app_settings.file_type_blocklist)
     if is_extension_blocked(upload.filename, blocklist):
-        raise HTTPException(status_code=400, detail=f"File type not allowed: {upload.filename}")
+        raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": upload.filename})
 
     content = await upload.read()
     if not content:
-        raise HTTPException(status_code=400, detail="Empty file")
+        raise HTTPException(status_code=400, detail=_("Empty file"))
     if len(content) > app_settings.max_file_size_bytes:
         raise HTTPException(
             status_code=400,
-            detail=f"File exceeds maximum size ({app_settings.max_file_size_bytes // (1024 * 1024)} MB)",
+            detail=_("File exceeds maximum size (%(max_mb)s MB)")
+            % {"max_mb": app_settings.max_file_size_bytes // (1024 * 1024)},
         )
 
     total_size = _transfer_total_bytes(transfer) + len(content)
     if total_size > app_settings.max_file_size_bytes:
-        raise HTTPException(status_code=400, detail="Total upload exceeds maximum file size")
+        raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
 
     file_id = uuid4()
     safe_name = _safe_filename(upload.filename)
@@ -314,7 +316,7 @@ async def delete_transfer_file(
     ip_address: str | None,
 ) -> None:
     if len(transfer.files) <= 1:
-        raise HTTPException(status_code=400, detail="Transfer must have at least one file")
+        raise HTTPException(status_code=400, detail=_("Transfer must have at least one file"))
 
     transfer_file = await get_transfer_file(transfer, file_id)
     file_name = transfer_file.original_name
@@ -365,7 +367,7 @@ async def get_user_transfer(db: AsyncSession, transfer_id: UUID, user_id: UUID) 
     )
     transfer = result.scalar_one_or_none()
     if not transfer:
-        raise HTTPException(status_code=404, detail="Transfer not found")
+        raise HTTPException(status_code=404, detail=_("Transfer not found"))
     return transfer
 
 
@@ -381,7 +383,7 @@ async def get_transfer_for_admin(db: AsyncSession, transfer_id: UUID) -> Transfe
     )
     transfer = result.scalar_one_or_none()
     if not transfer:
-        raise HTTPException(status_code=404, detail="Transfer not found")
+        raise HTTPException(status_code=404, detail=_("Transfer not found"))
     return transfer
 
 
@@ -405,11 +407,12 @@ async def update_transfer(
     if app_settings:
         ensure_expiry_within_limit(expires_at, app_settings.max_share_expiry_days)
     if max_downloads < 0:
-        raise HTTPException(status_code=400, detail="Max downloads cannot be negative")
+        raise HTTPException(status_code=400, detail=_("Max downloads cannot be negative"))
     if max_downloads > 0 and max_downloads < transfer.download_count:
         raise HTTPException(
             status_code=400,
-            detail=f"Max downloads cannot be less than current count ({transfer.download_count})",
+            detail=_("Max downloads cannot be less than current count (%(count)s)")
+            % {"count": transfer.download_count},
         )
 
     transfer.title = title
@@ -422,7 +425,7 @@ async def update_transfer(
     reset_expiry_notifications(transfer, expires_at, now)
 
     if not remove_password and not password and not transfer.password_hash:
-        raise HTTPException(status_code=400, detail="Enter a password to enable protection")
+        raise HTTPException(status_code=400, detail=_("Enter a password to enable protection"))
 
     if remove_password:
         transfer.password_hash = None

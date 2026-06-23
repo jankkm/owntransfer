@@ -1,29 +1,29 @@
 {% extends "base.html" %}
 {% import "_macros.html" as f %}
-{% block title %}New file request — {{ app_name }}{% endblock %}
+{% block title %}{{ _('New file request') }} — {{ app_name }}{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">Request files</h1>
+<h1 class="text-2xl font-bold mb-6">{{ _('Request files') }}</h1>
 <form method="post" class="bg-white border rounded-xl p-6 space-y-4">
-  {{ f.text_input("title", "Title", required=true) }}
-  {{ f.textarea_input("instructions", "Instructions for uploader") }}
+  {{ f.text_input("title", _("Title"), required=true) }}
+  {{ f.textarea_input("instructions", _("Instructions for uploader")) }}
   {% if allow_user_share_emails %}
-  {{ f.text_input("recipient_emails", "Send link to", hint="Comma-separated emails (optional). Recipients receive the upload link by email.") }}
+  {{ f.text_input("recipient_emails", _("Send link to"), hint=_("Comma-separated emails (optional). Recipients receive the upload link by email.")) }}
   {% endif %}
   <div class="grid md:grid-cols-2 gap-4">
     <div>
-      {{ f.field_label("Expiry date", "expires_at") }}
+      {{ f.field_label(_("Expiry date"), "expires_at") }}
       <input type="date" id="expires_at" name="expires_at" value="{{ default_expiry_date }}" min="{{ today_date }}" max="{{ max_expiry_date }}"
              class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
     </div>
     <div>
-      {{ f.field_label("Max uploads", "max_uploads") }}
+      {{ f.field_label(_("Max uploads"), "max_uploads") }}
       <input type="number" id="max_uploads" name="max_uploads" value="10" min="1"
              class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
     </div>
   </div>
-  {{ f.text_input("max_total_mb", "Max total size per upload (MB)", max_file_size_mb, type="number", required=true) }}
+  {{ f.text_input("max_total_mb", _("Max total size per upload (MB)"), max_file_size_mb, type="number", required=true) }}
   {{ f.password_protection_fields(false) }}
-  <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">Create file request</button>
+  <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Create file request') }}</button>
 </form>
 {% endblock %}
 

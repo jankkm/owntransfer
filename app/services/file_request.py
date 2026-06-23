@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.auth.passwords import hash_password, verify_password
 from app.config import settings
+from app.i18n import _
 from app.models import AppSettings, FileRequest, RequestUpload, UploadFile, User
 from app.services.audit import log_audit
 from app.services.email import send_request_email, send_upload_notify
@@ -93,17 +94,17 @@ async def lookup_request_by_token(db: AsyncSession, token: str) -> FileRequest |
 async def get_request_by_token(db: AsyncSession, token: str) -> FileRequest:
     req = await lookup_request_by_token(db, token)
     if not req:
-        raise HTTPException(status_code=404, detail="File request not found")
+        raise HTTPException(status_code=404, detail=_("File request not found"))
     return req
 
 
 def ensure_request_accessible(req: FileRequest) -> None:
     if req.is_disabled:
-        raise HTTPException(status_code=403, detail="This link has been disabled")
+        raise HTTPException(status_code=403, detail=_("This link has been disabled"))
     if is_past_expiry(is_expired=req.is_expired, expires_at=req.expires_at):
-        raise HTTPException(status_code=410, detail="This link has expired")
+        raise HTTPException(status_code=410, detail=_("This link has expired"))
     if req.upload_count >= req.max_uploads:
-        raise HTTPException(status_code=410, detail="Upload limit reached")
+        raise HTTPException(status_code=410, detail=_("Upload limit reached"))
 
 
 def verify_request_password(req: FileRequest, password: str | None) -> bool:
@@ -124,7 +125,7 @@ async def finalize_request_upload(
     ip_address: str | None,
 ) -> RequestUpload:
     if not staged_files:
-        raise HTTPException(status_code=400, detail="Add at least one file to upload")
+        raise HTTPException(status_code=400, detail=_("Add at least one file to upload"))
 
     blocklist = parse_blocklist(app_settings.file_type_blocklist)
     storage = get_storage()
@@ -140,10 +141,10 @@ async def finalize_request_upload(
     total_size = 0
     for staged in staged_files:
         if is_extension_blocked(staged.original_name, blocklist):
-            raise HTTPException(status_code=400, detail=f"File type not allowed: {staged.original_name}")
+            raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": staged.original_name})
         total_size += staged.size_bytes
         if total_size > req.max_total_bytes:
-            raise HTTPException(status_code=400, detail="Upload exceeds maximum allowed size for this request")
+            raise HTTPException(status_code=400, detail=_("Upload exceeds maximum allowed size for this request"))
         rel_path = f"requests/{req.id}/{upload.id}/{staged.original_name}"
         content = storage.absolute_path(staged.storage_path).read_bytes()
         await storage.save_file(rel_path, content)
@@ -193,7 +194,7 @@ async def handle_public_upload(
     storage = get_storage()
     valid_files = [f for f in files if f.filename]
     if not valid_files:
-        raise HTTPException(status_code=400, detail="Select at least one file to upload")
+        raise HTTPException(status_code=400, detail=_("Select at least one file to upload"))
 
     upload = RequestUpload(
         file_request_id=req.id,
@@ -208,16 +209,17 @@ async def handle_public_upload(
     saved_count = 0
     for f in valid_files:
         if is_extension_blocked(f.filename, blocklist):
-            raise HTTPException(status_code=400, detail=f"File type not allowed: {f.filename}")
+            raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": f.filename})
         content = await f.read()
         if len(content) > app_settings.max_file_size_bytes:
             raise HTTPException(
                 status_code=400,
-                detail=f"File exceeds maximum size ({app_settings.max_file_size_bytes // (1024 * 1024)} MB): {f.filename}",
+                detail=_("File exceeds maximum size (%(max_mb)s MB): %(filename)s")
+                % {"max_mb": app_settings.max_file_size_bytes // (1024 * 1024), "filename": f.filename},
             )
         total_size += len(content)
         if total_size > req.max_total_bytes:
-            raise HTTPException(status_code=400, detail="Upload exceeds maximum allowed size for this request")
+            raise HTTPException(status_code=400, detail=_("Upload exceeds maximum allowed size for this request"))
         rel_path = f"requests/{req.id}/{upload.id}/{f.filename}"
         await storage.save_file(rel_path, content)
         db.add(
@@ -232,7 +234,7 @@ async def handle_public_upload(
         saved_count += 1
 
     if saved_count == 0:
-        raise HTTPException(status_code=400, detail="Select at least one file to upload")
+        raise HTTPException(status_code=400, detail=_("Select at least one file to upload"))
 
     req.upload_count += 1
     await db.commit()
@@ -263,7 +265,7 @@ async def get_user_request(db: AsyncSession, request_id: UUID, user_id: UUID) ->
     )
     req = result.scalar_one_or_none()
     if not req:
-        raise HTTPException(status_code=404, detail="File request not found")
+        raise HTTPException(status_code=404, detail=_("File request not found"))
     return req
 
 
@@ -278,7 +280,7 @@ async def get_file_request_for_admin(db: AsyncSession, request_id: UUID) -> File
     )
     req = result.scalar_one_or_none()
     if not req:
-        raise HTTPException(status_code=404, detail="File request not found")
+        raise HTTPException(status_code=404, detail=_("File request not found"))
     return req
 
 
@@ -294,7 +296,7 @@ def _find_upload_file(req: FileRequest, file_id: UUID) -> UploadFile:
         for upload_file in upload.files:
             if upload_file.id == file_id:
                 return upload_file
-    raise HTTPException(status_code=404, detail="File not found")
+    raise HTTPException(status_code=404, detail=_("File not found"))
 
 
 async def delete_request_upload_file(
@@ -316,7 +318,7 @@ async def delete_request_upload_file(
         if file_match:
             break
     if not file_match or not upload_match:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail=_("File not found"))
 
     file_name = file_match.original_name
     storage = get_storage()
@@ -374,7 +376,7 @@ async def stream_file_request_zip(req: FileRequest) -> bytes:
                 zf.write(path, arcname=arcname)
                 file_count += 1
     if file_count == 0:
-        raise HTTPException(status_code=404, detail="No files to download")
+        raise HTTPException(status_code=404, detail=_("No files to download"))
     buffer.seek(0)
     return buffer.read()
 
@@ -411,7 +413,8 @@ async def update_file_request(
     if max_uploads < req.upload_count:
         raise HTTPException(
             status_code=400,
-            detail=f"Max uploads cannot be less than current count ({req.upload_count})",
+            detail=_("Max uploads cannot be less than current count (%(count)s)")
+            % {"count": req.upload_count},
         )
 
     req.title = title
@@ -424,7 +427,7 @@ async def update_file_request(
     reset_expiry_notifications(req, expires_at, now)
 
     if not remove_password and not password and not req.password_hash:
-        raise HTTPException(status_code=400, detail="Enter a password to enable protection")
+        raise HTTPException(status_code=400, detail=_("Enter a password to enable protection"))
 
     if remove_password:
         req.password_hash = None

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% import "_macros.html" as f %}
-{% block title %}My file requests — {{ app_name }}{% endblock %}
+{% block title %}{{ _('My file requests') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-  <h1 class="text-2xl font-bold">My file requests</h1>
-  <a href="/requests/new" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">New request</a>
+  <h1 class="text-2xl font-bold">{{ _('My file requests') }}</h1>
+  <a href="/requests/new" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">{{ _('New request') }}</a>
 </div>
 {{ f.share_list_controls("/requests", list_query) }}
 <div class="space-y-3">
@@ -18,17 +18,17 @@
       </div>
       {{ f.share_status_badges(
         file_request_is_active(r, now),
-        file_request_inactive_reason(r, now),
+        file_request_inactive_reason_code(r, now),
         r.password_hash,
         file_request_deletion_pending(r, purge_grace_days, now)
       ) }}
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-      {{ f.share_meta_item("Created", r.created_at|format_date) }}
-      {{ f.share_meta_item("Expires", r.expires_at|format_date) }}
-      {{ f.share_meta_item("Uploads", r.upload_count ~ " / " ~ r.max_uploads) }}
-      {{ f.share_meta_item("Files received", ns.file_count) }}
+      {{ f.share_meta_item(_("Created"), r.created_at|format_date) }}
+      {{ f.share_meta_item(_("Expires"), r.expires_at|format_date) }}
+      {{ f.share_meta_item(_("Uploads"), r.upload_count ~ " / " ~ r.max_uploads) }}
+      {{ f.share_meta_item(_("Files received"), ns.file_count) }}
     </div>
 
     {% if r.instructions %}
@@ -45,8 +45,8 @@
     {% if r.uploads %}
     <div class="mt-4 pt-4 border-t border-slate-100">
       <div class="flex items-center justify-between gap-3 mb-3">
-        <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Recent uploads</p>
-        <a href="/requests/{{ r.id }}/download" class="text-xs text-primary hover:underline font-medium">Download all (ZIP)</a>
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-400">{{ _('Recent uploads') }}</p>
+        <a href="/requests/{{ r.id }}/download" class="text-xs text-primary hover:underline font-medium">{{ _('Download all (ZIP)') }}</a>
       </div>
       <div class="space-y-2">
         {% for upload in r.uploads|sort(attribute='created_at', reverse=true) %}
@@ -62,7 +62,7 @@
             {% for file in upload.files %}
             <li class="flex items-center justify-between gap-4 text-slate-700">
               <span class="truncate">{{ file.original_name }}</span>
-              <a href="/requests/{{ r.id }}/files/{{ file.id }}" class="text-primary text-xs hover:underline shrink-0">Download</a>
+              <a href="/requests/{{ r.id }}/files/{{ file.id }}" class="text-primary text-xs hover:underline shrink-0">{{ _('Download') }}</a>
             </li>
             {% endfor %}
           </ul>
@@ -71,17 +71,17 @@
       </div>
     </div>
     {% else %}
-    <p class="text-sm text-slate-500 mt-4 pt-4 border-t border-slate-100">No uploads yet.</p>
+    <p class="text-sm text-slate-500 mt-4 pt-4 border-t border-slate-100">{{ _('No uploads yet.') }}</p>
     {% endif %}
   </article>
   {% else %}
   <div class="bg-white border border-dashed border-slate-200 rounded-xl p-10 text-center">
     {% if list_query.is_filtered %}
-    <p class="text-slate-600">No file requests match your search or filters.</p>
-    <a href="/requests" class="inline-block mt-3 text-sm text-primary hover:underline font-medium">Clear filters</a>
+    <p class="text-slate-600">{{ _('No file requests match your search or filters.') }}</p>
+    <a href="/requests" class="inline-block mt-3 text-sm text-primary hover:underline font-medium">{{ _('Clear filters') }}</a>
     {% else %}
-    <p class="text-slate-600">No file requests yet.</p>
-    <a href="/requests/new" class="inline-block mt-3 text-sm text-primary hover:underline font-medium">Create your first file request</a>
+    <p class="text-slate-600">{{ _('No file requests yet.') }}</p>
+    <a href="/requests/new" class="inline-block mt-3 text-sm text-primary hover:underline font-medium">{{ _('Create your first file request') }}</a>
     {% endif %}
   </div>
   {% endfor %}

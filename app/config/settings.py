@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     trusted_proxy_hops: int = Field(default=1, alias="TRUSTED_PROXY_HOPS")
     trusted_proxy_ips: str = Field(default="", alias="TRUSTED_PROXY_IPS")
     display_timezone: str = Field(default="UTC", alias="DISPLAY_TIMEZONE")
+    default_locale: str = Field(default="en", alias="DEFAULT_LOCALE")
 
     primary_color: str = Field(default="#2563eb", alias="PRIMARY_COLOR")
     accent_color: str = Field(default="#7c3aed", alias="ACCENT_COLOR")

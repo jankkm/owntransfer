@@ -1,34 +1,34 @@
 {% extends "base.html" %}
 {% import "_macros.html" as f %}
-{% block title %}Dashboard — {{ app_name }}{% endblock %}
+{% block title %}{{ _('Dashboard') }} — {{ app_name }}{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">Dashboard</h1>
+<h1 class="text-2xl font-bold mb-6">{{ _('Dashboard') }}</h1>
 
 <div class="grid md:grid-cols-2 gap-4 mb-6">
   <a href="/transfers/new"
      class="btn-primary text-white rounded-xl px-5 py-4 text-center shadow-sm hover:shadow-md transition-shadow">
-    <p class="font-semibold text-base">New transfer</p>
-    <p class="text-white/80 text-sm mt-1">Upload and share files with expiring links</p>
+    <p class="font-semibold text-base">{{ _('New transfer') }}</p>
+    <p class="text-white/80 text-sm mt-1">{{ _('Upload and share files with expiring links') }}</p>
   </a>
   <a href="/requests/new"
      class="btn-primary text-white rounded-xl px-5 py-4 text-center shadow-sm hover:shadow-md transition-shadow">
-    <p class="font-semibold text-base">New file request</p>
-    <p class="text-white/80 text-sm mt-1">Collect files from others via upload link</p>
+    <p class="font-semibold text-base">{{ _('New file request') }}</p>
+    <p class="text-white/80 text-sm mt-1">{{ _('Collect files from others via upload link') }}</p>
   </a>
 </div>
 
 <div class="grid grid-cols-2 gap-3 mb-6">
   <a href="/transfers" class="bg-white border border-slate-200 rounded-xl p-4 hover:border-slate-300 hover:shadow-sm transition">
-    <p class="text-xs text-slate-500 uppercase tracking-wide">Transfers</p>
+    <p class="text-xs text-slate-500 uppercase tracking-wide">{{ _('Transfers') }}</p>
     <p class="text-2xl font-bold mt-1">{{ summary.transfer_total }}</p>
-    <p class="text-xs text-slate-500 mt-1">{{ summary.active_transfers }} active</p>
-    <p class="text-xs text-primary font-medium mt-2">View all transfers →</p>
+    <p class="text-xs text-slate-500 mt-1">{{ _('%(count)s active') % {'count': summary.active_transfers} }}</p>
+    <p class="text-xs text-primary font-medium mt-2">{{ _('View all transfers →') }}</p>
   </a>
   <a href="/requests" class="bg-white border border-slate-200 rounded-xl p-4 hover:border-slate-300 hover:shadow-sm transition">
-    <p class="text-xs text-slate-500 uppercase tracking-wide">File requests</p>
+    <p class="text-xs text-slate-500 uppercase tracking-wide">{{ _('File requests') }}</p>
     <p class="text-2xl font-bold mt-1">{{ summary.request_total }}</p>
-    <p class="text-xs text-slate-500 mt-1">{{ summary.active_requests }} active</p>
-    <p class="text-xs text-primary font-medium mt-2">View all file requests →</p>
+    <p class="text-xs text-slate-500 mt-1">{{ _('%(count)s active') % {'count': summary.active_requests} }}</p>
+    <p class="text-xs text-primary font-medium mt-2">{{ _('View all file requests →') }}</p>
   </a>
 </div>
 
@@ -37,17 +37,17 @@
     <div class="flex text-sm">
       <a href="/dashboard?tab=transfers"
          class="py-3 px-2 mr-4 {% if tab == 'transfers' %}tab-active font-medium{% else %}text-slate-500 hover:text-slate-700{% endif %}">
-        Recent transfers ({{ summary.transfer_total }})
+        {{ _('Recent transfers (%(count)s)') % {'count': summary.transfer_total} }}
       </a>
       <a href="/dashboard?tab=requests"
          class="py-3 px-2 {% if tab == 'requests' %}tab-active font-medium{% else %}text-slate-500 hover:text-slate-700{% endif %}">
-        Recent file requests ({{ summary.request_total }})
+        {{ _('Recent file requests (%(count)s)') % {'count': summary.request_total} }}
       </a>
     </div>
     {% if tab == 'transfers' %}
-    <a href="/transfers" class="text-sm text-primary hover:underline py-3 pr-1">All transfers</a>
+    <a href="/transfers" class="text-sm text-primary hover:underline py-3 pr-1">{{ _('All transfers') }}</a>
     {% else %}
-    <a href="/requests" class="text-sm text-primary hover:underline py-3 pr-1">All file requests</a>
+    <a href="/requests" class="text-sm text-primary hover:underline py-3 pr-1">{{ _('All file requests') }}</a>
     {% endif %}
   </div>
 
@@ -56,14 +56,14 @@
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-slate-500 text-left">
         <tr>
-          <th class="py-3 px-4 font-medium">Title</th>
-          <th class="py-3 px-4 font-medium">Status</th>
-          <th class="py-3 px-4 font-medium">Files</th>
-          <th class="py-3 px-4 font-medium">Downloads</th>
-          <th class="py-3 px-4 font-medium">Expires</th>
-          <th class="py-3 px-4 font-medium">Created</th>
-          <th class="py-3 px-4 font-medium">Link</th>
-          <th class="py-3 px-4 font-medium">Actions</th>
+          <th class="py-3 px-4 font-medium">{{ _('Title') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Status') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Files') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Downloads') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Expires') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Created') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Link') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -73,7 +73,7 @@
           <td class="py-3 px-4">
             {{ f.share_status_badges(
               transfer_is_active(t, now),
-              transfer_inactive_reason(t, now),
+              transfer_inactive_reason_code(t, now),
               t.password_hash,
               transfer_deletion_pending(t, purge_grace_days, now)
             ) }}
@@ -88,14 +88,14 @@
                    onclick="this.select()">
           </td>
           <td class="py-3 px-4 whitespace-nowrap">
-            <a href="/transfers/{{ t.id }}/edit" class="text-primary hover:underline text-xs font-medium">Edit</a>
+            <a href="/transfers/{{ t.id }}/edit" class="text-primary hover:underline text-xs font-medium">{{ _('Edit') }}</a>
           </td>
         </tr>
         {% else %}
         <tr>
           <td colspan="8" class="py-10 px-4 text-center text-slate-500">
-            <p>No transfers yet.</p>
-            <a href="/transfers/new" class="inline-block mt-2 text-sm text-primary hover:underline font-medium">Create your first transfer</a>
+            <p>{{ _('No transfers yet.') }}</p>
+            <a href="/transfers/new" class="inline-block mt-2 text-sm text-primary hover:underline font-medium">{{ _('Create your first transfer') }}</a>
           </td>
         </tr>
         {% endfor %}
@@ -104,7 +104,7 @@
   </div>
   {% if summary.transfer_total > recent_transfers|length %}
   <div class="border-t border-slate-100 px-4 py-3 text-center">
-    <a href="/transfers" class="text-sm text-primary hover:underline font-medium">View all {{ summary.transfer_total }} transfers</a>
+    <a href="/transfers" class="text-sm text-primary hover:underline font-medium">{{ _('View all %(count)s transfers') % {'count': summary.transfer_total} }}</a>
   </div>
   {% endif %}
   {% else %}
@@ -112,13 +112,13 @@
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-slate-500 text-left">
         <tr>
-          <th class="py-3 px-4 font-medium">Title</th>
-          <th class="py-3 px-4 font-medium">Status</th>
-          <th class="py-3 px-4 font-medium">Uploads</th>
-          <th class="py-3 px-4 font-medium">Expires</th>
-          <th class="py-3 px-4 font-medium">Created</th>
-          <th class="py-3 px-4 font-medium">Link</th>
-          <th class="py-3 px-4 font-medium">Actions</th>
+          <th class="py-3 px-4 font-medium">{{ _('Title') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Status') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Uploads') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Expires') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Created') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Link') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -128,7 +128,7 @@
           <td class="py-3 px-4">
             {{ f.share_status_badges(
               file_request_is_active(r, now),
-              file_request_inactive_reason(r, now),
+              file_request_inactive_reason_code(r, now),
               r.password_hash,
               file_request_deletion_pending(r, purge_grace_days, now)
             ) }}
@@ -142,14 +142,14 @@
                    onclick="this.select()">
           </td>
           <td class="py-3 px-4 whitespace-nowrap">
-            <a href="/requests/{{ r.id }}/edit" class="text-primary hover:underline text-xs font-medium">Edit</a>
+            <a href="/requests/{{ r.id }}/edit" class="text-primary hover:underline text-xs font-medium">{{ _('Edit') }}</a>
           </td>
         </tr>
         {% else %}
         <tr>
           <td colspan="7" class="py-10 px-4 text-center text-slate-500">
-            <p>No file requests yet.</p>
-            <a href="/requests/new" class="inline-block mt-2 text-sm text-primary hover:underline font-medium">Create your first file request</a>
+            <p>{{ _('No file requests yet.') }}</p>
+            <a href="/requests/new" class="inline-block mt-2 text-sm text-primary hover:underline font-medium">{{ _('Create your first file request') }}</a>
           </td>
         </tr>
         {% endfor %}
@@ -158,7 +158,7 @@
   </div>
   {% if summary.request_total > recent_requests|length %}
   <div class="border-t border-slate-100 px-4 py-3 text-center">
-    <a href="/requests" class="text-sm text-primary hover:underline font-medium">View all {{ summary.request_total }} file requests</a>
+    <a href="/requests" class="text-sm text-primary hover:underline font-medium">{{ _('View all %(count)s file requests') % {'count': summary.request_total} }}</a>
   </div>
   {% endif %}
   {% endif %}

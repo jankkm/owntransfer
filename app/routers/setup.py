@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.passwords import hash_password
 from app.database import get_db
+from app.i18n import _
 from app.models import AppSettings, User
 from app.http.client_ip import get_client_ip
 from app.services.audit import log_audit
@@ -42,7 +43,7 @@ async def setup_post(
     existing = await db.execute(select(User).where(User.email == email.lower()))
     if existing.scalar_one_or_none():
         ctx = branding_context(app_settings)
-        ctx["error"] = "User already exists"
+        ctx["error"] = _("User already exists")
         return templates.TemplateResponse(request, "setup.html", ctx, status_code=400)
 
     user = User(

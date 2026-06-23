@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
 
+from app.i18n import _
 from app.models import AppSettings
 
 ALLOWED_LOGO_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}
@@ -43,12 +44,13 @@ def favicon_type(app_settings: AppSettings) -> str:
 
 def _validate_logo(upload: UploadFile) -> str:
     if not upload.filename:
-        raise HTTPException(status_code=400, detail="No file selected")
+        raise HTTPException(status_code=400, detail=_("No file selected"))
     ext = Path(upload.filename).suffix.lower()
     if ext not in ALLOWED_LOGO_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported logo format. Allowed: {', '.join(sorted(ALLOWED_LOGO_EXTENSIONS))}",
+            detail=_("Unsupported logo format. Allowed: %(extensions)s")
+            % {"extensions": ", ".join(sorted(ALLOWED_LOGO_EXTENSIONS))},
         )
     return ext
 
@@ -57,9 +59,9 @@ async def apply_logo_upload(app_settings: AppSettings, upload: UploadFile) -> No
     ext = _validate_logo(upload)
     content = await upload.read()
     if len(content) > MAX_LOGO_BYTES:
-        raise HTTPException(status_code=400, detail="Logo must be 2 MB or smaller")
+        raise HTTPException(status_code=400, detail=_("Logo must be 2 MB or smaller"))
     if not content:
-        raise HTTPException(status_code=400, detail="Uploaded logo file is empty")
+        raise HTTPException(status_code=400, detail=_("Uploaded logo file is empty"))
 
     content_type = _EXTENSION_TO_MIME.get(ext) or mimetypes.guess_type(upload.filename)[0]
     app_settings.logo_data = content

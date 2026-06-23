@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+from app.i18n import _, ngettext
 from app.services.datetime_display import ensure_utc, format_datetime_with_tz, utc_now
 from app.models import FileRequest, Transfer
 
@@ -84,7 +85,7 @@ EXPIRY_NOTICE_WITHIN_DAYS = 7
 def format_duration_remaining(delta: timedelta) -> str:
     total_seconds = max(0, int(delta.total_seconds()))
     if total_seconds < 60:
-        return "less than a minute"
+        return _("less than a minute")
 
     days, rem = divmod(total_seconds, 86400)
     hours, rem = divmod(rem, 3600)
@@ -92,12 +93,12 @@ def format_duration_remaining(delta: timedelta) -> str:
 
     parts: list[str] = []
     if days:
-        parts.append(f"{days} day{'s' if days != 1 else ''}")
+        parts.append(ngettext("%(count)s day", "%(count)s days", days) % {"count": days})
     if hours:
-        parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+        parts.append(ngettext("%(count)s hour", "%(count)s hours", hours) % {"count": hours})
     if not days and minutes:
-        parts.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
-    return ", ".join(parts[:2]) if parts else "less than a minute"
+        parts.append(ngettext("%(count)s minute", "%(count)s minutes", minutes) % {"count": minutes})
+    return ", ".join(parts[:2]) if parts else _("less than a minute")
 
 
 def build_share_timeline_notice(
@@ -120,7 +121,7 @@ def build_share_timeline_notice(
         remaining = purge_at - ensure_utc(now)
         return {
             "variant": "deletion",
-            "title": "Deletion pending",
+            "title": _("Deletion pending"),
             "time_left": format_duration_remaining(remaining),
             "deadline": format_datetime_with_tz(purge_at),
         }
@@ -132,7 +133,7 @@ def build_share_timeline_notice(
         return None
     return {
         "variant": "expiry",
-        "title": "Expiration pending",
+        "title": _("Expiration pending"),
         "time_left": format_duration_remaining(remaining),
         "deadline": format_datetime_with_tz(expires_at),
     }

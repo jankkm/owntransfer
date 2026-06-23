@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user
 from app.database import get_db
+from app.i18n import _
 from app.http.client_ip import get_client_ip
 from app.models import User
 from app.services.datetime_display import parse_expiry_date
@@ -99,11 +100,11 @@ async def list_transfers(
         "now": now,
     })
     if request.query_params.get("updated"):
-        ctx["success"] = "Transfer updated successfully."
+        ctx["success"] = _("Transfer updated successfully.")
     if request.query_params.get("created"):
-        ctx["success"] = "Transfer created successfully."
+        ctx["success"] = _("Transfer created successfully.")
     if request.query_params.get("deleted"):
-        ctx["success"] = "Transfer deleted."
+        ctx["success"] = _("Transfer deleted.")
     return templates.TemplateResponse(request, "transfers_list.html", ctx)
 
 
@@ -141,7 +142,7 @@ async def create_transfer_route(
         ctx = branding_context(app_settings)
         ctx.update({
             "user": user,
-            "error": "Enter a password to enable protection",
+            "error": _("Enter a password to enable protection"),
         })
         return templates.TemplateResponse(request, "transfers_new.html", ctx, status_code=400)
     scope = _transfer_staging_scope(user.id)
@@ -166,7 +167,7 @@ async def create_transfer_route(
         ctx = branding_context(app_settings)
         ctx.update({
             "user": user,
-            "error": exc.detail if isinstance(exc.detail, str) else "Could not create transfer",
+            "error": exc.detail if isinstance(exc.detail, str) else _("Could not create transfer"),
         })
         return templates.TemplateResponse(request, "transfers_new.html", ctx, status_code=exc.status_code)
     await discard_staged_paths(staged_files)
@@ -190,7 +191,7 @@ async def edit_transfer_page(
         "download_logs": download_logs,
         "has_password": bool(transfer.password_hash),
         "now": datetime.now(timezone.utc),
-        "success": "Share link regenerated. The old link no longer works."
+        "success": _("Share link regenerated. The old link no longer works.")
         if request.query_params.get("link_regenerated")
         else None,
     })

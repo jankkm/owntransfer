@@ -18,6 +18,7 @@ from app.auth.unlock_cookies import (
     set_transfer_unlock,
 )
 from app.database import get_db
+from app.i18n import _
 from app.http.client_ip import get_client_ip
 from app.limiter import limiter
 from app.models import User
@@ -73,14 +74,14 @@ def _request_staging_scope(token: str) -> str:
 
 def _require_request_unlock(request: Request, token: str, *, password_required: bool) -> None:
     if not is_request_unlocked(request, token, password_required=password_required):
-        raise HTTPException(status_code=403, detail="Unlock this file request before uploading")
+        raise HTTPException(status_code=403, detail=_("Unlock this file request before uploading"))
 
 
 def _require_download_grant(request: Request, token: str) -> None:
     if not has_transfer_download_grant(request.session, token):
         raise HTTPException(
             status_code=403,
-            detail="Open the transfer page in this browser before downloading.",
+            detail=_("Open the transfer page in this browser before downloading."),
         )
 
 
@@ -146,7 +147,7 @@ async def download_unlock(token: str, request: Request, password: str = Form("")
     ensure_transfer_accessible(transfer)
     if not verify_transfer_password(transfer, password):
         ctx = branding_context(app_settings)
-        ctx.update({"transfer": transfer, "needs_password": True, "can_download": False, "error": "Invalid password"})
+        ctx.update({"transfer": transfer, "needs_password": True, "can_download": False, "error": _("Invalid password")})
         return templates.TemplateResponse(request, "public_download.html", ctx, status_code=401)
 
     response = templates.TemplateResponse(
@@ -173,7 +174,7 @@ async def download_files_zip(token: str, request: Request, db: AsyncSession = De
         return _invalid_transfer_redirect(request)
     ensure_transfer_accessible(transfer)
     if not is_transfer_unlocked(request, token, password_required=bool(transfer.password_hash)):
-        raise HTTPException(status_code=403, detail="Password required")
+        raise HTTPException(status_code=403, detail=_("Password required"))
 
     creator = await db.get(User, transfer.created_by)
     await _handle_download_event(
@@ -209,7 +210,7 @@ async def download_single_file(
         return _invalid_transfer_redirect(request)
     ensure_transfer_accessible(transfer)
     if not is_transfer_unlocked(request, token, password_required=bool(transfer.password_hash)):
-        raise HTTPException(status_code=403, detail="Password required")
+        raise HTTPException(status_code=403, detail=_("Password required"))
     transfer_file = await get_transfer_file(transfer, file_id)
 
     creator = await db.get(User, transfer.created_by)
@@ -315,7 +316,7 @@ async def upload_handler(
     if unlock:
         if not verify_request_password(file_request, password):
             ctx = branding_context(app_settings)
-            ctx.update({"file_request": file_request, "needs_password": True, "error": "Invalid password"})
+            ctx.update({"file_request": file_request, "needs_password": True, "error": _("Invalid password")})
             return templates.TemplateResponse(request, "public_upload.html", ctx, status_code=401)
         response = templates.TemplateResponse(
             request,
@@ -352,11 +353,11 @@ async def upload_handler(
         ctx.update({
             "file_request": file_request,
             "needs_password": False,
-            "error": exc.detail if isinstance(exc.detail, str) else "Upload failed",
+            "error": exc.detail if isinstance(exc.detail, str) else _("Upload failed"),
         })
         return templates.TemplateResponse(request, "public_upload.html", ctx, status_code=exc.status_code)
     await discard_staged_paths(staged_files)
 
     ctx = branding_context(app_settings)
-    ctx.update({"file_request": file_request, "needs_password": False, "success": "Upload successful. Thank you!"})
+    ctx.update({"file_request": file_request, "needs_password": False, "success": _("Upload successful. Thank you!")})
     return templates.TemplateResponse(request, "public_upload.html", ctx)
