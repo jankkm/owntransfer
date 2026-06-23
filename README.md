@@ -263,4 +263,8 @@ The database schema is created automatically on startup via `ensure_schema` in t
 
 ## License
 
-License TBD.
+Copyright (C) 2026 Jan K.
+
+OwnTransfer is free software: you can redistribute it and/or modify it under the terms of the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).
+
+If you run a modified version of this software as a network service, you must make the corresponding source code available to users interacting with it over a network.
