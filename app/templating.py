@@ -16,7 +16,7 @@ from app.services.datetime_display import (
     max_expiry_date,
     today_date,
 )
-from app.auth.users import uses_local_auth
+from app.auth.users import uses_local_auth, user_initials
 from app.services import share_status
 from app.services.download_limits import format_download_limit, format_download_limit_short
 from app.services.share_lifecycle import (
@@ -42,6 +42,7 @@ templates.env.globals["file_request_deletion_pending"] = file_request_deletion_p
 templates.env.globals["share_timeline_notice"] = share_timeline_notice
 templates.env.filters["format_download_limit"] = format_download_limit
 templates.env.filters["format_download_limit_short"] = format_download_limit_short
+templates.env.filters["user_initials"] = user_initials
 
 
 def branding_context(app_settings: AppSettings) -> dict:

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user_optional
 from app.auth.passwords import verify_password
+from app.auth.users import oauth_display_name
 from app.auth.sessions import SESSION_COOKIE, SESSION_MAX_AGE, create_session_token
 from app.auth.totp import verify_totp
 from app.config.oauth_providers import get_oauth_providers
@@ -158,6 +159,16 @@ async def oauth_callback(provider: str, request: Request, db: AsyncSession = Dep
     if not userinfo:
         userinfo = await client.parse_id_token(request, token)
 
+    display_name = oauth_display_name(userinfo)
+    if not display_name:
+        try:
+            fetched = await client.userinfo(token=token)
+            if isinstance(fetched, dict):
+                userinfo = {**userinfo, **fetched}
+                display_name = oauth_display_name(userinfo)
+        except Exception:
+            pass
+
     email = (userinfo.get("email") or userinfo.get("preferred_username") or "").lower()
     sub = userinfo.get("sub")
     if not email or not sub:
@@ -166,11 +177,20 @@ async def oauth_callback(provider: str, request: Request, db: AsyncSession = Dep
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
     if not user:
-        user = User(email=email, oauth_provider=provider, oauth_sub=sub, is_admin=False, is_active=True)
+        user = User(
+            email=email,
+            oauth_provider=provider,
+            oauth_sub=sub,
+            display_name=display_name,
+            is_admin=False,
+            is_active=True,
+        )
         db.add(user)
     else:
         user.oauth_provider = provider
         user.oauth_sub = sub
+        if display_name:
+            user.display_name = display_name
     await db.commit()
     await db.refresh(user)
 

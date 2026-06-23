@@ -13,6 +13,7 @@ from app.http.client_ip import get_client_ip
 from app.models import User
 from app.services.datetime_display import parse_expiry_date
 from app.services.settings import get_app_settings
+from app.services.share_list import apply_transfer_list_query, parse_share_list_query
 from app.services.staging import (
     add_staged_file,
     discard_staged_paths,
@@ -74,13 +75,29 @@ async def delete_staged_transfer_file(
 @router.get("", response_class=HTMLResponse)
 async def list_transfers(
     request: Request,
+    q: str = "",
+    status: str = "all",
+    sort: str = "created_desc",
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     app_settings = await get_app_settings(db)
-    transfers = await list_user_transfers(db, user.id)
+    list_query = parse_share_list_query(q=q, status=status, sort=sort)
+    now = datetime.now(timezone.utc)
+    all_transfers = await list_user_transfers(db, user.id)
+    transfers = apply_transfer_list_query(
+        all_transfers,
+        list_query,
+        now=now,
+        purge_grace_days=app_settings.purge_grace_days,
+    )
     ctx = branding_context(app_settings)
-    ctx.update({"user": user, "transfers": transfers, "now": datetime.now(timezone.utc)})
+    ctx.update({
+        "user": user,
+        "transfers": transfers,
+        "list_query": list_query,
+        "now": now,
+    })
     if request.query_params.get("updated"):
         ctx["success"] = "Transfer updated successfully."
     if request.query_params.get("created"):

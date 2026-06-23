@@ -4,12 +4,21 @@
 {% block content %}
 <h1 class="text-2xl font-bold mb-6">Profile</h1>
 
-<div class="bg-white border rounded-xl p-6 space-y-2 mb-6">
-  <h2 class="font-semibold text-lg">Account</h2>
-  <p class="text-sm text-slate-600"><span class="text-slate-500">Email</span> · {{ user.email }}</p>
-  {% if not uses_local_auth %}
-  <p class="text-sm text-slate-500">Signed in with {{ user.oauth_provider }}. Password and two-factor settings are managed by your identity provider.</p>
-  {% endif %}
+<div class="bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
+  <div class="flex items-start gap-4">
+    <span class="profile-avatar flex items-center justify-center w-14 h-14 rounded-full text-lg font-semibold shrink-0">
+      {{ (user.display_name or user.email)|user_initials }}
+    </span>
+    <div class="min-w-0 space-y-1">
+      {% if user.display_name %}
+      <h2 class="text-lg font-semibold text-slate-900 truncate">{{ user.display_name }}</h2>
+      {% endif %}
+      <p class="text-sm text-slate-600 truncate">{{ user.email }}</p>
+      {% if not uses_local_auth %}
+      <p class="text-xs text-slate-500 pt-1">Signed in with {{ user.oauth_provider }}. Password and two-factor settings are managed by your identity provider.</p>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
 {% if uses_local_auth %}

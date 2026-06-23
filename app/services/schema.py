@@ -140,3 +140,6 @@ async def ensure_schema(conn: AsyncConnection) -> None:
         await conn.execute(
             text(f"ALTER TABLE users ADD COLUMN totp_enabled BOOLEAN NOT NULL DEFAULT {default}")
         )
+    user_cols = await conn.run_sync(_user_columns)
+    if "display_name" not in user_cols:
+        await conn.execute(text("ALTER TABLE users ADD COLUMN display_name VARCHAR(255)"))

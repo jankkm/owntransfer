@@ -17,6 +17,15 @@
     .text-primary { color: var(--primary); }
     .border-primary { border-color: var(--primary); }
     .tab-active { border-bottom: 2px solid var(--primary); color: var(--primary); }
+    .nav-link { color: #475569; transition: color 0.15s ease; }
+    .nav-link:hover { color: var(--primary); }
+    .profile-menu-btn { transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+    .profile-menu-btn:hover { background-color: #f8fafc; border-color: #cbd5e1; }
+    .profile-menu-btn[aria-expanded="true"] { background-color: #f8fafc; border-color: #cbd5e1; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
+    .profile-avatar {
+      background-color: color-mix(in srgb, var(--primary) 14%, white);
+      color: var(--primary);
+    }
     .app-logo {
       max-height: 2.5rem;
       max-width: 10rem;
@@ -52,23 +61,52 @@
         <span class="truncate">{{ app_name }}</span>
       </a>
       {% if user %}
-      <nav class="flex items-center gap-4 text-sm">
-        <a href="/dashboard" class="hover:text-primary">Dashboard</a>
-        <a href="/transfers" class="hover:text-primary">Transfers</a>
-        <a href="/requests" class="hover:text-primary">File requests</a>
-        <div class="relative" data-profile-menu>
+      <nav class="flex items-center gap-1 sm:gap-5 text-sm min-w-0">
+        <a href="/dashboard" class="nav-link px-1 py-1">Dashboard</a>
+        <a href="/transfers" class="nav-link hidden md:inline px-1 py-1">Transfers</a>
+        <a href="/requests" class="nav-link hidden md:inline px-1 py-1">File requests</a>
+        <div class="relative shrink-0 ml-1 sm:ml-2 sm:pl-4 sm:border-l sm:border-slate-200" data-profile-menu>
           <button type="button" data-profile-menu-toggle
-                  class="flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 text-slate-600 hover:text-primary hover:border-slate-300"
+                  class="profile-menu-btn flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-1 pr-2.5 sm:pr-3 py-1 max-w-[11rem] sm:max-w-[15rem]"
                   aria-label="Profile menu" aria-expanded="false" aria-haspopup="true">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true">
-              <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" />
+            <span class="profile-avatar flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold shrink-0">
+              {{ (user.display_name or user.email)|user_initials }}
+            </span>
+            <span class="hidden sm:block text-left min-w-0 flex-1">
+              <span class="block text-sm font-medium text-slate-800 truncate leading-tight">
+                {{ user.display_name or user.email.split('@')[0] }}
+              </span>
+              {% if user.display_name %}
+              <span class="block text-[11px] text-slate-500 truncate leading-tight mt-0.5">{{ user.email }}</span>
+              {% endif %}
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                 class="hidden sm:block w-4 h-4 text-slate-400 shrink-0" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.08 1.04l-4.25 4.25a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
             </svg>
           </button>
           <div data-profile-menu-panel
-               class="hidden absolute right-0 mt-2 w-44 rounded-lg border border-slate-200 bg-white py-1 shadow-lg z-50">
-            <a href="/auth/profile" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Profile</a>
-            {% if user.is_admin %}<a href="/admin" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Admin</a>{% endif %}
-            <a href="/auth/logout" class="block px-4 py-2 text-slate-600 hover:bg-slate-50">Logout</a>
+               class="hidden absolute right-0 mt-2 w-60 rounded-xl border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
+            <div class="px-4 py-3 bg-slate-50/80 border-b border-slate-100">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="profile-avatar flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold shrink-0">
+                  {{ (user.display_name or user.email)|user_initials }}
+                </span>
+                <div class="min-w-0">
+                  {% if user.display_name %}
+                  <p class="text-sm font-semibold text-slate-900 truncate">{{ user.display_name }}</p>
+                  <p class="text-xs text-slate-500 truncate mt-0.5">{{ user.email }}</p>
+                  {% else %}
+                  <p class="text-sm font-semibold text-slate-900 truncate">{{ user.email }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="py-1">
+              <a href="/auth/profile" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">Profile</a>
+              {% if user.is_admin %}<a href="/admin" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">Admin</a>{% endif %}
+              <a href="/auth/logout" class="block px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-50 border-t border-slate-100 mt-1">Logout</a>
+            </div>
           </div>
         </div>
       </nav>

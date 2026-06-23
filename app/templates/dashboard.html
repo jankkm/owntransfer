@@ -1,15 +1,166 @@
 {% extends "base.html" %}
+{% import "_macros.html" as f %}
 {% block title %}Dashboard — {{ app_name }}{% endblock %}
 {% block content %}
 <h1 class="text-2xl font-bold mb-6">Dashboard</h1>
-<div class="grid md:grid-cols-2 gap-6">
-  <a href="/transfers/new" class="block bg-white border rounded-xl p-6 hover:shadow-md transition">
-    <h2 class="text-lg font-semibold mb-2">Send files</h2>
-    <p class="text-slate-600 text-sm">Upload and share files with expiring, password-protected links.</p>
+
+<div class="grid md:grid-cols-2 gap-4 mb-6">
+  <a href="/transfers/new"
+     class="btn-primary text-white rounded-xl px-5 py-4 text-center shadow-sm hover:shadow-md transition-shadow">
+    <p class="font-semibold text-base">New transfer</p>
+    <p class="text-white/80 text-sm mt-1">Upload and share files with expiring links</p>
   </a>
-  <a href="/requests/new" class="block bg-white border rounded-xl p-6 hover:shadow-md transition">
-    <h2 class="text-lg font-semibold mb-2">Request files</h2>
-    <p class="text-slate-600 text-sm">Create a link so external users can upload files to you.</p>
+  <a href="/requests/new"
+     class="btn-primary text-white rounded-xl px-5 py-4 text-center shadow-sm hover:shadow-md transition-shadow">
+    <p class="font-semibold text-base">New file request</p>
+    <p class="text-white/80 text-sm mt-1">Collect files from others via upload link</p>
   </a>
+</div>
+
+<div class="grid grid-cols-2 gap-3 mb-6">
+  <a href="/transfers" class="bg-white border border-slate-200 rounded-xl p-4 hover:border-slate-300 hover:shadow-sm transition">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">Transfers</p>
+    <p class="text-2xl font-bold mt-1">{{ summary.transfer_total }}</p>
+    <p class="text-xs text-slate-500 mt-1">{{ summary.active_transfers }} active</p>
+    <p class="text-xs text-primary font-medium mt-2">View all transfers →</p>
+  </a>
+  <a href="/requests" class="bg-white border border-slate-200 rounded-xl p-4 hover:border-slate-300 hover:shadow-sm transition">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">File requests</p>
+    <p class="text-2xl font-bold mt-1">{{ summary.request_total }}</p>
+    <p class="text-xs text-slate-500 mt-1">{{ summary.active_requests }} active</p>
+    <p class="text-xs text-primary font-medium mt-2">View all file requests →</p>
+  </a>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+  <div class="flex flex-wrap items-center justify-between gap-3 border-b px-4">
+    <div class="flex text-sm">
+      <a href="/dashboard?tab=transfers"
+         class="py-3 px-2 mr-4 {% if tab == 'transfers' %}tab-active font-medium{% else %}text-slate-500 hover:text-slate-700{% endif %}">
+        Recent transfers ({{ summary.transfer_total }})
+      </a>
+      <a href="/dashboard?tab=requests"
+         class="py-3 px-2 {% if tab == 'requests' %}tab-active font-medium{% else %}text-slate-500 hover:text-slate-700{% endif %}">
+        Recent file requests ({{ summary.request_total }})
+      </a>
+    </div>
+    {% if tab == 'transfers' %}
+    <a href="/transfers" class="text-sm text-primary hover:underline py-3 pr-1">All transfers</a>
+    {% else %}
+    <a href="/requests" class="text-sm text-primary hover:underline py-3 pr-1">All file requests</a>
+    {% endif %}
+  </div>
+
+  {% if tab == 'transfers' %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-500 text-left">
+        <tr>
+          <th class="py-3 px-4 font-medium">Title</th>
+          <th class="py-3 px-4 font-medium">Status</th>
+          <th class="py-3 px-4 font-medium">Files</th>
+          <th class="py-3 px-4 font-medium">Downloads</th>
+          <th class="py-3 px-4 font-medium">Expires</th>
+          <th class="py-3 px-4 font-medium">Created</th>
+          <th class="py-3 px-4 font-medium">Link</th>
+          <th class="py-3 px-4 font-medium">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in recent_transfers %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50/50">
+          <td class="py-3 px-4 font-medium max-w-[12rem] truncate" title="{{ t.title }}">{{ t.title }}</td>
+          <td class="py-3 px-4">
+            {{ f.share_status_badges(
+              transfer_is_active(t, now),
+              transfer_inactive_reason(t, now),
+              t.password_hash,
+              transfer_deletion_pending(t, purge_grace_days, now)
+            ) }}
+          </td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ t.files|length }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ t.download_count|format_download_limit_short(t.max_downloads) }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ t.expires_at|format_date }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ t.created_at|format_datetime }}</td>
+          <td class="py-3 px-4">
+            <input readonly value="{{ base_url }}/d/{{ t.public_token }}"
+                   class="text-xs border border-slate-200 rounded-lg px-2 py-1 w-36 max-w-[10rem] bg-slate-50 font-mono"
+                   onclick="this.select()">
+          </td>
+          <td class="py-3 px-4 whitespace-nowrap">
+            <a href="/transfers/{{ t.id }}/edit" class="text-primary hover:underline text-xs font-medium">Edit</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="py-10 px-4 text-center text-slate-500">
+            <p>No transfers yet.</p>
+            <a href="/transfers/new" class="inline-block mt-2 text-sm text-primary hover:underline font-medium">Create your first transfer</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if summary.transfer_total > recent_transfers|length %}
+  <div class="border-t border-slate-100 px-4 py-3 text-center">
+    <a href="/transfers" class="text-sm text-primary hover:underline font-medium">View all {{ summary.transfer_total }} transfers</a>
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-500 text-left">
+        <tr>
+          <th class="py-3 px-4 font-medium">Title</th>
+          <th class="py-3 px-4 font-medium">Status</th>
+          <th class="py-3 px-4 font-medium">Uploads</th>
+          <th class="py-3 px-4 font-medium">Expires</th>
+          <th class="py-3 px-4 font-medium">Created</th>
+          <th class="py-3 px-4 font-medium">Link</th>
+          <th class="py-3 px-4 font-medium">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in recent_requests %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50/50">
+          <td class="py-3 px-4 font-medium max-w-[12rem] truncate" title="{{ r.title }}">{{ r.title }}</td>
+          <td class="py-3 px-4">
+            {{ f.share_status_badges(
+              file_request_is_active(r, now),
+              file_request_inactive_reason(r, now),
+              r.password_hash,
+              file_request_deletion_pending(r, purge_grace_days, now)
+            ) }}
+          </td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ r.upload_count }}/{{ r.max_uploads }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ r.expires_at|format_date }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ r.created_at|format_datetime }}</td>
+          <td class="py-3 px-4">
+            <input readonly value="{{ base_url }}/r/{{ r.public_token }}"
+                   class="text-xs border border-slate-200 rounded-lg px-2 py-1 w-36 max-w-[10rem] bg-slate-50 font-mono"
+                   onclick="this.select()">
+          </td>
+          <td class="py-3 px-4 whitespace-nowrap">
+            <a href="/requests/{{ r.id }}/edit" class="text-primary hover:underline text-xs font-medium">Edit</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="py-10 px-4 text-center text-slate-500">
+            <p>No file requests yet.</p>
+            <a href="/requests/new" class="inline-block mt-2 text-sm text-primary hover:underline font-medium">Create your first file request</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if summary.request_total > recent_requests|length %}
+  <div class="border-t border-slate-100 px-4 py-3 text-center">
+    <a href="/requests" class="text-sm text-primary hover:underline font-medium">View all {{ summary.request_total }} file requests</a>
+  </div>
+  {% endif %}
+  {% endif %}
 </div>
 {% endblock %}

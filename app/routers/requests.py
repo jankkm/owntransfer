@@ -25,6 +25,7 @@ from app.services.file_request import (
 )
 from app.services.datetime_display import parse_expiry_date
 from app.services.settings import get_app_settings
+from app.services.share_list import apply_request_list_query, parse_share_list_query
 from app.templating import branding_context, templates
 
 router = APIRouter(prefix="/requests", tags=["requests"])
@@ -33,13 +34,29 @@ router = APIRouter(prefix="/requests", tags=["requests"])
 @router.get("", response_class=HTMLResponse)
 async def list_requests(
     request: Request,
+    q: str = "",
+    status: str = "all",
+    sort: str = "created_desc",
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     app_settings = await get_app_settings(db)
-    requests_list = await list_user_requests(db, user.id)
+    list_query = parse_share_list_query(q=q, status=status, sort=sort)
+    now = datetime.now(timezone.utc)
+    all_requests = await list_user_requests(db, user.id)
+    requests_list = apply_request_list_query(
+        all_requests,
+        list_query,
+        now=now,
+        purge_grace_days=app_settings.purge_grace_days,
+    )
     ctx = branding_context(app_settings)
-    ctx.update({"user": user, "requests": requests_list, "now": datetime.now(timezone.utc)})
+    ctx.update({
+        "user": user,
+        "requests": requests_list,
+        "list_query": list_query,
+        "now": now,
+    })
     if request.query_params.get("updated"):
         ctx["success"] = "File request updated successfully."
     if request.query_params.get("created"):
