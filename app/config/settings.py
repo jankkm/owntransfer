@@ -7,6 +7,8 @@ from typing import Literal, Optional
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.config.env_files import resolve_env_file_variables
+
 DbBackend = Literal["sqlite", "postgres"]
 
 
@@ -95,6 +97,7 @@ class Settings(BaseSettings):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
+    resolve_env_file_variables()
     return Settings()
 
 

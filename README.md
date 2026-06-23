@@ -128,6 +128,10 @@ docker compose -f docker-compose.yml -f docker-compose.postgres.yml up --build
 
 Or set `DB_BACKEND=postgres` and `DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/db` in `.env`.
 
+### Secrets from files
+
+Any environment variable supports a `VAR_FILE` companion that points to a file whose contents become `VAR`. This works for all settings (for example `SECRET_KEY_FILE`, `POSTGRES_PASSWORD_FILE`, `ENTRA_CLIENT_SECRET_FILE`). When both are set, the file value takes precedence.
+
 ### Reverse proxy
 
 Run OwnTransfer behind nginx, Caddy, or Traefik in production. Set `BASE_URL` to your public HTTPS URL and enable `TRUST_PROXY_HEADERS=true` so security logging and rate limiting see the real client IP.
