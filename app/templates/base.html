@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   <link rel="icon" href="{{ logo_path }}" type="{{ favicon_type }}">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="/static/vendor/tailwindcss.js"></script>
+  <script src="/static/vendor/htmx.min.js"></script>
   <script>
     window.__i18n = {{ js_messages | tojson }};
     window.__ = (k, vars) => {
