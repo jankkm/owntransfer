@@ -62,12 +62,14 @@
 <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium whitespace-nowrap">{{ label }}</span>
 {% elif tone == 'orange' %}
 <span class="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-800 font-medium whitespace-nowrap">{{ label }}</span>
+{% elif tone == 'violet' %}
+<span class="text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 font-medium whitespace-nowrap">{{ label }}</span>
 {% else %}
 <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium whitespace-nowrap">{{ label }}</span>
 {% endif %}
 {%- endmacro %}
 
-{% macro share_status_badges(is_active, inactive_reason='', has_password=false, deletion_pending=false) -%}
+{% macro share_status_badges(is_active, inactive_reason='', has_password=false, deletion_pending=false, notify_on_download=false) -%}
 <div class="flex flex-wrap gap-1">
   {% if is_active %}
   {{ status_badge(_('Active'), 'green') }}
@@ -89,6 +91,9 @@
   {% endif %}
   {% if has_password %}
   {{ status_badge(_('Password'), 'blue') }}
+  {% endif %}
+  {% if notify_on_download %}
+  {{ status_badge(_('Notifications'), 'violet') }}
   {% endif %}
 </div>
 {%- endmacro %}
@@ -238,11 +243,12 @@
 <button type="button" data-show-confirm="{{ panel_id }}" class="{{ button_class }}">{{ label }}</button>
 {%- endmacro %}
 
-{% macro file_picker(upload_url, delete_url_template, require_files=true) -%}
+{% macro file_picker(upload_url, delete_url_template, require_files=true, required_files_message=none) -%}
 <div data-file-picker
      data-upload-url="{{ upload_url }}"
      data-delete-url-template="{{ delete_url_template }}"
      data-require-files="{{ 'true' if require_files else 'false' }}"
+     data-required-message="{{ required_files_message or _('Add at least one file') }}"
      class="space-y-3">
   <label class="block text-sm font-medium text-slate-700">{{ _('Files') }}</label>
   <div data-dropzone
@@ -253,5 +259,6 @@
   </div>
   <p data-empty-state class="text-xs text-slate-500">{{ _('No files added yet.') }}</p>
   <ul data-file-list class="space-y-2"></ul>
+  <p data-file-error class="hidden text-xs text-red-600"></p>
 </div>
 {%- endmacro %}

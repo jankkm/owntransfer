@@ -18,7 +18,8 @@
         transfer_is_active(t, now),
         transfer_inactive_reason_code(t, now),
         t.password_hash,
-        transfer_deletion_pending(t, purge_grace_days, now)
+        transfer_deletion_pending(t, purge_grace_days, now),
+        t.notify_on_download
       ) }}
     </div>
 

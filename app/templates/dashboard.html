@@ -8,12 +8,12 @@
   <a href="/transfers/new"
      class="btn-primary text-white rounded-xl px-5 py-4 text-center shadow-sm hover:shadow-md transition-shadow">
     <p class="font-semibold text-base">{{ _('New transfer') }}</p>
-    <p class="text-white/80 text-sm mt-1">{{ _('Upload and share files with expiring links') }}</p>
+    <p class="text-white/80 text-sm mt-1">{{ _('Upload and share files') }}</p>
   </a>
   <a href="/requests/new"
      class="btn-primary text-white rounded-xl px-5 py-4 text-center shadow-sm hover:shadow-md transition-shadow">
     <p class="font-semibold text-base">{{ _('New file request') }}</p>
-    <p class="text-white/80 text-sm mt-1">{{ _('Collect files from others via upload link') }}</p>
+    <p class="text-white/80 text-sm mt-1">{{ _('Collect files from others') }}</p>
   </a>
 </div>
 
@@ -75,7 +75,8 @@
               transfer_is_active(t, now),
               transfer_inactive_reason_code(t, now),
               t.password_hash,
-              transfer_deletion_pending(t, purge_grace_days, now)
+              transfer_deletion_pending(t, purge_grace_days, now),
+              t.notify_on_download
             ) }}
           </td>
           <td class="py-3 px-4 whitespace-nowrap">{{ t.files|length }}</td>

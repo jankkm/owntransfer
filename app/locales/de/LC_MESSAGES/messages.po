@@ -450,6 +450,10 @@ msgstr "Gesamt-Upload überschreitet die maximale Dateigröße"
 msgid "Add at least one file"
 msgstr "Mindestens eine Datei hinzufügen"
 
+#: app/static/file_picker.js
+msgid "Wait for uploads to finish"
+msgstr "Warten Sie, bis die Uploads abgeschlossen sind"
+
 #: app/services/transfer.py:159 app/services/transfer.py:370
 #: app/services/transfer.py:386
 msgid "Transfer not found"
@@ -503,6 +507,10 @@ msgstr "Upload-Limit"
 #: app/templates/public_download.html:11 app/templates/public_upload.html:14
 msgid "Password"
 msgstr "Passwort"
+
+#: app/templates/_macros.html:96
+msgid "Notifications"
+msgstr "Benachrichtigung"
 
 #: app/templates/_macros.html:105
 msgid "remaining"
@@ -1090,16 +1098,16 @@ msgid "New transfer"
 msgstr "Neue Übertragung"
 
 #: app/templates/dashboard.html:11
-msgid "Upload and share files with expiring links"
-msgstr "Dateien hochladen und mit ablaufenden Links teilen"
+msgid "Upload and share files"
+msgstr "Dateien hochladen und teilen"
 
 #: app/templates/dashboard.html:15 app/templates/requests_new.html:3
 msgid "New file request"
 msgstr "Neue Dateianfrage"
 
 #: app/templates/dashboard.html:16
-msgid "Collect files from others via upload link"
-msgstr "Dateien von anderen per Upload-Link sammeln"
+msgid "Collect files from others"
+msgstr "Dateien von anderen sammeln"
 
 #: app/templates/dashboard.html:25
 msgid "View all transfers →"

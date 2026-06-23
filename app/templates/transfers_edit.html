@@ -49,7 +49,7 @@
   <div class="grid md:grid-cols-2 gap-4">
     <div>
       {{ f.field_label(_("Expiry date"), "expires_at") }}
-      <input type="date" id="expires_at" name="expires_at" value="{{ transfer.expires_at|format_date }}"
+      <input type="date" id="expires_at" name="expires_at" value="{{ transfer.expires_at|input_date }}"
              min="{{ today_date }}" max="{{ max_expiry_date }}"
              class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
     </div>

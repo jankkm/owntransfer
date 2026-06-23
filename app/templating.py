@@ -13,6 +13,7 @@ from app.services.datetime_display import (
     format_date,
     format_datetime,
     format_datetime_with_tz,
+    input_date,
     max_expiry_date,
     today_date,
 )
@@ -43,6 +44,7 @@ templates.env.globals["locale_display_name"] = locale_display_name
 templates.env.globals["current_locale"] = get_locale
 templates.env.filters["format_datetime"] = format_datetime
 templates.env.filters["format_date"] = format_date
+templates.env.filters["input_date"] = input_date
 templates.env.filters["format_datetime_with_tz"] = format_datetime_with_tz
 templates.env.globals["user_uses_local_auth"] = uses_local_auth
 templates.env.globals["transfer_is_active"] = share_status.transfer_is_active

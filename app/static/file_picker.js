@@ -16,10 +16,23 @@
     const list = root.querySelector("[data-file-list]");
     const dropzone = root.querySelector("[data-dropzone]");
     const emptyState = root.querySelector("[data-empty-state]");
+    const errorEl = root.querySelector("[data-file-error]");
     const form = root.closest("form");
     const submitBtn = form ? form.querySelector("[data-submit-btn]") : null;
     const requireFiles = root.dataset.requireFiles === "true";
+    const requiredMessage = root.dataset.requiredMessage || t("Add at least one file");
     const files = new Map();
+
+    function setError(message) {
+      if (!errorEl) return;
+      if (!message) {
+        errorEl.textContent = "";
+        errorEl.classList.add("hidden");
+        return;
+      }
+      errorEl.textContent = message;
+      errorEl.classList.remove("hidden");
+    }
 
     function updateEmptyState() {
       if (!emptyState) return;
@@ -28,12 +41,15 @@
 
     function updateSubmitState() {
       if (!submitBtn || !requireFiles) return;
-      const hasReady = [...files.values()].some((entry) => entry.status === "done");
       const hasUploading = [...files.values()].some((entry) => entry.status === "uploading");
-      submitBtn.disabled = !hasReady || hasUploading;
+      submitBtn.disabled = hasUploading;
     }
 
     function notifyChange() {
+      const hasReady = [...files.values()].some((entry) => entry.status === "done");
+      if (hasReady) {
+        setError("");
+      }
       root.dispatchEvent(new CustomEvent("filepicker:change", { bubbles: true }));
       updateSubmitState();
     }
@@ -188,8 +204,16 @@
         if (!requireFiles) return;
         const hasReady = [...files.values()].some((entry) => entry.status === "done");
         const hasUploading = [...files.values()].some((entry) => entry.status === "uploading");
-        if (!hasReady || hasUploading) {
+        if (hasUploading) {
           event.preventDefault();
+          setError(t("Wait for uploads to finish"));
+          errorEl?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          return;
+        }
+        if (!hasReady) {
+          event.preventDefault();
+          setError(requiredMessage);
+          errorEl?.scrollIntoView({ block: "nearest", behavior: "smooth" });
         }
       });
     }

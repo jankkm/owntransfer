@@ -447,6 +447,10 @@ msgstr ""
 msgid "Add at least one file"
 msgstr ""
 
+#: app/static/file_picker.js
+msgid "Wait for uploads to finish"
+msgstr ""
+
 #: app/services/transfer.py:159 app/services/transfer.py:370
 #: app/services/transfer.py:386
 msgid "Transfer not found"
@@ -499,6 +503,10 @@ msgstr ""
 #: app/templates/admin.html:73 app/templates/login.html:32
 #: app/templates/public_download.html:11 app/templates/public_upload.html:14
 msgid "Password"
+msgstr ""
+
+#: app/templates/_macros.html:96
+msgid "Notifications"
 msgstr ""
 
 #: app/templates/_macros.html:105
@@ -1069,7 +1077,7 @@ msgid "New transfer"
 msgstr ""
 
 #: app/templates/dashboard.html:11
-msgid "Upload and share files with expiring links"
+msgid "Upload and share files"
 msgstr ""
 
 #: app/templates/dashboard.html:15 app/templates/requests_new.html:3
@@ -1077,7 +1085,7 @@ msgid "New file request"
 msgstr ""
 
 #: app/templates/dashboard.html:16
-msgid "Collect files from others via upload link"
+msgid "Collect files from others"
 msgstr ""
 
 #: app/templates/dashboard.html:25

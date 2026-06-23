@@ -52,6 +52,13 @@ def format_date(value: datetime | None, fmt: str = "medium") -> str:
     return babel_format_date(_to_local(value), format=fmt, locale=get_locale())
 
 
+def input_date(value: datetime | None) -> str:
+    """Format a datetime for HTML date inputs (YYYY-MM-DD in display timezone)."""
+    if value is None:
+        return ""
+    return _to_local(value).strftime("%Y-%m-%d")
+
+
 def format_datetime_with_tz(value: datetime | None, fmt: str = "medium") -> str:
     if value is None:
         return _(_EMPTY)

@@ -21,7 +21,7 @@ from app.database import get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
 from app.limiter import limiter
-from app.models import User
+from app.models import FileRequest, Transfer, User
 from app.services.file_request import (
     ensure_request_accessible,
     finalize_request_upload,
@@ -66,6 +66,22 @@ def _invalid_transfer_redirect(request: Request) -> RedirectResponse:
 def _invalid_request_redirect(request: Request) -> RedirectResponse:
     log_invalid_request_link(request)
     return _login_redirect()
+
+
+def _resolve_transfer(transfer: Transfer | None, request: Request) -> Transfer | RedirectResponse:
+    if transfer is None:
+        return _invalid_transfer_redirect(request)
+    if transfer.is_disabled:
+        return _login_redirect()
+    return transfer
+
+
+def _resolve_request(file_request: FileRequest | None, request: Request) -> FileRequest | RedirectResponse:
+    if file_request is None:
+        return _invalid_request_redirect(request)
+    if file_request.is_disabled:
+        return _login_redirect()
+    return file_request
 
 
 def _request_staging_scope(token: str) -> str:
@@ -120,8 +136,10 @@ async def _handle_download_event(
 async def download_page(token: str, request: Request, db: AsyncSession = Depends(get_db)):
     app_settings = await get_app_settings(db)
     transfer = await lookup_transfer_by_token(db, token)
-    if not transfer:
-        return _invalid_transfer_redirect(request)
+    resolved = _resolve_transfer(transfer, request)
+    if isinstance(resolved, RedirectResponse):
+        return resolved
+    transfer = resolved
     ensure_transfer_accessible(transfer)
 
     password_required = bool(transfer.password_hash)
@@ -142,8 +160,10 @@ async def download_page(token: str, request: Request, db: AsyncSession = Depends
 async def download_unlock(token: str, request: Request, password: str = Form(""), db: AsyncSession = Depends(get_db)):
     app_settings = await get_app_settings(db)
     transfer = await lookup_transfer_by_token(db, token)
-    if not transfer:
-        return _invalid_transfer_redirect(request)
+    resolved = _resolve_transfer(transfer, request)
+    if isinstance(resolved, RedirectResponse):
+        return resolved
+    transfer = resolved
     ensure_transfer_accessible(transfer)
     if not verify_transfer_password(transfer, password):
         ctx = branding_context(app_settings)
@@ -170,8 +190,10 @@ async def download_files_zip(token: str, request: Request, db: AsyncSession = De
     _require_download_grant(request, token)
     app_settings = await get_app_settings(db)
     transfer = await lookup_transfer_by_token(db, token)
-    if not transfer:
-        return _invalid_transfer_redirect(request)
+    resolved = _resolve_transfer(transfer, request)
+    if isinstance(resolved, RedirectResponse):
+        return resolved
+    transfer = resolved
     ensure_transfer_accessible(transfer)
     if not is_transfer_unlocked(request, token, password_required=bool(transfer.password_hash)):
         raise HTTPException(status_code=403, detail=_("Password required"))
@@ -206,8 +228,10 @@ async def download_single_file(
     _require_download_grant(request, token)
     app_settings = await get_app_settings(db)
     transfer = await lookup_transfer_by_token(db, token)
-    if not transfer:
-        return _invalid_transfer_redirect(request)
+    resolved = _resolve_transfer(transfer, request)
+    if isinstance(resolved, RedirectResponse):
+        return resolved
+    transfer = resolved
     ensure_transfer_accessible(transfer)
     if not is_transfer_unlocked(request, token, password_required=bool(transfer.password_hash)):
         raise HTTPException(status_code=403, detail=_("Password required"))
@@ -238,8 +262,10 @@ async def download_single_file(
 async def upload_page(token: str, request: Request, db: AsyncSession = Depends(get_db)):
     app_settings = await get_app_settings(db)
     file_request = await lookup_request_by_token(db, token)
-    if not file_request:
-        return _invalid_request_redirect(request)
+    resolved = _resolve_request(file_request, request)
+    if isinstance(resolved, RedirectResponse):
+        return resolved
+    file_request = resolved
     ensure_request_accessible(file_request)
     password_required = bool(file_request.password_hash)
     needs_password = password_required and not is_request_unlocked(
@@ -260,8 +286,10 @@ async def stage_request_file(
 ):
     app_settings = await get_app_settings(db)
     file_request = await lookup_request_by_token(db, token)
-    if not file_request:
-        return _invalid_request_redirect(request)
+    resolved = _resolve_request(file_request, request)
+    if isinstance(resolved, RedirectResponse):
+        return resolved
+    file_request = resolved
     ensure_request_accessible(file_request)
     _require_request_unlock(request, token, password_required=bool(file_request.password_hash))
     staged = await add_staged_file(
@@ -288,8 +316,10 @@ async def delete_staged_request_file(
     db: AsyncSession = Depends(get_db),
 ):
     file_request = await lookup_request_by_token(db, token)
-    if not file_request:
-        return _invalid_request_redirect(request)
+    resolved = _resolve_request(file_request, request)
+    if isinstance(resolved, RedirectResponse):
+        return resolved
+    file_request = resolved
     ensure_request_accessible(file_request)
     _require_request_unlock(request, token, password_required=bool(file_request.password_hash))
     await remove_staged_file(_request_staging_scope(token), file_id)
@@ -309,8 +339,10 @@ async def upload_handler(
 ):
     app_settings = await get_app_settings(db)
     file_request = await lookup_request_by_token(db, token)
-    if not file_request:
-        return _invalid_request_redirect(request)
+    resolved = _resolve_request(file_request, request)
+    if isinstance(resolved, RedirectResponse):
+        return resolved
+    file_request = resolved
     ensure_request_accessible(file_request)
 
     if unlock:

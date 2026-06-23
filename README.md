@@ -87,7 +87,7 @@ During the grace period, shares show an **Expired** and **Deletion pending** bad
 
 ### Status badges
 
-Transfers and file requests display clear status badges: Active, Expired, Disabled, download/upload limit reached, Password protected, and Deletion pending.
+Transfers and file requests display clear status badges: Active, Expired, Disabled, download/upload limit reached, Password protected, Notifications (transfers with download alerts), and Deletion pending.
 
 ## Quick start
 

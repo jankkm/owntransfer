@@ -244,6 +244,28 @@ async def test_expired_transfer_not_security_logged(client: AsyncClient, caplog:
 
 
 @pytest.mark.asyncio
+async def test_disabled_transfer_redirects_to_login(client: AsyncClient, caplog: pytest.LogCaptureFixture):
+    async with async_session() as session:
+        user = (await session.execute(select(User))).scalar_one()
+        session.add(
+            Transfer(
+                public_token="disabled-transfer-token",
+                created_by=user.id,
+                title="Disabled",
+                expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+                is_disabled=True,
+            )
+        )
+        await session.commit()
+
+    with caplog.at_level(logging.WARNING, logger=SECURITY_LOGGER_NAME):
+        response = await client.get("/d/disabled-transfer-token", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/auth/login"
+    assert not any("event=invalid_transfer_link" in record.message for record in caplog.records)
+
+
+@pytest.mark.asyncio
 async def test_disabled_request_not_security_logged(client: AsyncClient, caplog: pytest.LogCaptureFixture):
     async with async_session() as session:
         user = (await session.execute(select(User))).scalar_one()
@@ -262,5 +284,6 @@ async def test_disabled_request_not_security_logged(client: AsyncClient, caplog:
 
     with caplog.at_level(logging.WARNING, logger=SECURITY_LOGGER_NAME):
         response = await client.get("/r/disabled-request-token", follow_redirects=False)
-    assert response.status_code == 403
+    assert response.status_code == 303
+    assert response.headers["location"] == "/auth/login"
     assert not any("event=invalid_request_link" in record.message for record in caplog.records)
