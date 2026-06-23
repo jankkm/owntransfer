@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}Edit transfer — {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <a href="{{ back_url or '/transfers' }}" class="text-sm text-slate-500 hover:text-primary">&larr; Back{% if admin_edit %} to shares{% else %} to transfers{% endif %}</a>
+</div>
+<h1 class="text-2xl font-bold mb-6">Edit transfer{% if admin_edit and transfer.creator %} <span class="text-base font-normal text-slate-500">— {{ transfer.creator.email }}</span>{% endif %}</h1>
+
+{{ f.share_timeline_notice_box(transfer, purge_grace_days, now) }}
+
+<div class="bg-white border rounded-xl p-6 space-y-4 mb-4">
+  <div>
+    {{ f.field_label("Share link", "share_link") }}
+    <input readonly id="share_link" value="{{ base_url }}/d/{{ transfer.public_token }}"
+           class="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 text-sm" onclick="this.select()">
+  </div>
+  <form method="post" action="{{ regenerate_action or ('/transfers/' ~ transfer.id ~ '/regenerate-link') }}" class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+    {% if admin_edit %}
+    <input type="hidden" name="tab" value="{{ shares_tab }}">
+    {% if shares_user %}<input type="hidden" name="user" value="{{ shares_user }}">{% endif %}
+    {% endif %}
+    <p class="text-sm font-medium text-slate-700">Regenerate link</p>
+    <p class="text-xs text-slate-500 mt-1 mb-2">Issue a new URL and invalidate the current one.</p>
+    {{ f.confirm_trigger("regen-link-panel", "Regenerate link", "text-sm text-primary hover:underline") }}
+    {{ f.confirm_panel(
+      "regen-link-panel",
+      "Regenerate share link?",
+      "The current link will stop working immediately. Anyone with the old link will no longer be able to access this transfer.",
+      "Yes, regenerate link"
+    ) }}
+  </form>
+</div>
+
+<form method="post" action="{{ form_action or ('/transfers/' ~ transfer.id ~ '/edit') }}" class="bg-white border rounded-xl p-6 space-y-4 mb-4">
+  {% if admin_edit %}
+  <input type="hidden" name="tab" value="{{ shares_tab }}">
+  {% if shares_user %}<input type="hidden" name="user" value="{{ shares_user }}">{% endif %}
+  {% endif %}
+  {% set is_active = transfer_is_active(transfer, now) %}
+  {% set can_toggle = transfer_can_toggle(transfer, now) %}
+  {% set inactive_reason = transfer_inactive_reason(transfer, now) %}
+  {% set is_disabled = transfer.is_disabled %}
+  {% include "_share_active_controls.html" %}
+  {{ f.text_input("title", "Title", transfer.title, required=true) }}
+  {{ f.textarea_input("message", "Message", transfer.message or '') }}
+
+  <div class="grid md:grid-cols-2 gap-4">
+    <div>
+      {{ f.field_label("Expiry date", "expires_at") }}
+      <input type="date" id="expires_at" name="expires_at" value="{{ transfer.expires_at|format_date }}"
+             min="{{ today_date }}" max="{{ max_expiry_date }}"
+             class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
+    </div>
+    {{ f.text_input("max_downloads", "Max downloads", transfer.max_downloads, type="number", required=true, hint="Current downloads: " ~ transfer.download_count ~ ". Use 0 for unlimited.") }}
+  </div>
+
+  {{ f.password_protection_fields(has_password) }}
+
+  {{ f.checkbox_input("notify_on_download", "Notify me when someone downloads", checked=transfer.notify_on_download) }}
+
+  <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">Save changes</button>
+</form>
+
+<div class="bg-white border rounded-xl p-6 mb-4" data-transfer-files
+     data-upload-url="{{ files_upload_url or ('/transfers/' ~ transfer.id ~ '/files') }}"
+     data-delete-url-template="{{ files_delete_url_template or ('/transfers/' ~ transfer.id ~ '/files/{id}') }}">
+  <div class="flex items-center justify-between gap-3 mb-1">
+    <p class="text-sm font-medium text-slate-700" data-files-title>Files ({{ transfer.files|length }})</p>
+    <div class="flex items-center gap-3 shrink-0">
+      <button type="button" data-files-edit-btn class="text-sm text-primary hover:underline">Edit files</button>
+      <button type="button" data-files-done-btn class="text-sm text-primary hover:underline hidden">Done</button>
+    </div>
+  </div>
+  <p class="text-xs text-slate-500 mb-3">File changes are saved immediately.</p>
+  <p data-files-error class="hidden text-xs text-red-600 mb-2"></p>
+  <ul data-files-list class="text-sm space-y-2">
+    {% for file in transfer.files %}
+    <li data-file-id="{{ file.id }}" data-file-size="{{ file.size_bytes }}" data-server-file="true">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-medium truncate" data-file-name>{{ file.original_name }}</p>
+          <p class="text-xs text-slate-500" data-file-meta>{{ (file.size_bytes / 1024 / 1024)|round(2) }} MB</p>
+          <div data-file-progress class="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden hidden">
+            <div class="h-full bg-[var(--primary)] transition-all duration-150" style="width:0%"></div>
+          </div>
+          <p data-file-error class="text-xs text-red-600 mt-1 hidden"></p>
+        </div>
+        <button type="button" data-file-remove class="text-xs text-slate-500 hover:text-red-600 shrink-0 hidden">Remove</button>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  <div data-files-edit-panel class="hidden mt-3 space-y-3">
+    <div data-dropzone
+         class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-slate-400 transition-colors">
+      <p class="text-sm font-medium text-slate-700">Drop files here or click to browse</p>
+      <p class="text-xs text-slate-500 mt-1">New files are saved immediately.</p>
+      <input data-file-input type="file" multiple class="hidden">
+    </div>
+  </div>
+</div>
+
+{% if download_logs %}
+<div class="mt-6 bg-white border rounded-xl p-6">
+  <h2 class="font-semibold text-lg mb-3">Download log</h2>
+  <div class="overflow-x-auto text-sm">
+    <table class="w-full">
+      <thead>
+        <tr class="text-left border-b text-slate-500">
+          <th class="py-2 pr-4">Date &amp; time</th>
+          <th class="py-2 pr-4">IP address</th>
+          <th class="py-2 pr-4">Type</th>
+          <th class="py-2">File</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in download_logs %}
+        <tr class="border-b">
+          <td class="py-2 pr-4 whitespace-nowrap">{{ log.created_at|format_datetime }}</td>
+          <td class="py-2 pr-4">{{ log.ip_address or '—' }}</td>
+          <td class="py-2 pr-4">{{ log.download_type }}</td>
+          <td class="py-2">{{ log.file_name or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="mt-6 bg-white border rounded-xl p-6">
+  <h2 class="font-semibold text-lg mb-1">Download log</h2>
+  <p class="text-sm text-slate-500">No downloads recorded yet.</p>
+</div>
+{% endif %}
+
+{% if admin_edit %}
+<form method="post" action="/admin/shares/transfers/{{ transfer.id }}/delete" class="mt-4 bg-white border border-red-100 rounded-xl p-6">
+  <input type="hidden" name="tab" value="{{ shares_tab }}">
+  {% if shares_user %}<input type="hidden" name="user" value="{{ shares_user }}">{% endif %}
+  <p class="text-sm font-medium text-slate-700 mb-1">Danger zone</p>
+  <p class="text-xs text-slate-500 mb-3">Permanently delete this transfer and all uploaded files.</p>
+  {{ f.confirm_trigger("delete-transfer-panel", "Delete transfer", "text-red-600 text-sm hover:underline") }}
+  {{ f.confirm_panel(
+    "delete-transfer-panel",
+    "Delete this transfer?",
+    "All files will be permanently removed. This cannot be undone.",
+    "Yes, delete transfer",
+    variant="red"
+  ) }}
+</form>
+{% else %}
+<form method="post" action="/transfers/{{ transfer.id }}/delete" class="mt-4 bg-white border border-red-100 rounded-xl p-6">
+  <p class="text-sm font-medium text-slate-700 mb-1">Danger zone</p>
+  <p class="text-xs text-slate-500 mb-3">Permanently delete this transfer and all uploaded files.</p>
+  {{ f.confirm_trigger("delete-transfer-panel", "Delete transfer", "text-red-600 text-sm hover:underline") }}
+  {{ f.confirm_panel(
+    "delete-transfer-panel",
+    "Delete this transfer?",
+    "All files will be permanently removed. This cannot be undone.",
+    "Yes, delete transfer",
+    variant="red"
+  ) }}
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/password_toggle.js"></script>
+<script src="/static/inline_remove_confirm.js"></script>
+<script src="/static/transfer_files.js"></script>
+{% endblock %}

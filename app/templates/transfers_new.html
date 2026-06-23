@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}New transfer — {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Send files</h1>
+<form method="post" class="bg-white border rounded-xl p-6 space-y-4">
+  {{ f.text_input("title", "Title", required=true) }}
+  {{ f.textarea_input("message", "Message (optional)") }}
+  {{ f.file_picker("/transfers/staging", "/transfers/staging/{id}") }}
+  {% if allow_user_share_emails %}
+  {{ f.text_input("recipient_emails", "Recipient emails", hint="Comma-separated. Recipients will receive the download link by email.") }}
+  {% endif %}
+  <div class="grid md:grid-cols-2 gap-4">
+    <div>
+      {{ f.field_label("Expiry date", "expires_at") }}
+      <input type="date" id="expires_at" name="expires_at" value="{{ default_expiry_date }}" min="{{ today_date }}" max="{{ max_expiry_date }}"
+             class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
+    </div>
+    <div>
+      {{ f.field_label("Max downloads", "max_downloads") }}
+      <input type="number" id="max_downloads" name="max_downloads" value="{{ max_downloads_default }}" min="0"
+             class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
+      <p class="text-xs text-slate-500 mt-1">Use 0 for unlimited downloads.</p>
+    </div>
+  </div>
+  {{ f.password_protection_fields(false) }}
+  {{ f.checkbox_input("notify_on_download", "Notify me when someone downloads") }}
+  <button type="submit" data-submit-btn class="btn-primary text-white rounded-lg px-4 py-2" disabled>Create transfer</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/password_toggle.js"></script>
+<script src="/static/file_picker.js"></script>
+{% endblock %}

@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}Shares &amp; requests — Admin — {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">Admin</h1>
+{% include "_admin_nav.html" %}
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="bg-white border rounded-xl p-4">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">Transfers</p>
+    <p class="text-2xl font-bold mt-1">{{ summary.transfer_total }}</p>
+    <p class="text-xs text-slate-500 mt-1">{{ summary.active_transfers }} active</p>
+  </div>
+  <div class="bg-white border rounded-xl p-4">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">File requests</p>
+    <p class="text-2xl font-bold mt-1">{{ summary.request_total }}</p>
+    <p class="text-xs text-slate-500 mt-1">{{ summary.active_requests }} active</p>
+  </div>
+  <div class="bg-white border rounded-xl p-4 md:col-span-2">
+    <form method="get" class="flex flex-col sm:flex-row gap-3 items-end h-full">
+      <input type="hidden" name="tab" value="{{ tab }}">
+      <div class="flex-1 w-full">
+        <label for="user" class="block text-xs font-medium text-slate-700 mb-1">Filter by user</label>
+        <select id="user" name="user" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">All users</option>
+          {% for u in filter_users %}
+          <option value="{{ u.id }}" {% if filter_user_id == u.id|string %}selected{% endif %}>{{ u.email }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm shrink-0">Apply</button>
+      {% if filter_user_id %}
+      <a href="/admin/shares?tab={{ tab }}" class="text-sm text-slate-500 hover:text-primary py-2 shrink-0">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="bg-white border rounded-xl overflow-hidden">
+  <div class="flex border-b text-sm px-4">
+    <a href="/admin/shares?tab=transfers{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
+       class="py-3 px-2 mr-4 {% if tab == 'transfers' %}tab-active font-medium{% else %}text-slate-500{% endif %}">
+      Transfers ({{ transfers|length }})
+    </a>
+    <a href="/admin/shares?tab=requests{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
+       class="py-3 px-2 {% if tab == 'requests' %}tab-active font-medium{% else %}text-slate-500{% endif %}">
+      File requests ({{ file_requests|length }})
+    </a>
+  </div>
+
+  {% if tab == 'transfers' %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-500 text-left">
+        <tr>
+          <th class="py-3 px-4 font-medium">Title</th>
+          <th class="py-3 px-4 font-medium">Status</th>
+          <th class="py-3 px-4 font-medium">Owner</th>
+          <th class="py-3 px-4 font-medium">Files</th>
+          <th class="py-3 px-4 font-medium">Downloads</th>
+          <th class="py-3 px-4 font-medium">Expires</th>
+          <th class="py-3 px-4 font-medium">Created</th>
+          <th class="py-3 px-4 font-medium">Link</th>
+          <th class="py-3 px-4 font-medium">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transfers %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50/50">
+          <td class="py-3 px-4 font-medium">{{ t.title }}</td>
+          <td class="py-3 px-4">
+            {{ f.share_status_badges(
+              transfer_is_active(t, now),
+              transfer_inactive_reason(t, now),
+              t.password_hash,
+              transfer_deletion_pending(t, purge_grace_days, now)
+            ) }}
+          </td>
+          <td class="py-3 px-4">
+            <a href="/admin/shares?tab=transfers&user={{ t.created_by }}" class="text-primary hover:underline">
+              {{ t.creator.email if t.creator else '—' }}
+            </a>
+          </td>
+          <td class="py-3 px-4">{{ t.files|length }}</td>
+          <td class="py-3 px-4">{{ t.download_count|format_download_limit_short(t.max_downloads) }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ t.expires_at|format_date }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ t.created_at|format_datetime }}</td>
+          <td class="py-3 px-4">
+            <input readonly value="{{ base_url }}/d/{{ t.public_token }}"
+                   class="text-xs border rounded px-2 py-1 w-36 max-w-[10rem]" onclick="this.select()">
+          </td>
+          <td class="py-3 px-4 whitespace-nowrap">
+            <div class="flex flex-wrap items-center gap-2">
+              <a href="/admin/shares/transfers/{{ t.id }}/edit?tab={{ tab }}{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
+                 class="text-primary hover:underline text-xs">Edit</a>
+              <form method="post" action="/admin/shares/transfers/{{ t.id }}/delete" class="inline">
+                <input type="hidden" name="tab" value="{{ tab }}">
+                {% if filter_user_id %}<input type="hidden" name="user" value="{{ filter_user_id }}">{% endif %}
+                {{ f.confirm_trigger("delete-transfer-" ~ loop.index, "Delete", "text-red-600 hover:underline text-xs") }}
+                {{ f.confirm_panel(
+                  "delete-transfer-" ~ loop.index,
+                  "Delete this transfer?",
+                  "All files will be permanently removed. This cannot be undone.",
+                  "Yes, delete",
+                  variant="red"
+                ) }}
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="py-8 px-4 text-center text-slate-500">No transfers found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-500 text-left">
+        <tr>
+          <th class="py-3 px-4 font-medium">Title</th>
+          <th class="py-3 px-4 font-medium">Status</th>
+          <th class="py-3 px-4 font-medium">Owner</th>
+          <th class="py-3 px-4 font-medium">Uploads</th>
+          <th class="py-3 px-4 font-medium">Expires</th>
+          <th class="py-3 px-4 font-medium">Created</th>
+          <th class="py-3 px-4 font-medium">Link</th>
+          <th class="py-3 px-4 font-medium">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in file_requests %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50/50">
+          <td class="py-3 px-4 font-medium">{{ r.title }}</td>
+          <td class="py-3 px-4">
+            {{ f.share_status_badges(
+              file_request_is_active(r, now),
+              file_request_inactive_reason(r, now),
+              r.password_hash,
+              file_request_deletion_pending(r, purge_grace_days, now)
+            ) }}
+          </td>
+          <td class="py-3 px-4">
+            <a href="/admin/shares?tab=requests&user={{ r.created_by }}" class="text-primary hover:underline">
+              {{ r.creator.email if r.creator else '—' }}
+            </a>
+          </td>
+          <td class="py-3 px-4">{{ r.upload_count }}/{{ r.max_uploads }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ r.expires_at|format_date }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ r.created_at|format_datetime }}</td>
+          <td class="py-3 px-4">
+            <input readonly value="{{ base_url }}/r/{{ r.public_token }}"
+                   class="text-xs border rounded px-2 py-1 w-36 max-w-[10rem]" onclick="this.select()">
+          </td>
+          <td class="py-3 px-4 whitespace-nowrap">
+            <div class="flex flex-wrap items-center gap-2">
+              <a href="/admin/shares/requests/{{ r.id }}/edit?tab={{ tab }}{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
+                 class="text-primary hover:underline text-xs">Edit</a>
+              <form method="post" action="/admin/shares/requests/{{ r.id }}/delete" class="inline">
+                <input type="hidden" name="tab" value="{{ tab }}">
+                {% if filter_user_id %}<input type="hidden" name="user" value="{{ filter_user_id }}">{% endif %}
+                {{ f.confirm_trigger("delete-request-" ~ loop.index, "Delete", "text-red-600 hover:underline text-xs") }}
+                {{ f.confirm_panel(
+                  "delete-request-" ~ loop.index,
+                  "Delete this file request?",
+                  "All uploads will be permanently removed. This cannot be undone.",
+                  "Yes, delete",
+                  variant="red"
+                ) }}
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="py-8 px-4 text-center text-slate-500">No file requests found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

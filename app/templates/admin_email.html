@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}Email templates — Admin — {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">Admin</h1>
+{% set active = 'email' %}
+{% include "_admin_nav.html" %}
+
+<form method="post" action="/admin/email" class="space-y-6">
+  {% for key, label, variables in template_sections %}
+  <div class="bg-white border rounded-xl p-6 space-y-3">
+    <h2 class="font-semibold text-lg">{{ label }}</h2>
+    <p class="text-xs text-slate-500">Jinja2 variables: {{ variables|join(', ') }}</p>
+    {{ f.text_input("subj_" ~ key, "Subject", subjects[key]) }}
+    {{ f.textarea_input("tpl_" ~ key, "Body (HTML)", templates[key], rows=8) }}
+  </div>
+  {% endfor %}
+  <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">Save email templates</button>
+</form>
+{% endblock %}

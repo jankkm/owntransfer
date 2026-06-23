@@ -1,0 +1,180 @@
+{% macro field_label(label, for_id='') -%}
+<label {% if for_id %}for="{{ for_id }}"{% endif %} class="block text-sm font-medium text-slate-700 mb-1">{{ label }}</label>
+{%- endmacro %}
+
+{% macro text_input(name, label, value='', type='text', required=false, hint='', placeholder='') -%}
+<div>
+  {{ field_label(label, name) }}
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}" placeholder="{{ placeholder }}"
+         class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+         {% if required %}required{% endif %}>
+  {% if hint %}<p class="text-xs text-slate-500 mt-1">{{ hint }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro textarea_input(name, label, value='', rows=3, required=false, hint='') -%}
+<div>
+  {{ field_label(label, name) }}
+  <textarea id="{{ name }}" name="{{ name }}" rows="{{ rows }}"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            {% if required %}required{% endif %}>{{ value }}</textarea>
+  {% if hint %}<p class="text-xs text-slate-500 mt-1">{{ hint }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro color_input(name, label, value='#2563eb') -%}
+<div>
+  {{ field_label(label, name) }}
+  <div class="flex gap-2 items-center">
+    <input type="color" id="{{ name }}_picker" value="{{ value }}"
+           class="h-10 w-14 border border-slate-300 rounded cursor-pointer p-1"
+           oninput="document.getElementById('{{ name }}').value = this.value">
+    <input type="text" id="{{ name }}" name="{{ name }}" value="{{ value }}" pattern="^#[0-9A-Fa-f]{6}$"
+           class="flex-1 border border-slate-300 rounded-lg px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+           oninput="if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) document.getElementById('{{ name }}_picker').value = this.value">
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro checkbox_input(name, label, checked=false, value='1', disabled=false) -%}
+<label class="flex items-center gap-2 text-sm text-slate-700 {% if not disabled %}cursor-pointer{% else %}opacity-60{% endif %}">
+  <input type="checkbox" name="{{ name }}" value="{{ value }}" class="rounded border-slate-300" {% if checked %}checked{% endif %} {% if disabled %}disabled{% endif %}>
+  <span>{{ label }}</span>
+</label>
+{%- endmacro %}
+
+{% macro share_active_badge(is_active, inactive_reason='') -%}
+{% if is_active %}
+<span class="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">Active</span>
+{% else %}
+<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium"{% if inactive_reason %} title="{{ inactive_reason }}"{% endif %}>Inactive</span>
+{% endif %}
+{%- endmacro %}
+
+{% macro status_badge(label, tone='slate') -%}
+{% if tone == 'green' %}
+<span class="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium whitespace-nowrap">{{ label }}</span>
+{% elif tone == 'amber' %}
+<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 font-medium whitespace-nowrap">{{ label }}</span>
+{% elif tone == 'red' %}
+<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-700 font-medium whitespace-nowrap">{{ label }}</span>
+{% elif tone == 'blue' %}
+<span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium whitespace-nowrap">{{ label }}</span>
+{% elif tone == 'orange' %}
+<span class="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-800 font-medium whitespace-nowrap">{{ label }}</span>
+{% else %}
+<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium whitespace-nowrap">{{ label }}</span>
+{% endif %}
+{%- endmacro %}
+
+{% macro share_status_badges(is_active, inactive_reason='', has_password=false, deletion_pending=false) -%}
+<div class="flex flex-wrap gap-1">
+  {% if is_active %}
+  {{ status_badge('Active', 'green') }}
+  {% elif inactive_reason == 'Expired' %}
+  {{ status_badge('Expired', 'red') }}
+  {% elif inactive_reason == 'Link disabled' %}
+  {{ status_badge('Disabled', 'slate') }}
+  {% elif inactive_reason == 'Download limit reached' %}
+  {{ status_badge('Download limit', 'slate') }}
+  {% elif inactive_reason == 'Upload limit reached' %}
+  {{ status_badge('Upload limit', 'slate') }}
+  {% elif inactive_reason %}
+  {{ status_badge('Inactive', 'slate') }}
+  {% else %}
+  {{ status_badge('Inactive', 'slate') }}
+  {% endif %}
+  {% if deletion_pending %}
+  {{ status_badge('Deletion pending', 'orange') }}
+  {% endif %}
+  {% if has_password %}
+  {{ status_badge('Password', 'blue') }}
+  {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro share_timeline_notice_box(item, purge_grace_days, now) -%}
+{% set notice = share_timeline_notice(item, purge_grace_days, now) %}
+{% if notice %}
+<div class="rounded-xl border p-4 mb-4
+  {% if notice.variant == 'deletion' %}border-orange-200 bg-orange-50{% else %}border-amber-200 bg-amber-50{% endif %}">
+  <p class="font-semibold {% if notice.variant == 'deletion' %}text-orange-900{% else %}text-amber-900{% endif %}">
+    {{ notice.title }}
+  </p>
+  <p class="text-sm mt-1 {% if notice.variant == 'deletion' %}text-orange-800{% else %}text-amber-800{% endif %}">
+  <span class="font-medium">{{ notice.time_left }}</span> remaining
+    {% if notice.variant == 'deletion' %}
+    — permanently deleted on {{ notice.deadline }}
+    {% else %}
+    — expires on {{ notice.deadline }}
+    {% endif %}
+  </p>
+  {% if notice.variant == 'deletion' %}
+  <p class="text-xs mt-2 text-orange-700">Extend the expiry date below to keep this share.</p>
+  {% endif %}
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro password_protection_fields(has_password=false) -%}
+<div class="space-y-3" data-password-toggle data-has-password="{{ 'true' if has_password else 'false' }}">
+  {{ checkbox_input("use_password", "Password protection", checked=has_password) }}
+  <div data-password-field class="{% if not has_password %}hidden{% endif %}">
+    {% if has_password %}
+    {{ text_input("password", "New password", type="password", hint="Leave blank to keep the current password") }}
+    {% else %}
+    {{ text_input("password", "Password", type="password", hint="Required when password protection is enabled") }}
+    {% endif %}
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro file_input(name, label, multiple=false, required=false, hint='', accept='') -%}
+<div>
+  {{ field_label(label, name) }}
+  <input id="{{ name }}" name="{{ name }}" type="file"{% if accept %} accept="{{ accept }}"{% endif %}
+         class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2"
+         {% if multiple %}multiple{% endif %} {% if required %}required{% endif %}>
+  {% if hint %}<p class="text-xs text-slate-500 mt-1">{{ hint }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro confirm_panel(panel_id, title, message, confirm_text='Confirm', cancel_text='Cancel', variant='amber') -%}
+<div id="{{ panel_id }}" class="hidden mt-3 rounded-lg border p-4 text-sm
+  {% if variant == 'red' %}border-red-200 bg-red-50{% else %}border-amber-200 bg-amber-50{% endif %}">
+  <p class="font-medium mb-1 {% if variant == 'red' %}text-red-900{% else %}text-amber-900{% endif %}">{{ title }}</p>
+  <p class="mb-3 {% if variant == 'red' %}text-red-800{% else %}text-amber-800{% endif %}">{{ message }}</p>
+  <div class="flex gap-2">
+    <button type="submit" data-confirm-for="{{ panel_id }}"
+            class="rounded-lg px-3 py-1.5 text-white text-sm {% if variant == 'red' %}bg-red-600 hover:bg-red-700{% else %}bg-amber-700 hover:bg-amber-800{% endif %}">
+      {{ confirm_text }}
+    </button>
+    <button type="button" data-cancel-for="{{ panel_id }}"
+            class="rounded-lg px-3 py-1.5 border border-slate-300 bg-white text-sm hover:bg-slate-50">
+      {{ cancel_text }}
+    </button>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro confirm_trigger(panel_id, label, button_class='') -%}
+<button type="button" data-show-confirm="{{ panel_id }}" class="{{ button_class }}">{{ label }}</button>
+{%- endmacro %}
+
+{% macro file_picker(upload_url, delete_url_template, require_files=true) -%}
+<div data-file-picker
+     data-upload-url="{{ upload_url }}"
+     data-delete-url-template="{{ delete_url_template }}"
+     data-require-files="{{ 'true' if require_files else 'false' }}"
+     class="space-y-3">
+  <label class="block text-sm font-medium text-slate-700">Files</label>
+  <div data-dropzone
+       class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-slate-400 transition-colors">
+    <p class="text-sm font-medium text-slate-700">Drop files here or click to browse</p>
+    <p class="text-xs text-slate-500 mt-1">Files upload automatically. You can remove them before submitting.</p>
+    <input data-file-input type="file" multiple class="hidden">
+  </div>
+  <p data-empty-state class="text-xs text-slate-500">No files added yet.</p>
+  <ul data-file-list class="space-y-2"></ul>
+</div>
+{%- endmacro %}

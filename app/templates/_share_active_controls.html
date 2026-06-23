@@ -1,0 +1,11 @@
+{% import "_macros.html" as f %}
+<div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 space-y-2">
+  <div>{{ f.share_active_badge(is_active, inactive_reason) }}</div>
+  {% if can_toggle or is_disabled or inactive_reason == 'Expired' or admin_edit %}
+  <input type="hidden" name="has_enabled_field" value="1">
+  {{ f.checkbox_input("enabled", "Link is active", checked=not is_disabled) }}
+  <p class="text-xs text-slate-500">Uncheck to temporarily disable this link without deleting it.</p>
+  {% elif inactive_reason %}
+  <p class="text-xs text-slate-500">{{ inactive_reason }}</p>
+  {% endif %}
+</div>

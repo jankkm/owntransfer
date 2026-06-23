@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}Edit file request — {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <a href="{{ back_url or '/requests' }}" class="text-sm text-slate-500 hover:text-primary">&larr; Back{% if admin_edit %} to shares{% else %} to file requests{% endif %}</a>
+</div>
+<h1 class="text-2xl font-bold mb-6">Edit file request{% if admin_edit and file_request.creator %} <span class="text-base font-normal text-slate-500">— {{ file_request.creator.email }}</span>{% endif %}</h1>
+
+{{ f.share_timeline_notice_box(file_request, purge_grace_days, now) }}
+
+<div class="bg-white border rounded-xl p-6 space-y-4 mb-4">
+  <div>
+    {{ f.field_label("Share link", "share_link") }}
+    <input readonly id="share_link" value="{{ base_url }}/r/{{ file_request.public_token }}"
+           class="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 text-sm" onclick="this.select()">
+  </div>
+  <form method="post" action="{{ regenerate_action or ('/requests/' ~ file_request.id ~ '/regenerate-link') }}" class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+    {% if admin_edit %}
+    <input type="hidden" name="tab" value="{{ shares_tab }}">
+    {% if shares_user %}<input type="hidden" name="user" value="{{ shares_user }}">{% endif %}
+    {% endif %}
+    <p class="text-sm font-medium text-slate-700">Regenerate link</p>
+    <p class="text-xs text-slate-500 mt-1 mb-2">Issue a new URL and invalidate the current one.</p>
+    {{ f.confirm_trigger("regen-link-panel", "Regenerate link", "text-sm text-primary hover:underline") }}
+    {{ f.confirm_panel(
+      "regen-link-panel",
+      "Regenerate share link?",
+      "The current link will stop working immediately. Anyone with the old link will no longer be able to upload files.",
+      "Yes, regenerate link"
+    ) }}
+  </form>
+</div>
+
+<form method="post" action="{{ form_action or ('/requests/' ~ file_request.id ~ '/edit') }}" class="bg-white border rounded-xl p-6 space-y-4 mb-4">
+  {% if admin_edit %}
+  <input type="hidden" name="tab" value="{{ shares_tab }}">
+  {% if shares_user %}<input type="hidden" name="user" value="{{ shares_user }}">{% endif %}
+  {% endif %}
+  {% set is_active = file_request_is_active(file_request, now) %}
+  {% set can_toggle = file_request_can_toggle(file_request, now) %}
+  {% set inactive_reason = file_request_inactive_reason(file_request, now) %}
+  {% set is_disabled = file_request.is_disabled %}
+  {% include "_share_active_controls.html" %}
+  {{ f.text_input("title", "Title", file_request.title, required=true) }}
+  {{ f.textarea_input("instructions", "Instructions for uploader", file_request.instructions or '') }}
+
+  <div class="grid md:grid-cols-2 gap-4">
+    <div>
+      {{ f.field_label("Expiry date", "expires_at") }}
+      <input type="date" id="expires_at" name="expires_at" value="{{ file_request.expires_at|format_date }}"
+             min="{{ today_date }}" max="{{ max_expiry_date }}"
+             class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
+    </div>
+    {{ f.text_input("max_uploads", "Max uploads", file_request.max_uploads, type="number", required=true, hint="Current uploads: " ~ file_request.upload_count) }}
+  </div>
+
+  {{ f.text_input("max_total_mb", "Max total size per upload (MB)", (file_request.max_total_bytes / 1024 / 1024)|int, type="number", required=true) }}
+
+  {{ f.password_protection_fields(has_password) }}
+
+  <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">Save changes</button>
+</form>
+
+<div class="bg-white border rounded-xl p-6 mb-4" data-request-files
+     data-delete-url-template="{{ files_delete_url_template or ('/requests/' ~ file_request.id ~ '/files/{id}') }}">
+  <div class="flex items-center justify-between gap-3 mb-1">
+    <p class="text-sm font-medium text-slate-700" data-files-title>
+      Received uploads ({{ file_request.uploads|length }}) ·
+      {% set ns = namespace(count=0) %}
+      {% for upload in file_request.uploads %}{% set ns.count = ns.count + upload.files|length %}{% endfor %}
+      {{ ns.count }} file{% if ns.count != 1 %}s{% endif %}
+    </p>
+    <div class="flex items-center gap-3 shrink-0">
+      {% if file_request.uploads %}
+      <a href="/requests/{{ file_request.id }}/download"
+         class="text-sm text-primary hover:underline"
+         data-files-download-all>Download all (ZIP)</a>
+      <button type="button" data-files-edit-btn class="text-sm text-primary hover:underline">Edit files</button>
+      <button type="button" data-files-done-btn class="text-sm text-primary hover:underline hidden">Done</button>
+      {% endif %}
+    </div>
+  </div>
+  <p class="text-xs text-slate-500 mb-3">File removals are saved immediately.</p>
+  <p data-files-error class="hidden text-xs text-red-600 mb-2"></p>
+  <p data-files-empty class="text-sm text-slate-500 {% if file_request.uploads %}hidden{% endif %}">No uploads yet.</p>
+  <div data-files-list class="space-y-3">
+    {% for upload in file_request.uploads|sort(attribute='created_at', reverse=true) %}
+    <div data-upload-id="{{ upload.id }}" class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <p class="text-xs text-slate-500 mb-2">
+        {{ upload.created_at|format_datetime }}
+        {% if upload.uploader_name %}· {{ upload.uploader_name }}{% endif %}
+        {% if upload.uploader_email %}· {{ upload.uploader_email }}{% endif %}
+        {% if upload.ip_address %}· IP {{ upload.ip_address }}{% endif %}
+      </p>
+      <ul class="space-y-2">
+        {% for file in upload.files %}
+        <li data-file-id="{{ file.id }}" data-file-size="{{ file.size_bytes }}" class="text-sm text-slate-600">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <p class="font-medium truncate" data-file-name>{{ file.original_name }}</p>
+              <p class="text-xs text-slate-500" data-file-meta>{{ (file.size_bytes / 1024 / 1024)|round(2) }} MB</p>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <a href="{{ files_download_url_prefix or ('/requests/' ~ file_request.id ~ '/files/') }}{{ file.id }}"
+                 data-file-download
+                 class="text-primary text-xs hover:underline">Download</a>
+              <button type="button" data-file-remove class="text-xs text-slate-500 hover:text-red-600 hidden">Remove</button>
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if admin_edit %}
+<form method="post" action="/admin/shares/requests/{{ file_request.id }}/delete" class="mt-4 bg-white border border-red-100 rounded-xl p-6">
+  <input type="hidden" name="tab" value="{{ shares_tab }}">
+  {% if shares_user %}<input type="hidden" name="user" value="{{ shares_user }}">{% endif %}
+  <p class="text-sm font-medium text-slate-700 mb-1">Danger zone</p>
+  <p class="text-xs text-slate-500 mb-3">Permanently delete this file request and all uploaded files.</p>
+  {{ f.confirm_trigger("delete-request-panel", "Delete file request", "text-red-600 text-sm hover:underline") }}
+  {{ f.confirm_panel(
+    "delete-request-panel",
+    "Delete this file request?",
+    "All uploads will be permanently removed. This cannot be undone.",
+    "Yes, delete file request",
+    variant="red"
+  ) }}
+</form>
+{% else %}
+<form method="post" action="/requests/{{ file_request.id }}/delete" class="mt-4 bg-white border border-red-100 rounded-xl p-6">
+  <p class="text-sm font-medium text-slate-700 mb-1">Danger zone</p>
+  <p class="text-xs text-slate-500 mb-3">Permanently delete this file request and all uploaded files.</p>
+  {{ f.confirm_trigger("delete-request-panel", "Delete file request", "text-red-600 text-sm hover:underline") }}
+  {{ f.confirm_panel(
+    "delete-request-panel",
+    "Delete this file request?",
+    "All uploads will be permanently removed. This cannot be undone.",
+    "Yes, delete file request",
+    variant="red"
+  ) }}
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/password_toggle.js"></script>
+<script src="/static/inline_remove_confirm.js"></script>
+<script src="/static/request_files.js"></script>
+{% endblock %}

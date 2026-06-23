@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - DB_BACKEND=${DB_BACKEND:-sqlite}
+      - SQLITE_PATH=/data/owntransfer.db
+      - SECRET_KEY=change-me
+      - UPLOAD_DIR=/data/uploads
+      - BASE_URL=${BASE_URL:-http://localhost:8080}
+    volumes:
+      - data:/data
+
+volumes:
+  data:

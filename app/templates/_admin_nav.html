@@ -1,0 +1,14 @@
+<nav class="flex gap-6 border-b border-slate-200 mb-6 text-sm">
+  <a href="/admin"
+     class="pb-3 {% if active == 'settings' %}tab-active font-medium{% else %}text-slate-500 hover:text-slate-700{% endif %}">
+    Settings
+  </a>
+  <a href="/admin/shares"
+     class="pb-3 {% if active == 'shares' %}tab-active font-medium{% else %}text-slate-500 hover:text-slate-700{% endif %}">
+    Shares &amp; requests
+  </a>
+  <a href="/admin/email"
+     class="pb-3 {% if active == 'email' %}tab-active font-medium{% else %}text-slate-500 hover:text-slate-700{% endif %}">
+    Email templates
+  </a>
+</nav>

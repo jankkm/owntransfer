@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}My transfers — {{ app_name }}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">My transfers</h1>
+  <a href="/transfers/new" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">New transfer</a>
+</div>
+<div class="space-y-4">
+  {% for t in transfers %}
+  <div class="bg-white border rounded-xl p-4">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+      <div class="flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="font-semibold">{{ t.title }}</h2>
+          {{ f.share_status_badges(
+            transfer_is_active(t, now),
+            transfer_inactive_reason(t, now),
+            t.password_hash,
+            transfer_deletion_pending(t, purge_grace_days, now)
+          ) }}
+        </div>
+        <p class="text-sm text-slate-500 mt-1">
+          {{ t.files|length }} file(s) · expires {{ t.expires_at|format_date }}
+          · {{ t.download_count|format_download_limit(t.max_downloads) }}
+        </p>
+        {% if t.message %}<p class="text-sm text-slate-600 mt-2">{{ t.message }}</p>{% endif %}
+      </div>
+      <div class="flex flex-col gap-2 md:items-end md:min-w-[16rem]">
+        <input readonly value="{{ base_url }}/d/{{ t.public_token }}" class="text-xs border rounded px-2 py-1 w-full" onclick="this.select()">
+        <div class="flex flex-wrap gap-3 justify-end text-sm items-start">
+          <a href="/transfers/{{ t.id }}/edit" class="text-primary hover:underline">Edit</a>
+          <form method="post" action="/transfers/{{ t.id }}/delete" class="text-right">
+            {{ f.confirm_trigger("delete-panel-" ~ loop.index, "Delete", "text-red-600 hover:underline") }}
+            {{ f.confirm_panel(
+              "delete-panel-" ~ loop.index,
+              "Delete this transfer?",
+              "All files will be permanently removed. This cannot be undone.",
+              "Yes, delete",
+              variant="red"
+            ) }}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <p class="text-slate-500">No transfers yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

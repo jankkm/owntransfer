@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Dashboard</h1>
+<div class="grid md:grid-cols-2 gap-6">
+  <a href="/transfers/new" class="block bg-white border rounded-xl p-6 hover:shadow-md transition">
+    <h2 class="text-lg font-semibold mb-2">Send files</h2>
+    <p class="text-slate-600 text-sm">Upload and share files with expiring, password-protected links.</p>
+  </a>
+  <a href="/requests/new" class="block bg-white border rounded-xl p-6 hover:shadow-md transition">
+    <h2 class="text-lg font-semibold mb-2">Request files</h2>
+    <p class="text-slate-600 text-sm">Create a link so external users can upload files to you.</p>
+  </a>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}Login — {{ app_name }}{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-xl shadow-sm border overflow-hidden">
+  {% if oauth_providers and allow_local_login %}
+  <div class="flex border-b text-sm">
+    <a href="/auth/login?tab=oauth" class="flex-1 text-center py-3 {% if tab == 'oauth' %}tab-active font-medium{% else %}text-slate-500{% endif %}">OAuth</a>
+    <a href="/auth/login?tab=local" class="flex-1 text-center py-3 {% if tab == 'local' %}tab-active font-medium{% else %}text-slate-500{% endif %}">Email</a>
+  </div>
+  {% endif %}
+  <div class="p-8">
+    {% if tab == 'oauth' %}
+      <h1 class="text-xl font-bold mb-4">Sign in with your company account</h1>
+      <div class="space-y-3">
+        {% for provider in oauth_providers %}
+        <a href="/auth/oauth/{{ provider.key }}" class="block w-full text-center border rounded-lg py-3 font-medium hover:bg-slate-50">
+          Sign in with {{ provider.name }}
+        </a>
+        {% endfor %}
+      </div>
+      {% if allow_local_login %}
+      <p class="mt-6 text-sm text-slate-500 text-center">
+        Prefer email? <a href="/auth/login?tab=local" class="text-primary underline">Use local login</a>
+      </p>
+      {% endif %}
+    {% else %}
+      <h1 class="text-xl font-bold mb-1">Sign in</h1>
+      <p class="text-sm text-slate-500 mb-4">{% if oauth_providers %}Backup sign-in for local accounts.{% else %}Enter your email and password.{% endif %}</p>
+      <form method="post" action="/auth/login/local" class="space-y-4">
+        {{ f.text_input("email", "Email", type="email", required=true) }}
+        {{ f.text_input("password", "Password", type="password", required=true) }}
+        <button type="submit" class="btn-primary w-full text-white rounded-lg py-2">Sign in</button>
+      </form>
+      {% if oauth_providers %}
+      <p class="mt-4 text-sm text-center"><a href="/auth/login?tab=oauth" class="text-primary underline">Back to OAuth sign-in</a></p>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

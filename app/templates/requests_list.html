@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}My file requests — {{ app_name }}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">My file requests</h1>
+  <a href="/requests/new" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">New request</a>
+</div>
+<div class="space-y-4">
+  {% for r in requests %}
+  <div class="bg-white border rounded-xl p-4">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-4">
+      <div class="flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="font-semibold">{{ r.title }}</h2>
+          {{ f.share_status_badges(
+            file_request_is_active(r, now),
+            file_request_inactive_reason(r, now),
+            r.password_hash,
+            file_request_deletion_pending(r, purge_grace_days, now)
+          ) }}
+        </div>
+        <p class="text-sm text-slate-500 mt-1">
+          {{ r.upload_count }}/{{ r.max_uploads }} uploads · expires {{ r.expires_at|format_date }}
+        </p>
+        {% if r.instructions %}<p class="text-sm text-slate-600 mt-2">{{ r.instructions }}</p>{% endif %}
+      </div>
+      <div class="flex flex-col gap-2 md:items-end md:min-w-[16rem]">
+        <input readonly value="{{ base_url }}/r/{{ r.public_token }}" class="text-xs border rounded px-2 py-1 w-full" onclick="this.select()">
+        <div class="flex flex-wrap gap-3 justify-end text-sm">
+          <a href="/requests/{{ r.id }}/edit" class="text-primary hover:underline">Edit</a>
+          <form method="post" action="/requests/{{ r.id }}/delete" class="text-right">
+            {{ f.confirm_trigger("delete-panel-" ~ loop.index, "Delete", "text-red-600 hover:underline") }}
+            {{ f.confirm_panel(
+              "delete-panel-" ~ loop.index,
+              "Delete this file request?",
+              "All uploads will be permanently removed. This cannot be undone.",
+              "Yes, delete",
+              variant="red"
+            ) }}
+          </form>
+        </div>
+      </div>
+    </div>
+    {% if r.uploads %}
+    <div class="mb-3">
+      <a href="/requests/{{ r.id }}/download" class="btn-primary inline-block text-white rounded-lg px-3 py-1.5 text-xs">Download all (ZIP)</a>
+    </div>
+    <div class="space-y-3">
+      {% for upload in r.uploads|sort(attribute='created_at', reverse=true) %}
+      <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <p class="text-xs text-slate-500 mb-2">
+          Uploaded {{ upload.created_at|format_datetime }}
+          {% if upload.ip_address %}· IP {{ upload.ip_address }}{% endif %}
+          {% if upload.uploader_name or upload.uploader_email %}
+          · {{ upload.uploader_name or '' }}{% if upload.uploader_name and upload.uploader_email %} · {% endif %}{{ upload.uploader_email or '' }}
+          {% endif %}
+        </p>
+        <ul class="text-sm space-y-1">
+          {% for file in upload.files %}
+          <li class="flex items-center justify-between gap-4">
+            <span>{{ file.original_name }} ({{ (file.size_bytes / 1024 / 1024)|round(2) }} MB)</span>
+            <a href="/requests/{{ r.id }}/files/{{ file.id }}" class="text-primary text-xs hover:underline shrink-0">Download</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-slate-500">No uploads yet.</p>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="text-slate-500">No file requests yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

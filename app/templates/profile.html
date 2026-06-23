@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}Profile — {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Profile</h1>
+
+<div class="bg-white border rounded-xl p-6 space-y-2 mb-6">
+  <h2 class="font-semibold text-lg">Account</h2>
+  <p class="text-sm text-slate-600"><span class="text-slate-500">Email</span> · {{ user.email }}</p>
+  {% if not uses_local_auth %}
+  <p class="text-sm text-slate-500">Signed in with {{ user.oauth_provider }}. Password and two-factor settings are managed by your identity provider.</p>
+  {% endif %}
+</div>
+
+{% if uses_local_auth %}
+<div class="bg-white border rounded-xl p-6 space-y-4 mb-6">
+  <h2 class="font-semibold text-lg">Change password</h2>
+  <form method="post" action="/auth/profile/password" class="space-y-4 max-w-md">
+    {{ f.text_input("current_password", "Current password", type="password", required=true) }}
+    {{ f.text_input("new_password", "New password", type="password", required=true, hint="At least 8 characters") }}
+    {{ f.text_input("confirm_password", "Confirm new password", type="password", required=true) }}
+    <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">Update password</button>
+  </form>
+</div>
+
+<div class="bg-white border rounded-xl p-6 space-y-4">
+  <h2 class="font-semibold text-lg">Two-factor authentication</h2>
+
+  {% if user.totp_enabled %}
+  <p class="text-sm text-slate-600">Two-factor authentication is <span class="font-medium text-green-700">enabled</span> for your account.</p>
+  <form method="post" action="/auth/profile/totp/disable" class="space-y-4 max-w-md border-t border-slate-100 pt-4">
+    <p class="text-xs text-slate-500">Enter your password and a current authenticator code to disable 2FA.</p>
+    {{ f.text_input("current_password", "Current password", type="password", required=true) }}
+    {{ f.text_input("totp_code", "Authentication code", required=true, hint="6-digit code from your authenticator app") }}
+    <button type="submit" class="text-red-600 text-sm hover:underline">Disable two-factor authentication</button>
+  </form>
+
+  {% elif totp_pending and totp_qr %}
+  <p class="text-sm text-slate-600">Scan this QR code with your authenticator app, then enter a code to finish setup.</p>
+  <img src="{{ totp_qr }}" alt="TOTP QR code" class="w-48 h-48 border border-slate-200 rounded-lg bg-white p-2">
+  <form method="post" action="/auth/profile/totp/confirm" class="space-y-4 max-w-md">
+    {{ f.text_input("totp_code", "Authentication code", required=true, hint="6-digit code from your authenticator app") }}
+    <div class="flex flex-wrap gap-3 items-center">
+      <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">Enable 2FA</button>
+      <button type="submit" formaction="/auth/profile/totp/cancel" class="text-sm text-slate-500 hover:text-slate-700">Cancel setup</button>
+    </div>
+  </form>
+
+  {% else %}
+  <p class="text-sm text-slate-600">Add an extra layer of security with an authenticator app (Google Authenticator, 1Password, etc.).</p>
+  <form method="post" action="/auth/profile/totp/start">
+    <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">Set up two-factor authentication</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

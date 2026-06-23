@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  app:
+    environment:
+      - DB_BACKEND=postgres
+      - DATABASE_URL=postgresql+asyncpg://owntransfer:owntransfer@db:5432/owntransfer
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=owntransfer
+      - POSTGRES_PASSWORD=owntransfer
+      - POSTGRES_DB=owntransfer
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U owntransfer -d owntransfer"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
