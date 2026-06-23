@@ -685,11 +685,7 @@ msgid "Remove custom logo and use default"
 msgstr ""
 
 #: app/templates/admin.html:23
-msgid "Primary color"
-msgstr ""
-
-#: app/templates/admin.html:24
-msgid "Accent color"
+msgid "Color scheme"
 msgstr ""
 
 #: app/templates/admin.html:25

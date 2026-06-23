@@ -52,7 +52,7 @@ _Screenshots coming soon._
 
 | Area | What you can configure |
 |------|------------------------|
-| **Branding** | App name, logo, primary/accent colors |
+| **Branding** | App name, logo, color scheme |
 | **Limits** | Max file size, default expiry, max share lifetime, default download limit, purge grace period, file extension blocklist, local login, user-sent share emails |
 | **SMTP** | Outbound mail for share links and notifications |
 | **Email templates** | Editable Jinja2 subjects and HTML bodies for all notification types |

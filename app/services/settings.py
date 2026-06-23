@@ -19,8 +19,7 @@ async def get_app_settings(db: AsyncSession) -> AppSettings:
     row = AppSettings(
         id=1,
         app_name=settings.app_name,
-        primary_color=settings.primary_color,
-        accent_color=settings.accent_color,
+        color_scheme=settings.color_scheme,
         max_file_size_bytes=settings.max_file_size_bytes,
         default_expiry_days=settings.default_expiry_days,
         max_share_expiry_days=settings.max_share_expiry_days,

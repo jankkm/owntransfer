@@ -40,6 +40,16 @@ async def ensure_schema(conn: AsyncConnection) -> None:
             text("ALTER TABLE app_settings ADD COLUMN logo_content_type VARCHAR(128)")
         )
 
+    columns = await conn.run_sync(_existing_columns)
+    if "color_scheme" not in columns and "primary_color" in columns:
+        await conn.execute(
+            text("ALTER TABLE app_settings RENAME COLUMN primary_color TO color_scheme")
+        )
+
+    columns = await conn.run_sync(_existing_columns)
+    if "accent_color" in columns:
+        await conn.execute(text("ALTER TABLE app_settings DROP COLUMN accent_color"))
+
     if "impressum_enabled" not in columns:
         default = "1" if dialect == "sqlite" else "TRUE"
         await conn.execute(

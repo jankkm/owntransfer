@@ -458,8 +458,7 @@ async def admin_delete_request(
 @router.post("/branding")
 async def save_branding(
     app_name: str = Form(...),
-    primary_color: str = Form(...),
-    accent_color: str = Form(...),
+    color_scheme: str = Form(...),
     logo: UploadFile | None = File(None),
     remove_logo: str = Form(""),
     db: AsyncSession = Depends(get_db),
@@ -467,8 +466,7 @@ async def save_branding(
 ):
     app_settings = await get_app_settings(db)
     app_settings.app_name = app_name
-    app_settings.primary_color = primary_color
-    app_settings.accent_color = accent_color
+    app_settings.color_scheme = color_scheme
 
     if remove_logo:
         clear_logo(app_settings)

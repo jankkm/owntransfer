@@ -64,8 +64,7 @@ templates.env.filters["user_initials"] = user_initials
 def branding_context(app_settings: AppSettings) -> dict:
     return {
         "app_name": app_settings.app_name,
-        "primary_color": app_settings.primary_color,
-        "accent_color": app_settings.accent_color,
+        "color_scheme": app_settings.color_scheme,
         "logo_path": logo_url(app_settings),
         "favicon_type": favicon_type(app_settings),
         "has_custom_logo": has_custom_logo(app_settings),

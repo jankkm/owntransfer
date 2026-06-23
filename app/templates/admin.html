@@ -20,8 +20,7 @@
       {{ f.checkbox_input("remove_logo", _("Remove custom logo and use default")) }}
       {% endif %}
     </div>
-    {{ f.color_input("primary_color", _("Primary color"), app_settings.primary_color) }}
-    {{ f.color_input("accent_color", _("Accent color"), app_settings.accent_color) }}
+    {{ f.color_input("color_scheme", _("Color scheme"), app_settings.color_scheme) }}
     <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save branding') }}</button>
   </form>
   <form method="post" action="/admin/limits" class="bg-white border rounded-xl p-6 space-y-4">

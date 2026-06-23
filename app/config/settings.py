@@ -34,8 +34,7 @@ class Settings(BaseSettings):
     display_timezone: str = Field(default="UTC", alias="DISPLAY_TIMEZONE")
     default_locale: str = Field(default="en", alias="DEFAULT_LOCALE")
 
-    primary_color: str = Field(default="#2563eb", alias="PRIMARY_COLOR")
-    accent_color: str = Field(default="#7c3aed", alias="ACCENT_COLOR")
+    color_scheme: str = Field(default="#2563eb", alias="COLOR_SCHEME")
     max_file_size_mb: int = Field(default=2048, alias="MAX_FILE_SIZE_MB")
     default_expiry_days: int = Field(default=7, alias="DEFAULT_EXPIRY_DAYS")
     max_share_expiry_days: int = Field(default=365, alias="MAX_SHARE_EXPIRY_DAYS")

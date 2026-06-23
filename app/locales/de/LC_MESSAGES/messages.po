@@ -693,12 +693,8 @@ msgid "Remove custom logo and use default"
 msgstr "Eigenes Logo entfernen und Standard verwenden"
 
 #: app/templates/admin.html:23
-msgid "Primary color"
-msgstr "Primärfarbe"
-
-#: app/templates/admin.html:24
-msgid "Accent color"
-msgstr "Akzentfarbe"
+msgid "Color scheme"
+msgstr "Farbschema"
 
 #: app/templates/admin.html:25
 msgid "Save branding"
