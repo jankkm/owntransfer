@@ -1362,6 +1362,14 @@ msgstr "6-stelliger Code"
 msgid "Continue"
 msgstr "Weiter"
 
+#: app/templates/_macros.html:163 app/static/copy_to_clipboard.js:0
+msgid "Copied!"
+msgstr "Kopiert!"
+
+#: app/templates/_macros.html:164
+msgid "Copy link"
+msgstr "Link kopieren"
+
 #: app/templates/login_totp.html:14
 msgid "Back to login"
 msgstr "Zurück zur Anmeldung"

@@ -38,6 +38,8 @@ JS_MESSAGE_KEYS = (
     "Sending…",
     "Could not remove file",
     "Could not show confirmation dialog.",
+    "Copied!",
+    "Copy link",
     "Remove file?",
     "Remove file from transfer?",
     "this file",

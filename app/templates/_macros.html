@@ -151,10 +151,33 @@
 </div>
 {%- endmacro %}
 
+{% macro copy_url_field(url, input_id='', compact=false) -%}
+<div class="relative min-w-0" data-copy-url-field>
+  <input readonly {% if input_id %}id="{{ input_id }}"{% endif %}
+         value="{{ url }}"
+         data-copy-url-input
+         class="{% if compact %}w-full min-w-0 text-xs border border-slate-200 rounded-lg pl-2 pr-8 py-1 bg-slate-50 font-mono text-slate-600 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]{% else %}w-full min-w-0 text-xs font-mono border border-slate-200 rounded-lg pl-3 pr-10 py-2 bg-slate-50 text-slate-600 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]{% endif %}"
+         onclick="this.select()">
+  <button type="button"
+          data-copy-url-btn
+          data-copied-label="{{ _('Copied!') }}"
+          title="{{ _('Copy link') }}"
+          class="absolute right-1 top-1/2 -translate-y-1/2 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] {% if compact %}p-0.5{% else %}p-1.5{% endif %}"
+          aria-label="{{ _('Copy link') }}">
+    <svg data-copy-icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+         class="{% if compact %}w-3 h-3{% else %}w-4 h-4{% endif %}" aria-hidden="true">
+      <path fill-rule="evenodd" d="M7 3.5A1.5 1.5 0 0 1 8.5 2h3A1.5 1.5 0 0 1 13 3.5V4h1.5A1.5 1.5 0 0 1 16 5.5v10A1.5 1.5 0 0 1 14.5 17h-9A1.5 1.5 0 0 1 4 15.5v-10A1.5 1.5 0 0 1 5.5 4H7v-.5Zm2 0h2v-.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5V4ZM5.5 5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-10a.5.5 0 0 0-.5-.5h-9Z" clip-rule="evenodd" />
+    </svg>
+    <svg data-copied-icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+         class="hidden text-green-700 {% if compact %}w-3 h-3{% else %}w-4 h-4{% endif %}" aria-hidden="true">
+      <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+    </svg>
+  </button>
+</div>
+{%- endmacro %}
+
 {% macro share_link_field(url) -%}
-<input readonly value="{{ url }}"
-       class="w-full text-xs font-mono border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 text-slate-600 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-       onclick="this.select()">
+{{ copy_url_field(url) }}
 {%- endmacro %}
 
 {% macro share_list_footer(share_url, edit_url, delete_form_action, delete_panel_id) -%}

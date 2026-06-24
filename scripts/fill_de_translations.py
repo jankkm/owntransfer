@@ -77,6 +77,8 @@ TRANSLATIONS: dict[str | tuple[str, str], str | tuple[str, str]] = {
     "Confirm": "Bestätigen",
     "Confirm new password": "Neues Passwort bestätigen",
     "Continue": "Weiter",
+    "Copied!": "Kopiert!",
+    "Copy link": "Link kopieren",
     "Could not create transfer": "Übertragung konnte nicht erstellt werden",
     "Could not remove file": "Datei konnte nicht entfernt werden",
     "Could not show confirmation dialog.": "Bestätigungsdialog konnte nicht angezeigt werden.",

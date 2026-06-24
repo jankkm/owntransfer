@@ -1332,6 +1332,14 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
+#: app/templates/_macros.html:163
+msgid "Copied!"
+msgstr ""
+
+#: app/templates/_macros.html:164
+msgid "Copy link"
+msgstr ""
+
 #: app/templates/login_totp.html:14
 msgid "Back to login"
 msgstr ""

@@ -12,8 +12,7 @@
 <div class="bg-white border rounded-xl p-6 space-y-4 mb-4">
   <div>
     {{ f.field_label(_("Share link"), "share_link") }}
-    <input readonly id="share_link" value="{{ base_url }}/r/{{ file_request.public_token }}"
-           class="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 text-sm" onclick="this.select()">
+    {{ f.copy_url_field(base_url ~ "/r/" ~ file_request.public_token, input_id="share_link") }}
   </div>
   <form method="post" action="{{ regenerate_action or ('/requests/' ~ file_request.id ~ '/regenerate-link') }}" class="rounded-lg border border-slate-200 bg-slate-50 p-4">
     {{ csrf_input() }}

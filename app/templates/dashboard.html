@@ -85,9 +85,7 @@
           <td class="py-3 px-4 whitespace-nowrap">{{ t.expires_at|format_date }}</td>
           <td class="py-3 px-4 whitespace-nowrap">{{ t.created_at|format_datetime }}</td>
           <td class="py-3 px-4">
-            <input readonly value="{{ base_url }}/d/{{ t.public_token }}"
-                   class="text-xs border border-slate-200 rounded-lg px-2 py-1 w-36 max-w-[10rem] bg-slate-50 font-mono"
-                   onclick="this.select()">
+            {{ f.copy_url_field(base_url ~ "/d/" ~ t.public_token, compact=true) }}
           </td>
           <td class="py-3 px-4 whitespace-nowrap">
             <a href="/transfers/{{ t.id }}/edit" class="text-primary hover:underline text-xs font-medium">{{ _('Edit') }}</a>
@@ -140,9 +138,7 @@
           <td class="py-3 px-4 whitespace-nowrap">{{ r.expires_at|format_date }}</td>
           <td class="py-3 px-4 whitespace-nowrap">{{ r.created_at|format_datetime }}</td>
           <td class="py-3 px-4">
-            <input readonly value="{{ base_url }}/r/{{ r.public_token }}"
-                   class="text-xs border border-slate-200 rounded-lg px-2 py-1 w-36 max-w-[10rem] bg-slate-50 font-mono"
-                   onclick="this.select()">
+            {{ f.copy_url_field(base_url ~ "/r/" ~ r.public_token, compact=true) }}
           </td>
           <td class="py-3 px-4 whitespace-nowrap">
             <a href="/requests/{{ r.id }}/edit" class="text-primary hover:underline text-xs font-medium">{{ _('Edit') }}</a>
