@@ -41,6 +41,20 @@ def test_render_email_subject_uses_recipient_locale(app_settings: AppSettings):
     assert "wurde heruntergeladen" in body
 
 
+def test_render_email_subject_uses_spanish_locale(app_settings: AppSettings):
+    subject, body = _render_default_template_email(
+        app_settings,
+        "download_notify",
+        locale="es",
+        app_name=app_settings.app_name,
+        title="Mi transferencia",
+        download_count=1,
+        max_downloads=5,
+    )
+    assert subject == "OwnTransfer: Transferencia descargada"
+    assert "fue descargada" in body
+
+
 def test_render_email_template_keeps_strong_tags(app_settings: AppSettings):
     body = render_email_template(
         app_settings,

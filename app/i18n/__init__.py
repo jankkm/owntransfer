@@ -11,7 +11,7 @@ from starlette.requests import Request
 from app.config import settings
 
 LOCALES_DIR = Path(__file__).resolve().parent.parent / "locales"
-SUPPORTED_LOCALES: tuple[str, ...] = ("en", "de")
+SUPPORTED_LOCALES: tuple[str, ...] = ("en", "de", "es")
 LOCALE_COOKIE = "locale"
 LOCALE_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
 

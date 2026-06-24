@@ -273,7 +273,7 @@ Point `logpath` at your application log file. With Docker, forward container std
 
 ## Localization
 
-The UI supports **English** (`en`) and **German** (`de`). More languages can be added by extending `SUPPORTED_LOCALES` in `app/i18n/__init__.py` and creating a new catalog under `app/locales/`.
+The UI supports **English** (`en`), **German** (`de`), and **Spanish** (`es`). More languages can be added by extending `SUPPORTED_LOCALES` in `app/i18n/__init__.py` and creating a new catalog under `app/locales/`.
 
 **How the active language is chosen:**
 
@@ -288,7 +288,9 @@ Admin-editable legal pages and custom email template overrides are not localized
 ```bash
 pybabel extract -F babel.cfg -o app/locales/messages.pot .
 pybabel update -i app/locales/messages.pot -d app/locales -l de
+pybabel update -i app/locales/messages.pot -d app/locales -l es
 # Edit app/locales/de/LC_MESSAGES/messages.po (or run scripts/fill_de_translations.py)
+# Edit app/locales/es/LC_MESSAGES/messages.po (or run scripts/fill_es_translations.py)
 pybabel compile -d app/locales
 ```
 

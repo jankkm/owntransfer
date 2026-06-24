@@ -75,11 +75,13 @@ async def client():
 def test_normalize_locale():
     assert normalize_locale("de-DE") == "de"
     assert normalize_locale("en_US") == "en"
+    assert normalize_locale("es-ES") == "es"
     assert normalize_locale("fr") is None
 
 
 def test_negotiate_from_header():
     assert negotiate_from_header("de-DE,de;q=0.9,en;q=0.8") == "de"
+    assert negotiate_from_header("es-ES,es;q=0.9,en;q=0.8") == "es"
     assert negotiate_from_header("fr-FR,fr;q=0.9") is None
 
 
@@ -94,6 +96,27 @@ def test_ngettext_german():
     activate("de")
     assert ngettext("%(count)s day", "%(count)s days", 1) % {"count": 1} == "1 Tag"
     assert ngettext("%(count)s day", "%(count)s days", 3) % {"count": 3} == "3 Tage"
+
+
+def test_gettext_spanish_translation():
+    activate("es")
+    assert gettext("Dashboard") == "Panel"
+    assert gettext("Login") == "Iniciar sesión"
+    assert gettext("Invalid credentials") == "Credenciales no válidas"
+
+
+def test_ngettext_spanish():
+    activate("es")
+    assert ngettext("%(count)s day", "%(count)s days", 1) % {"count": 1} == "1 día"
+    assert ngettext("%(count)s day", "%(count)s days", 3) % {"count": 3} == "3 días"
+
+
+@pytest.mark.asyncio
+async def test_accept_language_selects_spanish(client: AsyncClient):
+    response = await client.get("/auth/login", headers={"Accept-Language": "es-ES,es;q=0.9"})
+    assert response.status_code == 200
+    assert 'lang="es"' in response.text
+    assert "Iniciar sesión" in response.text
 
 
 @pytest.mark.asyncio
@@ -140,6 +163,7 @@ async def test_footer_language_switcher_present(client: AsyncClient):
     assert 'action="/locale"' in response.text
     assert 'value="de"' in response.text
     assert 'value="en"' in response.text
+    assert 'value="es"' in response.text
 
 
 @pytest.mark.asyncio
@@ -209,4 +233,5 @@ def test_resolve_locale_uses_saved_user_locale():
 def test_email_locale_falls_back_to_default():
     assert email_locale(None) == "en"
     assert email_locale("de") == "de"
+    assert email_locale("es") == "es"
     assert email_locale("fr") == "en"

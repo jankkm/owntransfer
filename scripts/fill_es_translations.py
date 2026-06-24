@@ -1,0 +1,617 @@
+#!/usr/bin/env python3
+"""Fill Spanish translations in locales/es/LC_MESSAGES/messages.po."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from babel.messages.pofile import read_po, write_po
+
+ROOT = Path(__file__).resolve().parent.parent
+ES_PO = ROOT / "app/locales/es/LC_MESSAGES/messages.po"
+
+# Spanish translations keyed by English msgid (singular) or (singular, plural) tuple.
+TRANSLATIONS: dict[str | tuple[str, str], str | tuple[str, str]] = {
+    "%(count)s / ∞": "%(count)s / ∞",
+    "%(count)s / ∞ downloads": "%(count)s / ∞ descargas",
+    "%(count)s active": "%(count)s activos",
+    "%(count)s day": "%(count)s día",
+    "%(count)s days": "%(count)s días",
+    "%(count)s file": "%(count)s archivo",
+    "%(count)s file · expires %(expires)s": "%(count)s archivo · caduca el %(expires)s",
+    "%(count)s files": "%(count)s archivos",
+    "%(count)s hour": "%(count)s hora",
+    "%(count)s hours": "%(count)s horas",
+    "%(count)s minute": "%(count)s minuto",
+    "%(count)s minutes": "%(count)s minutos",
+    "%(count)s requests": "%(count)s solicitudes",
+    "%(count)s transfers": "%(count)s transferencias",
+    "%(count)s/%(max)s": "%(count)s/%(max)s",
+    "%(count)s/%(max)s downloads": "%(count)s/%(max)s descargas",
+    "%(when)s %(tz)s": "%(when)s %(tz)s",
+    "0 = unlimited downloads.": "0 = descargas ilimitadas.",
+    "2FA is not enabled": "2FA no está activado",
+    "2FA setup not available": "Configuración de 2FA no disponible",
+    "6-digit code": "Código de 6 dígitos",
+    "6-digit code from your authenticator app": "Código de 6 dígitos de su aplicación de autenticación",
+    "Color scheme": "Esquema de color",
+    "Access": "Acceso",
+    "Access settings saved.": "Configuración de acceso guardada.",
+    "Action": "Acción",
+    "Actions": "Acciones",
+    "Active": "Activo",
+    "Add at least one file": "Añada al menos un archivo",
+    "Add at least one file to upload": "Añada al menos un archivo para subir",
+    "Wait for uploads to finish": "Espere a que terminen las subidas",
+    "Waiting…": "Esperando…",
+    "Add user": "Añadir usuario",
+    "Admin": "Administración",
+    "Admin access required": "Se requiere acceso de administrador",
+    "Admin email": "Correo del administrador",
+    "Admin password": "Contraseña del administrador",
+    "All file requests": "Todas las solicitudes de archivos",
+    "All files will be permanently removed. This cannot be undone.": "Todos los archivos se eliminarán permanentemente. Esta acción no se puede deshacer.",
+    "All statuses": "Todos los estados",
+    "All transfers": "Todas las transferencias",
+    "All uploads will be permanently removed. This cannot be undone.": "Todas las subidas se eliminarán permanentemente. Esta acción no se puede deshacer.",
+    "Allow local login": "Permitir inicio de sesión local",
+    "Allow users to email share links to recipients": "Permitir que los usuarios envíen enlaces de uso compartido por correo",
+    "An account with this email already exists. Sign in with your existing method, or ask an administrator to link your account.": "Ya existe una cuenta con este correo. Inicie sesión con su método existente o pida a un administrador que vincule su cuenta.",
+    "Apply": "Aplicar",
+    "At least 8 characters": "Al menos 8 caracteres",
+    "Authentication code": "Código de autenticación",
+    "Back to OAuth sign-in": "Volver al inicio de sesión con OAuth",
+    "Back to login": "Volver al inicio de sesión",
+    "Backup sign-in for local accounts.": "Inicio de sesión de respaldo para cuentas locales.",
+    "Blocked file extensions": "Extensiones de archivo bloqueadas",
+    "Body (HTML)": "Cuerpo (HTML)",
+    "Branding": "Marca",
+    "Branding saved.": "Marca guardada.",
+    "Cancel": "Cancelar",
+    "Cancel setup": "Cancelar configuración",
+    "Change password": "Cambiar contraseña",
+    "Clear": "Limpiar",
+    "Clear filters": "Limpiar filtros",
+    "Collect files from others": "Recopilar archivos de otros",
+    "Comma-separated (e.g. .exe,.bat) or JSON array": "Separado por comas (p. ej. .exe,.bat) o matriz JSON",
+    "Comma-separated emails (optional). Recipients receive the upload link by email.": "Correos separados por comas (opcional). Los destinatarios recibirán el enlace de subida por correo.",
+    "Comma-separated. Recipients will receive the download link by email.": "Separado por comas. Los destinatarios recibirán el enlace de descarga por correo.",
+    "Complete upload": "Completar subida",
+    "Confirm": "Confirmar",
+    "Confirm new password": "Confirmar nueva contraseña",
+    "Continue": "Continuar",
+    "Copied!": "¡Copiado!",
+    "Copy link": "Copiar enlace",
+    "Could not create transfer": "No se pudo crear la transferencia",
+    "Could not remove file": "No se pudo eliminar el archivo",
+    "Could not save uploaded file": "No se pudo guardar el archivo subido",
+    "Could not show confirmation dialog.": "No se pudo mostrar el diálogo de confirmación.",
+    "Create admin & continue": "Crear administrador y continuar",
+    "Create file request": "Crear solicitud de archivos",
+    "Create the initial admin account to get started.": "Cree la cuenta de administrador inicial para comenzar.",
+    "Create transfer": "Crear transferencia",
+    "Create your first file request": "Cree su primera solicitud de archivos",
+    "Create your first transfer": "Cree su primera transferencia",
+    "Created": "Creado",
+    "Current downloads: %(count)s. Use 0 for unlimited.": "Descargas actuales: %(count)s. Use 0 para ilimitadas.",
+    "Current logo": "Logotipo actual",
+    "Current password": "Contraseña actual",
+    "Current password is incorrect": "La contraseña actual es incorrecta",
+    "Current uploads: %(count)s.": "Subidas actuales: %(count)s.",
+    "Danger zone": "Zona de peligro",
+    "Dashboard": "Panel",
+    "Date & time": "Fecha y hora",
+    "Delete": "Eliminar",
+    "Delete after expiry (days)": "Eliminar tras caducidad (días)",
+    "Delete file request": "Eliminar solicitud de archivos",
+    "Delete reminder before purge": "Recordatorio de eliminación antes del borrado",
+    "Delete this file request?": "¿Eliminar esta solicitud de archivos?",
+    "Delete this share?": "¿Eliminar este uso compartido?",
+    "Delete this transfer?": "¿Eliminar esta transferencia?",
+    "Delete this user?": "¿Eliminar este usuario?",
+    "Delete transfer": "Eliminar transferencia",
+    "Deletion pending": "Eliminación pendiente",
+    "Deletion reminder (days before purge)": "Recordatorio de eliminación (días antes del borrado)",
+    "Deletion reminder before purge": "Recordatorio de eliminación antes del borrado",
+    "Demote": "Quitar privilegios de administrador",
+    "Disabled": "Desactivado",
+    "Download": "Descargar",
+    "Download all (ZIP)": "Descargar todo (ZIP)",
+    "Download (ZIP)": "Descargar (ZIP)",
+    "Download limit": "Límite de descargas",
+    "Download limit reached": "Límite de descargas alcanzado",
+    "Limit reached": "Límite alcanzado",
+    "All available downloads for this transfer have been used. Contact the person who shared these files if you still need them.": "Se han utilizado todas las descargas disponibles para esta transferencia. Contacte a la persona que compartió estos archivos si aún los necesita.",
+    "All available uploads for this request have been used. Contact the person who requested these files if you still need to upload.": "Se han utilizado todas las subidas disponibles para esta solicitud. Contacte a la persona que solicitó estos archivos si aún necesita subir.",
+    "This transfer is no longer available because it has expired.": "Esta transferencia ya no está disponible porque ha caducado.",
+    "This file request is no longer available because it has expired.": "Esta solicitud de archivos ya no está disponible porque ha caducado.",
+    "This transfer is no longer available.": "Esta transferencia ya no está disponible.",
+    "This file request is no longer available.": "Esta solicitud de archivos ya no está disponible.",
+    "This link is no longer available.": "Este enlace ya no está disponible.",
+    "Unavailable": "No disponible",
+    (
+        "This transfer allows %(max)s download. Unlocking uses one download; "
+        "you can then download all files in this browser session.",
+        "This transfer allows %(max)s downloads. Unlocking uses one download; "
+        "you can then download all files in this browser session.",
+    ): (
+        "Esta transferencia permite %(max)s descarga. Desbloquear consume una descarga; "
+        "después podrá descargar todos los archivos en esta sesión del navegador.",
+        "Esta transferencia permite %(max)s descargas. Desbloquear consume una descarga; "
+        "después podrá descargar todos los archivos en esta sesión del navegador.",
+    ),
+    "Download log": "Registro de descargas",
+    "Download notification": "Notificación de descarga",
+    "Downloads": "Descargas",
+    "Downloads are tied to this browser session and cannot be shared as direct links.": "Las descargas están vinculadas a esta sesión del navegador y no se pueden compartir como enlaces directos.",
+    "Drop files here or click to browse": "Suelte archivos aquí o haga clic para buscar",
+    "Edit": "Editar",
+    "Edit file request": "Editar solicitud de archivos",
+    "Edit files": "Editar archivos",
+    "Edit transfer": "Editar transferencia",
+    "Email": "Correo",
+    "Email and password are required": "Se requieren correo y contraseña",
+    "Email owners this many days before auto-delete. 0 = disabled.": "Enviar correo a los propietarios tantos días antes de la eliminación automática. 0 = desactivado.",
+    "Email templates saved.": "Plantillas de correo guardadas.",
+    "Empty file": "Archivo vacío",
+    "Enable 2FA": "Activar 2FA",
+    "Enter a password to enable protection": "Introduzca una contraseña para activar la protección",
+    "Enter the 6-digit code from your authenticator app.": "Introduzca el código de 6 dígitos de su aplicación de autenticación.",
+    "Enter your email and password.": "Introduzca su correo y contraseña.",
+    "Expired": "Caducado",
+    "Expired on %(date)s.": "Caducó el %(date)s.",
+    "Expired unused": "Caducado sin uso",
+    "Expired without activity": "Caducado sin actividad",
+    "Expiration pending": "Caducidad pendiente",
+    "Expires": "Caduca",
+    "Expires latest": "Caduca más tarde",
+    "Expires soonest": "Caduca antes",
+    "Expires … · up to %(mb)s MB per upload": "Caduca … · hasta %(mb)s MB por subida",
+    "Expiry cannot be more than %(max_days)s days in the future": "La fecha de caducidad no puede ser más de %(max_days)s días en el futuro",
+    "Expiry date": "Fecha de caducidad",
+    "Extend expiry or delete it": "Ampliar caducidad o eliminar",
+    "Extend expiry to keep it": "Ampliar caducidad para conservarlo",
+    "Extend the expiry date below to keep this share.": "Amplíe la fecha de caducidad a continuación para conservar este uso compartido.",
+    "File": "Archivo",
+    "File changes are saved immediately.": "Los cambios en archivos se guardan inmediatamente.",
+    "File exceeds maximum size (%(mb)s MB)": "El archivo supera el tamaño máximo (%(mb)s MB)",
+    "File exceeds maximum size (%(mb)s MB): %(filename)s": "El archivo supera el tamaño máximo (%(mb)s MB): %(filename)s",
+    "File not found": "Archivo no encontrado",
+    "File removals are saved immediately.": "La eliminación de archivos se guarda inmediatamente.",
+    "File request created successfully.": "Solicitud de archivos creada correctamente.",
+    "File request deleted.": "Solicitud de archivos eliminada.",
+    "File request link": "Enlace de solicitud de archivos",
+    "File request not found": "Solicitud de archivos no encontrada",
+    "File request updated successfully.": "Solicitud de archivos actualizada correctamente.",
+    "File request updated.": "Solicitud de archivos actualizada.",
+    "File requests": "Solicitudes de archivos",
+    "File type not allowed: %(filename)s": "Tipo de archivo no permitido: %(filename)s",
+    "File type not allowed: %(name)s": "Tipo de archivo no permitido: %(name)s",
+    "File upload settings saved.": "Configuración de subida de archivos guardada.",
+    "File uploads": "Subidas de archivos",
+    "Files": "Archivos",
+    "Files received": "Archivos recibidos",
+    "Files upload automatically. You can remove them before submitting.": "Los archivos se suben automáticamente. Puede eliminarlos antes de enviar.",
+    "Files shared with you": "Archivos compartidos con usted",
+    "Filter": "Filtrar",
+    "Filter by user": "Filtrar por usuario",
+    "From address": "Dirección de remitente",
+    "How far in the future users can set expiry dates for transfers and file requests.": "Hasta cuándo en el futuro los usuarios pueden establecer fechas de caducidad para transferencias y solicitudes de archivos.",
+    "How many files the browser uploads at once when staging (1–50). Lower values are gentler on slow links and reverse proxies.": "Cuántos archivos sube el navegador a la vez al preparar (1–50). Valores más bajos son más suaves en conexiones lentas y proxies inversos.",
+    "IP": "IP",
+    "IP address": "Dirección IP",
+    "IP %(ip)s": "IP %(ip)s",
+    "Impressum": "Aviso legal",
+    "Impressum text (Markdown)": "Texto del aviso legal (Markdown)",
+    "Inactive": "Inactivo",
+    "Instructions for uploader": "Instrucciones para quien sube",
+    "Internal notifications (download alerts, upload received) are always sent when enabled per transfer.": "Las notificaciones internas (alertas de descarga, subida recibida) siempre se envían cuando están activadas por transferencia.",
+    "Invalid authentication code": "Código de autenticación no válido",
+    "Invalid credentials": "Credenciales no válidas",
+    "Invalid password": "Contraseña no válida",
+    "Issue a new URL and invalidate the current one.": "Emitir una nueva URL e invalidar la actual.",
+    "Jinja2 variables:": "Variables Jinja2:",
+    "Leave blank to keep the current password": "Deje en blanco para conservar la contraseña actual",
+    "Legal pages": "Páginas legales",
+    "Legal pages saved.": "Páginas legales guardadas.",
+    "Limits": "Límites",
+    "Link disabled": "Enlace desactivado",
+    "Link is active": "Enlace activo",
+    "Local login disabled": "Inicio de sesión local desactivado",
+    "Login": "Iniciar sesión",
+    "Logo": "Logotipo",
+    "Logo must be 2 MB or smaller": "El logotipo debe ser de 2 MB o menos",
+    "Logout": "Cerrar sesión",
+    "Max downloads": "Máx. descargas",
+    "Max downloads cannot be less than current count (%(count)s)": "Las descargas máximas no pueden ser menores que el recuento actual (%(count)s)",
+    "Max downloads cannot be negative": "Las descargas máximas no pueden ser negativas",
+    "Max file size (MB)": "Tamaño máx. de archivo (MB)",
+    "Max share lifetime (days)": "Duración máx. del uso compartido (días)",
+    "Max total size per upload (MB)": "Tamaño total máx. por subida (MB)",
+    "Max uploads": "Máx. subidas",
+    "Max uploads cannot be less than current count (%(count)s)": "Las subidas máximas no pueden ser menores que el recuento actual (%(count)s)",
+    "Message": "Mensaje",
+    "Message (optional)": "Mensaje (opcional)",
+    "Missing filename": "Falta el nombre del archivo",
+    "My file requests": "Mis solicitudes de archivos",
+    "My transfers": "Mis transferencias",
+    "Network error": "Error de red",
+    "New file request": "Nueva solicitud de archivos",
+    "New files are saved immediately.": "Los archivos nuevos se guardan inmediatamente.",
+    "New password": "Nueva contraseña",
+    "New password for %(email)s": "Nueva contraseña para %(email)s",
+    "New request": "Nueva solicitud",
+    "New transfer": "Nueva transferencia",
+    "Newest first": "Más recientes primero",
+    "No downloads recorded yet.": "Aún no hay descargas registradas.",
+    "No file requests found.": "No se encontraron solicitudes de archivos.",
+    "No file requests match your search or filters.": "Ninguna solicitud de archivos coincide con su búsqueda o filtros.",
+    "No file requests yet.": "Aún no hay solicitudes de archivos.",
+    "No files added yet.": "Aún no se han añadido archivos.",
+    "No files selected": "No hay archivos seleccionados",
+    "No files to download": "No hay archivos para descargar",
+    "No transfers found.": "No se encontraron transferencias.",
+    "No transfers match your search or filters.": "Ninguna transferencia coincide con su búsqueda o filtros.",
+    "No transfers yet.": "Aún no hay transferencias.",
+    "No uploads yet.": "Aún no hay subidas.",
+    "No users yet.": "Aún no hay usuarios.",
+    "Not authenticated": "No autenticado",
+    "Notify me when someone downloads": "Notificarme cuando alguien descargue",
+    "OAuth": "OAuth",
+    "OAuth accounts cannot change password here": "Las cuentas OAuth no pueden cambiar la contraseña aquí",
+    "OAuth accounts cannot enable 2FA here": "Las cuentas OAuth no pueden activar 2FA aquí",
+    "OAuth provider did not return email": "El proveedor OAuth no devolvió correo",
+    "OAuth provider did not return an email address": "El proveedor OAuth no devolvió una dirección de correo",
+    "Oldest first": "Más antiguos primero",
+    "Open the transfer page in this browser before downloading.": "Abra la página de transferencia en este navegador antes de descargar.",
+    "Password": "Contraseña",
+    "Notifications": "Notificaciones",
+    "Password protection": "Protección con contraseña",
+    "Password required": "Contraseña requerida",
+    "Password updated.": "Contraseña actualizada.",
+    "Permanently delete this file request and all uploaded files.": "Eliminar permanentemente esta solicitud de archivos y todos los archivos subidos.",
+    "Permanently delete this transfer and all uploaded files.": "Eliminar permanentemente esta transferencia y todos los archivos subidos.",
+    "Prefer email?": "¿Prefiere correo?",
+    "Privacy policy": "Política de privacidad",
+    "Privacy policy text (Markdown)": "Texto de la política de privacidad (Markdown)",
+    "Profile": "Perfil",
+    "Profile menu": "Menú de perfil",
+    "Promote": "Hacer administrador",
+    "Provider not configured": "Proveedor no configurado",
+    "Ready": "Listo",
+    "Received uploads (%(uploads)s) · %(files)s": "Subidas recibidas (%(uploads)s) · %(files)s",
+    "Recent audit log": "Registro de auditoría reciente",
+    "Recent file requests (%(count)s)": "Solicitudes de archivos recientes (%(count)s)",
+    "Recent transfers (%(count)s)": "Transferencias recientes (%(count)s)",
+    "Recent uploads": "Subidas recientes",
+    "Recipient emails": "Correos de destinatarios",
+    "Regenerate link": "Regenerar enlace",
+    "Regenerate share link?": "¿Regenerar enlace de uso compartido?",
+    "Remove": "Eliminar",
+    "Remove custom logo and use default": "Eliminar logotipo personalizado y usar el predeterminado",
+    "Remove file from transfer?": "¿Eliminar archivo de la transferencia?",
+    "Remove file?": "¿Eliminar archivo?",
+    "Removing…": "Eliminando…",
+    "Request failed": "Solicitud fallida",
+    "Retry": "Reintentar",
+    "Request files": "Solicitar archivos",
+    "Required when password protection is enabled": "Obligatorio cuando la protección con contraseña está activada",
+    "Resource": "Recurso",
+    "Save": "Guardar",
+    "Save SMTP": "Guardar SMTP",
+    "Save branding": "Guardar marca",
+    "Save changes": "Guardar cambios",
+    "Save access": "Guardar acceso",
+    "Save email templates": "Guardar plantillas de correo",
+    "Save file uploads": "Guardar subidas de archivos",
+    "Save legal pages": "Guardar páginas legales",
+    "Save limits": "Guardar límites",
+    "Save shares": "Guardar usos compartidos",
+    "Scan this QR code with your authenticator app, then enter a code to finish setup.": "Escanee este código QR con su aplicación de autenticación y luego introduzca un código para completar la configuración.",
+    "Search": "Buscar",
+    "Select at least one file to upload": "Seleccione al menos un archivo para subir",
+    "Send files": "Enviar archivos",
+    "Send link to": "Enviar enlace a",
+    "Send test email": "Enviar correo de prueba",
+    "Sends a test message to %(email)s using the values above (without saving).": "Envía un mensaje de prueba a %(email)s con los valores anteriores (sin guardar).",
+    "Sending…": "Enviando…",
+    "Set password": "Establecer contraseña",
+    "Set up two-factor authentication": "Configurar autenticación de dos factores",
+    "Settings": "Configuración",
+    "Share link": "Enlace de uso compartido",
+    "Share link (outbound transfer)": "Enlace de uso compartido (transferencia saliente)",
+    "Share link regenerated. The old link no longer works.": "Enlace de uso compartido regenerado. El enlace anterior ya no funciona.",
+    "Share settings saved.": "Configuración de uso compartido guardada.",
+    "Share links & requests": "Enlaces y solicitudes",
+    "Shares": "Usos compartidos",
+    "Shares & requests": "Usos compartidos y solicitudes",
+    "Shares & requests — Admin": "Usos compartidos y solicitudes — Admin",
+    "Show Impressum link in footer": "Mostrar enlace de aviso legal en el pie de página",
+    "Show privacy policy link in footer": "Mostrar enlace de política de privacidad en el pie de página",
+    "Show all uploads": "Mostrar todas las subidas",
+    "Show less": "Mostrar menos",
+    "Shown in the header, scaled to fit.": "Se muestra en la cabecera, escalado para ajustarse.",
+    "Shown on /impressum when enabled.": "Se muestra en /impressum cuando está activado.",
+    "Shown on /privacy when enabled.": "Se muestra en /privacy cuando está activado.",
+    "Sign in": "Iniciar sesión",
+    "Sign in with %(provider)s": "Iniciar sesión con %(provider)s",
+    "Sign in with your company account": "Inicie sesión con su cuenta de empresa",
+    "Signed in with %(provider)s. Password and two-factor settings are managed by your identity provider.": "Sesión iniciada con %(provider)s. La contraseña y la configuración de dos factores las gestiona su proveedor de identidad.",
+    "Sort": "Ordenar",
+    "Staged file not found": "Archivo preparado no encontrado",
+    "Subject": "Asunto",
+    "The account will be deactivated and can no longer sign in. Their transfers and file requests remain.": "La cuenta se desactivará y ya no podrá iniciar sesión. Sus transferencias y solicitudes de archivos permanecen.",
+    "The current link will stop working immediately. Anyone with the old link will no longer be able to access this transfer.": "El enlace actual dejará de funcionar inmediatamente. Quien tenga el enlace anterior ya no podrá acceder a esta transferencia.",
+    "The current link will stop working immediately. Anyone with the old link will no longer be able to upload files.": "El enlace actual dejará de funcionar inmediatamente. Quien tenga el enlace anterior ya no podrá subir archivos.",
+    "Test email sent to %(email)s.": "Correo de prueba enviado a %(email)s.",
+    "This link expires on %(date)s.": "Este enlace caduca el %(date)s.",
+    "This link has been disabled": "Este enlace ha sido desactivado",
+    "This link has expired": "Este enlace ha caducado",
+    "This link has expired and is not publicly accessible until you extend the expiry date.": "Este enlace ha caducado y no es accesible públicamente hasta que amplíe la fecha de caducidad.",
+    "This link has reached its download limit and is not publicly accessible until you raise the limit.": "Este enlace ha alcanzado su límite de descargas y no es accesible públicamente hasta que aumente el límite.",
+    "This link has reached its upload limit and is not publicly accessible until you raise the limit.": "Este enlace ha alcanzado su límite de subidas y no es accesible públicamente hasta que aumente el límite.",
+    "Time": "Hora",
+    "Title": "Título",
+    "Title A–Z": "Título A–Z",
+    "Title Z–A": "Título Z–A",
+    "Title or description…": "Título o descripción…",
+    "TOTP QR code": "Código QR TOTP",
+    "Transfer created successfully.": "Transferencia creada correctamente.",
+    "Transfer deleted.": "Transferencia eliminada.",
+    "Transfer downloaded": "Transferencia descargada",
+    "Transfer must have at least one file": "La transferencia debe tener al menos un archivo",
+    "Transfer must have at least one file.": "La transferencia debe tener al menos un archivo.",
+    "Transfer not found": "Transferencia no encontrada",
+    "Transfer updated successfully.": "Transferencia actualizada correctamente.",
+    "Transfer updated.": "Transferencia actualizada.",
+    "Transfers": "Transferencias",
+    "Two-factor authentication": "Autenticación de dos factores",
+    "Two-factor authentication disabled.": "Autenticación de dos factores desactivada.",
+    "Two-factor authentication enabled.": "Autenticación de dos factores activada.",
+    "Two-factor authentication is enabled for your account.": "La autenticación de dos factores está activada para su cuenta.",
+    "Type": "Tipo",
+    "Uncheck to temporarily disable this link without deleting it.": "Desmarque para desactivar temporalmente este enlace sin eliminarlo.",
+    "Unlock": "Desbloquear",
+    "Unlock this file request before uploading": "Desbloquee esta solicitud de archivos antes de subir",
+    "Unsupported logo format. Allowed: %(extensions)s": "Formato de logotipo no compatible. Permitidos: %(extensions)s",
+    "Update password": "Actualizar contraseña",
+    "Upload": "Subir",
+    "Upload failed": "Error al subir",
+    "Upload limit": "Límite de subidas",
+    "Upload limit reached": "Límite de subidas alcanzado",
+    "Upload received notification": "Notificación de subida recibida",
+    "Upload timed out — try Retry": "Tiempo de subida agotado — intente Reintentar",
+    "Upload not found": "Subida no encontrada",
+    "Upload successful. Thank you!": "Subida correcta. ¡Gracias!",
+    "Uploaded logo file is empty": "El archivo de logotipo subido está vacío",
+    "Uploading…": "Subiendo…",
+    "Uploads": "Subidas",
+    "Use 0 for unlimited downloads.": "Use 0 para descargas ilimitadas.",
+    "Use local login": "Usar inicio de sesión local",
+    "User added.": "Usuario añadido.",
+    "User already exists": "El usuario ya existe",
+    "User deleted.": "Usuario eliminado.",
+    "User demoted from admin.": "Privilegios de administrador retirados.",
+    "User promoted to admin.": "Usuario promovido a administrador.",
+    "View all %(count)s file requests": "Ver las %(count)s solicitudes de archivos",
+    "View all %(count)s transfers": "Ver las %(count)s transferencias",
+    "View all file requests →": "Ver todas las solicitudes de archivos →",
+    "View all transfers →": "Ver todas las transferencias →",
+    "View in dashboard": "Ver en el panel",
+    "Welcome to %(app_name)s": "Bienvenido a %(app_name)s",
+    "Yes, delete": "Sí, eliminar",
+    "Yes, delete file request": "Sí, eliminar solicitud de archivos",
+    "Yes, delete transfer": "Sí, eliminar transferencia",
+    "Yes, delete user": "Sí, eliminar usuario",
+    "Yes, regenerate link": "Sí, regenerar enlace",
+    "Yes, remove file": "Sí, eliminar archivo",
+    "You cannot delete your own account": "No puede eliminar su propia cuenta",
+    "You cannot demote your own account": "No puede degradar su propia cuenta",
+    "Your email (optional)": "Su correo (opcional)",
+    "Your email address is not verified with the identity provider": "Su dirección de correo no está verificada con el proveedor de identidad",
+    "You have unsaved changes. Leave this page?": "Tiene cambios sin guardar. ¿Salir de esta página?",
+    "Your name (optional)": "Su nombre (opcional)",
+    "—": "—",
+    "less than a minute": "menos de un minuto",
+    "remaining": "restante",
+    "permanently deleted on": "se eliminará permanentemente el",
+    "expires on": "caduca el",
+    "admin": "admin",
+    "Done": "Hecho",
+    "Download files": "Descargar archivos",
+    "Upload files": "Subir archivos",
+    "Password:": "Contraseña:",
+    "Downloads:": "Descargas:",
+    "New upload received": "Nueva subida recibida",
+    "File upload requested": "Subida de archivos solicitada",
+    "will be deleted soon": "se eliminará pronto",
+    "expired unused": "caducado sin uso",
+    "Setup": "Configuración",
+    "App name": "Nombre de la aplicación",
+    "Owner": "Propietario",
+    "Parallel file uploads": "Subidas de archivos en paralelo",
+    "Link": "Enlace",
+    "Language": "Idioma",
+    "Status": "Estado",
+    "Files (": "Archivos (",
+    "All users": "Todos los usuarios",
+    "Email templates": "Plantillas de correo",
+    "Email templates — Admin": "Plantillas de correo — Admin",
+    "SMTP": "SMTP",
+    "SMTP host": "Servidor SMTP",
+    "SMTP port": "Puerto SMTP",
+    "SMTP username": "Usuario SMTP",
+    "SMTP password": "Contraseña SMTP",
+    "SMTP host is required": "Se requiere servidor SMTP",
+    "SMTP test — %(app_name)s": "Prueba SMTP — %(app_name)s",
+    "This is a test email from your SMTP configuration.": "Este es un correo de prueba de su configuración SMTP.",
+    "Default expiry (days)": "Caducidad predeterminada (días)",
+    "Default max downloads": "Descargas máx. predeterminadas",
+    "PNG, JPG, SVG, GIF or WebP. Max 2 MB.": "PNG, JPG, SVG, GIF o WebP. Máx. 2 MB.",
+    "Upload new logo": "Subir nuevo logotipo",
+    "No file selected": "Ningún archivo seleccionado",
+    "Cannot delete the last admin": "No se puede eliminar el último administrador",
+    "Cannot demote the last admin": "No se puede degradar al último administrador",
+    "Enter your password and a current authenticator code to disable 2FA.": "Introduzca su contraseña y un código de autenticación actual para desactivar 2FA.",
+    "Disable two-factor authentication": "Desactivar autenticación de dos factores",
+    "Add an extra layer of security with an authenticator app (Google Authenticator, 1Password, etc.).": "Añada una capa extra de seguridad con una aplicación de autenticación (Google Authenticator, 1Password, etc.).",
+    "New passwords do not match": "Las nuevas contraseñas no coinciden",
+    "Password is required": "Se requiere contraseña",
+    "Password must be at least 8 characters": "La contraseña debe tener al menos 8 caracteres",
+    "File exceeds maximum size (%(max_mb)s MB): %(filename)s": "El archivo supera el tamaño máximo (%(max_mb)s MB): %(filename)s",
+    "File exceeds maximum size (%(max_mb)s MB)": "El archivo supera el tamaño máximo (%(max_mb)s MB)",
+    ("%(count)s day", "%(count)s days"): ("%(count)s día", "%(count)s días"),
+    ("%(count)s hour", "%(count)s hours"): ("%(count)s hora", "%(count)s horas"),
+    ("%(count)s minute", "%(count)s minutes"): ("%(count)s minuto", "%(count)s minutos"),
+    ("%(count)s file", "%(count)s files"): ("%(count)s archivo", "%(count)s archivos"),
+    ("%(count)s file · expires %(expires)s", "%(count)s files · expires %(expires)s"): (
+        "%(count)s archivo · caduca el %(expires)s",
+        "%(count)s archivos · caducan el %(expires)s",
+    ),
+    "Users": "Usuarios",
+    "Transfers (%(count)s)": "Transferencias (%(count)s)",
+    "File requests (%(count)s)": "Solicitudes de archivos (%(count)s)",
+    "Upload and share files": "Subir y compartir archivos",
+    "Two-factor authentication is": "La autenticación de dos factores está",
+    "enabled": "activada",
+    "for your account.": "para su cuenta.",
+    "Expires %(expires)s · up to %(max_mb)s MB per upload": "Caduca el %(expires)s · hasta %(max_mb)s MB por subida",
+    "Back": "Volver",
+    "to shares": "a usos compartidos",
+    "to file requests": "a solicitudes de archivos",
+    "to transfers": "a transferencias",
+    "Current uploads: %(count)s": "Subidas actuales: %(count)s",
+    "Received uploads (%(uploads)s)": "Subidas recibidas (%(uploads)s)",
+    "Files (%(count)s)": "Archivos (%(count)s)",
+    "Total upload exceeds maximum allowed size": "La subida total supera el tamaño máximo permitido",
+    "Total upload exceeds maximum file size": "La subida total supera el tamaño máximo de archivo",
+    "Upload exceeds maximum allowed size for this request": "La subida supera el tamaño máximo permitido para esta solicitud",
+    "Expired shares are permanently deleted this many days after expiry. 0 = disabled (no auto-delete).": "Los usos compartidos caducados se eliminan permanentemente tantos días después de la caducidad. 0 = desactivado (sin eliminación automática).",
+    '"%(name)s" will be permanently removed from this transfer. This cannot be undone.': '"%(name)s" se eliminará permanentemente de esta transferencia. Esta acción no se puede deshacer.',
+    '"%(name)s" will be permanently removed. This cannot be undone.': '"%(name)s" se eliminará permanentemente. Esta acción no se puede deshacer.',
+    'Remove "%(name)s" from the list?': '¿Eliminar "%(name)s" de la lista?',
+    "this file": "este archivo",
+    "← Back": "← Volver",
+    " to shares": " a usos compartidos",
+    " to transfers": " a transferencias",
+    " to file requests": " a solicitudes de archivos",
+    "{{ app_name }}: Files shared with you": "{{ app_name }}: Archivos compartidos con usted",
+    "{{ app_name }}: File upload requested": "{{ app_name }}: Subida de archivos solicitada",
+    "{{ app_name }}: New upload received": "{{ app_name }}: Nueva subida recibida",
+    "{{ app_name }}: Transfer downloaded": "{{ app_name }}: Transferencia descargada",
+    "{{ app_name }}: {{ resource_label }} expired unused": "{{ app_name }}: {{ resource_label }} caducado sin uso",
+    "{{ app_name }}: {{ resource_label }} will be deleted soon": "{{ app_name }}: {{ resource_label }} se eliminará pronto",
+    "transfer": "transferencia",
+    "file request": "solicitud de archivos",
+    "Expired on": "Caducó el",
+    "This link expires on": "Este enlace caduca el",
+    (
+        "<p>You have received files via {{ app_name }}.</p>\n"
+        "<p><strong>{{ title }}</strong></p>\n"
+        "{% if message %}<p>{{ message }}</p>{% endif %}\n"
+        '<p><a href="{{ link }}">Download files</a></p>\n'
+        "{% if password %}<p>Password: <strong>{{ password }}</strong></p>{% endif %}\n"
+        "<p>This link expires on {{ expires_at }}.</p>"
+    ): (
+        "<p>Ha recibido archivos a través de {{ app_name }}.</p>\n"
+        "<p><strong>{{ title }}</strong></p>\n"
+        "{% if message %}<p>{{ message }}</p>{% endif %}\n"
+        '<p><a href="{{ link }}">Descargar archivos</a></p>\n'
+        "{% if password %}<p>Contraseña: <strong>{{ password }}</strong></p>{% endif %}\n"
+        "<p>Este enlace caduca el {{ expires_at }}.</p>"
+    ),
+    (
+        "<p>{{ sender }} has requested files from you via {{ app_name }}.</p>\n"
+        "<p><strong>{{ title }}</strong></p>\n"
+        "{% if instructions %}<p>{{ instructions }}</p>{% endif %}\n"
+        '<p><a href="{{ link }}">Upload files</a></p>\n'
+        "{% if password %}<p>Password: <strong>{{ password }}</strong></p>{% endif %}\n"
+        "<p>This link expires on {{ expires_at }}.</p>"
+    ): (
+        "<p>{{ sender }} le ha solicitado archivos a través de {{ app_name }}.</p>\n"
+        "<p><strong>{{ title }}</strong></p>\n"
+        "{% if instructions %}<p>{{ instructions }}</p>{% endif %}\n"
+        '<p><a href="{{ link }}">Subir archivos</a></p>\n'
+        "{% if password %}<p>Contraseña: <strong>{{ password }}</strong></p>{% endif %}\n"
+        "<p>Este enlace caduca el {{ expires_at }}.</p>"
+    ),
+    (
+        "<p>New files were uploaded to your file request <strong>{{ title "
+        "}}</strong>.</p>\n"
+        '<p><a href="{{ dashboard_link }}">View in dashboard</a></p>'
+    ): (
+        "<p>Se han subido nuevos archivos a su solicitud de archivos <strong>{{ title "
+        "}}</strong>.</p>\n"
+        '<p><a href="{{ dashboard_link }}">Ver en el panel</a></p>'
+    ),
+    (
+        "<p>Your transfer <strong>{{ title }}</strong> was downloaded.</p>\n"
+        "<p>Downloads: {{ download_count }} / {{ max_downloads }}</p>"
+    ): (
+        "<p>Su transferencia <strong>{{ title }}</strong> fue descargada.</p>\n"
+        "<p>Descargas: {{ download_count }} / {{ max_downloads }}</p>"
+    ),
+    (
+        "<p>Your {{ resource_label }} <strong>{{ title }}</strong> has expired "
+        "without any {% if resource_type == 'transfer' %}downloads{% else "
+        "%}uploads{% endif %}.</p>\n"
+        "<p>Expired on {{ expires_at }}.</p>\n"
+        '<p><a href="{{ edit_link }}">Extend expiry or delete it</a></p>'
+    ): (
+        "<p>Su {{ resource_label }} <strong>{{ title }}</strong> ha caducado "
+        "sin {% if resource_type == 'transfer' %}descargas{% else "
+        "%}subidas{% endif %}.</p>\n"
+        "<p>Caducó el {{ expires_at }}.</p>\n"
+        '<p><a href="{{ edit_link }}">Ampliar caducidad o eliminar</a></p>'
+    ),
+    (
+        "<p>Your expired {{ resource_label }} <strong>{{ title }}</strong> will be"
+        " permanently deleted on {{ purge_at }} (in {{ days_until_purge }} day{% "
+        "if days_until_purge != 1 %}s{% endif %}).</p>\n"
+        '<p><a href="{{ edit_link }}">Extend expiry to keep it</a></p>'
+    ): (
+        "<p>Su {{ resource_label }} caducada <strong>{{ title }}</strong> se eliminará "
+        "permanentemente el {{ purge_at }} (en {{ days_until_purge }} día{% "
+        "if days_until_purge != 1 %}s{% endif %}).</p>\n"
+        '<p><a href="{{ edit_link }}">Ampliar caducidad para conservarlo</a></p>'
+    ),
+}
+
+
+def main() -> None:
+    with ES_PO.open("rb") as f:
+        catalog = read_po(f)
+
+    missing: list[str] = []
+    for message in catalog:
+        if not message.id:
+            continue
+        key: str | tuple[str, str] = message.id
+        if key not in TRANSLATIONS:
+            if isinstance(key, tuple):
+                missing.append(f"({key[0]!r}, {key[1]!r})")
+            else:
+                missing.append(repr(key))
+            continue
+        translation = TRANSLATIONS[key]
+        if isinstance(key, tuple) and isinstance(translation, tuple):
+            message.string = translation
+        else:
+            message.string = translation  # type: ignore[assignment]
+        message.flags.discard("fuzzy")
+
+    if missing:
+        print(f"Missing {len(missing)} translations:")
+        for item in missing[:20]:
+            print(" ", item)
+        if len(missing) > 20:
+            print(f"  ... and {len(missing) - 20} more")
+
+    with ES_PO.open("wb") as f:
+        write_po(f, catalog)
+
+    print(f"Updated {ES_PO}")
+
+
+if __name__ == "__main__":
+    main()
