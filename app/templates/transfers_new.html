@@ -3,7 +3,7 @@
 {% block title %}{{ _('New transfer') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <h1 class="text-2xl font-bold mb-6">{{ _('Send files') }}</h1>
-<form method="post" class="bg-white border rounded-xl p-6 space-y-4">
+<form method="post" class="bg-white border rounded-xl p-6 space-y-4" data-unsaved-guard>
   {{ csrf_input() }}
   {{ f.text_input("title", _("Title"), required=true) }}
   {{ f.textarea_input("message", _("Message (optional)")) }}
@@ -33,4 +33,5 @@
 {% block scripts %}
 <script src="{{ static_url('password_toggle.js') }}"></script>
 <script src="{{ static_url('file_picker.js') }}"></script>
+<script src="{{ static_url('unsaved_changes.js') }}"></script>
 {% endblock %}

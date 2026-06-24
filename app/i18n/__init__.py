@@ -46,6 +46,7 @@ JS_MESSAGE_KEYS = (
     '"%(name)s" will be permanently removed from this transfer. This cannot be undone.',
     'Remove "%(name)s" from the list?',
     '"%(name)s" will be permanently removed. This cannot be undone.',
+    "You have unsaved changes. Leave this page?",
 )
 
 _locale_var: ContextVar[str] = ContextVar("locale", default="en")

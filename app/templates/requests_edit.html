@@ -33,7 +33,7 @@
   </form>
 </div>
 
-<form method="post" action="{{ form_action or ('/requests/' ~ file_request.id ~ '/edit') }}" class="bg-white border rounded-xl p-6 space-y-4 mb-4">
+<form method="post" action="{{ form_action or ('/requests/' ~ file_request.id ~ '/edit') }}" class="bg-white border rounded-xl p-6 space-y-4 mb-4" data-unsaved-guard>
   {{ csrf_input() }}
   {% if admin_edit %}
   <input type="hidden" name="tab" value="{{ shares_tab }}">
@@ -157,7 +157,8 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/password_toggle.js"></script>
-<script src="/static/inline_remove_confirm.js"></script>
-<script src="/static/request_files.js"></script>
+<script src="{{ static_url('password_toggle.js') }}"></script>
+<script src="{{ static_url('inline_remove_confirm.js') }}"></script>
+<script src="{{ static_url('request_files.js') }}"></script>
+<script src="{{ static_url('unsaved_changes.js') }}"></script>
 {% endblock %}
