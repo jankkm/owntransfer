@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.auth.download_grants import has_transfer_download_grant
 from app.auth.passwords import hash_password, verify_password
 from app.config import settings
 from app.i18n import _
@@ -159,12 +160,44 @@ async def get_transfer_by_token(db: AsyncSession, token: str) -> Transfer:
     return transfer
 
 
-def ensure_transfer_accessible(transfer: Transfer) -> None:
+ACCESS_DISABLED = "disabled"
+ACCESS_EXPIRED = "expired"
+ACCESS_DOWNLOAD_LIMIT = "download_limit"
+
+
+def transfer_access_issue(
+    transfer: Transfer,
+    *,
+    session: dict | None = None,
+    public_token: str | None = None,
+) -> str | None:
     if transfer.is_disabled:
-        raise HTTPException(status_code=403, detail=_("This link has been disabled"))
+        return ACCESS_DISABLED
     if is_past_expiry(is_expired=transfer.is_expired, expires_at=transfer.expires_at):
-        raise HTTPException(status_code=410, detail=_("This link has expired"))
+        return ACCESS_EXPIRED
     if transfer_download_limit_reached(transfer):
+        has_grant = (
+            session is not None
+            and public_token is not None
+            and has_transfer_download_grant(session, public_token)
+        )
+        if not has_grant:
+            return ACCESS_DOWNLOAD_LIMIT
+    return None
+
+
+def ensure_transfer_accessible(
+    transfer: Transfer,
+    *,
+    session: dict | None = None,
+    public_token: str | None = None,
+) -> None:
+    issue = transfer_access_issue(transfer, session=session, public_token=public_token)
+    if issue == ACCESS_DISABLED:
+        raise HTTPException(status_code=403, detail=_("This link has been disabled"))
+    if issue == ACCESS_EXPIRED:
+        raise HTTPException(status_code=410, detail=_("This link has expired"))
+    if issue == ACCESS_DOWNLOAD_LIMIT:
         raise HTTPException(status_code=410, detail=_("Download limit reached"))
 
 

@@ -6,10 +6,24 @@
   <h1 class="text-2xl font-bold mb-2">{{ transfer.title }}</h1>
   {% if transfer.message %}<p class="text-slate-600 mb-4">{{ transfer.message }}</p>{% endif %}
   <p class="text-sm text-slate-500 mb-6">{{ ngettext('%(count)s file · expires %(expires)s', '%(count)s files · expires %(expires)s', transfer.files|length) % {'count': transfer.files|length, 'expires': transfer.expires_at|format_datetime_with_tz} }}</p>
+  {% if access_blocked %}
+  <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 mb-2">
+    <p class="text-base font-semibold text-slate-900 mb-2">{{ access_blocked_title }}</p>
+    <p class="text-sm text-slate-600">{{ access_blocked_message }}</p>
+  </div>
+  {% else %}
+  {% if error %}<p class="text-sm text-red-600 mb-4">{{ error }}</p>{% endif %}
   {% if needs_password %}
+  {% if limit_warning %}<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">{{ limit_warning }}</p>{% endif %}
   <form method="post" class="space-y-4 mb-6">
     {{ csrf_input() }}
     {{ f.text_input("password", _("Password"), type="password", required=true) }}
+    <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Unlock') }}</button>
+  </form>
+  {% elif needs_unlock %}
+  {% if limit_warning %}<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">{{ limit_warning }}</p>{% endif %}
+  <form method="post" class="mb-6">
+    {{ csrf_input() }}
     <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Unlock') }}</button>
   </form>
   {% elif can_download %}
@@ -28,6 +42,7 @@
   </div>
   {% if transfer.files|length > 1 %}
   <a href="/d/{{ transfer.public_token }}/download" class="btn-primary inline-block text-white rounded-lg px-4 py-2">{{ _('Download all (ZIP)') }}</a>
+  {% endif %}
   {% endif %}
   {% endif %}
 </div>

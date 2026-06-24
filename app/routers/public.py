@@ -18,14 +18,17 @@ from app.auth.unlock_cookies import (
     set_transfer_unlock,
 )
 from app.database import async_session, get_db
-from app.i18n import _
+from app.i18n import _, ngettext
 from app.http.client_ip import get_client_ip
 from app.limiter import limiter
 from app.models import FileRequest, Transfer, User
 from app.services.file_request import (
-    ensure_request_accessible,
+    ACCESS_DISABLED,
+    ACCESS_EXPIRED,
+    ACCESS_UPLOAD_LIMIT,
     finalize_request_upload,
     lookup_request_by_token,
+    request_access_issue,
     verify_request_password,
 )
 from app.services.security_log import (
@@ -42,13 +45,17 @@ from app.services.staging import (
     restore_staged_files,
     take_staged_files,
 )
+from app.services.download_limits import transfer_download_limit_reached
 from app.services.transfer import (
-    ensure_transfer_accessible,
+    ACCESS_DISABLED,
+    ACCESS_DOWNLOAD_LIMIT,
+    ACCESS_EXPIRED,
     get_transfer_file,
     iter_transfer_file,
     log_transfer_download,
     lookup_transfer_by_token,
     record_download,
+    transfer_access_issue,
     transfer_zip_entries,
     verify_transfer_password,
 )
@@ -77,16 +84,12 @@ def _invalid_request_redirect(request: Request) -> RedirectResponse:
 def _resolve_transfer(transfer: Transfer | None, request: Request) -> Transfer | RedirectResponse:
     if transfer is None:
         return _invalid_transfer_redirect(request)
-    if transfer.is_disabled:
-        return _login_redirect()
     return transfer
 
 
 def _resolve_request(file_request: FileRequest | None, request: Request) -> FileRequest | RedirectResponse:
     if file_request is None:
         return _invalid_request_redirect(request)
-    if file_request.is_disabled:
-        return _login_redirect()
     return file_request
 
 
@@ -107,21 +110,204 @@ def _require_download_grant(request: Request, token: str) -> None:
         )
 
 
-def _grant_response(
+def _download_limit_warning(transfer: Transfer) -> str | None:
+    if transfer.max_downloads <= 0:
+        return None
+    return ngettext(
+        "This transfer allows %(max)s download. Unlocking uses one download; "
+        "you can then download all files in this browser session.",
+        "This transfer allows %(max)s downloads. Unlocking uses one download; "
+        "you can then download all files in this browser session.",
+        transfer.max_downloads,
+    ) % {"max": transfer.max_downloads}
+
+
+def _access_blocked_copy(issue: str, *, kind: str = "transfer") -> dict[str, str]:
+    if issue == ACCESS_DOWNLOAD_LIMIT:
+        return {
+            "access_blocked_title": _("Download limit reached"),
+            "access_blocked_message": _(
+                "All available downloads for this transfer have been used. Contact the person who shared these files if you still need them."
+            ),
+        }
+    if issue == ACCESS_UPLOAD_LIMIT:
+        return {
+            "access_blocked_title": _("Upload limit reached"),
+            "access_blocked_message": _(
+                "All available uploads for this request have been used. Contact the person who requested these files if you still need to upload."
+            ),
+        }
+    if issue == ACCESS_EXPIRED:
+        if kind == "request":
+            return {
+                "access_blocked_title": _("This link has expired"),
+                "access_blocked_message": _(
+                    "This file request is no longer available because it has expired."
+                ),
+            }
+        return {
+            "access_blocked_title": _("This link has expired"),
+            "access_blocked_message": _(
+                "This transfer is no longer available because it has expired."
+            ),
+        }
+    if issue == ACCESS_DISABLED:
+        if kind == "request":
+            return {
+                "access_blocked_title": _("This link has been disabled"),
+                "access_blocked_message": _("This file request is no longer available."),
+            }
+        return {
+            "access_blocked_title": _("This link has been disabled"),
+            "access_blocked_message": _("This transfer is no longer available."),
+        }
+    return {
+        "access_blocked_title": _("Unavailable"),
+        "access_blocked_message": _("This link is no longer available."),
+    }
+
+
+def _access_blocked_status(issue: str) -> int:
+    if issue == ACCESS_DISABLED:
+        return 403
+    return 410
+
+
+def _download_page_context(
     request: Request,
+    transfer: Transfer,
+    *,
+    error: str | None = None,
+    access_issue: str | None = None,
+) -> dict:
+    token = transfer.public_token
+    password_required = bool(transfer.password_hash)
+    unlocked = is_transfer_unlocked(request, token, password_required=password_required)
+    has_grant = has_transfer_download_grant(request.session, token)
+    access_blocked = access_issue is not None
+    needs_password = not access_blocked and password_required and not unlocked and not has_grant
+    needs_unlock = not access_blocked and not has_grant and not needs_password
+    can_download = not access_blocked and has_grant
+    limit_warning = _download_limit_warning(transfer) if not has_grant and not access_blocked else None
+    ctx: dict = {
+        "transfer": transfer,
+        "needs_password": needs_password,
+        "needs_unlock": needs_unlock,
+        "can_download": can_download,
+        "limit_warning": limit_warning,
+        "error": error,
+        "access_blocked": access_blocked,
+    }
+    if access_blocked:
+        ctx.update(_access_blocked_copy(access_issue, kind="transfer"))
+    return ctx
+
+
+def _upload_page_context(
+    request: Request,
+    file_request: FileRequest,
     token: str,
-    response: HTMLResponse,
+    *,
+    error: str | None = None,
+    access_issue: str | None = None,
+    success: str | None = None,
+) -> dict:
+    password_required = bool(file_request.password_hash)
+    access_blocked = access_issue is not None
+    needs_password = (
+        not access_blocked
+        and password_required
+        and not is_request_unlocked(request, token, password_required=password_required)
+    )
+    ctx: dict = {
+        "file_request": file_request,
+        "needs_password": needs_password,
+        "error": error,
+        "success": success,
+        "access_blocked": access_blocked,
+    }
+    if access_blocked:
+        ctx.update(_access_blocked_copy(access_issue, kind="request"))
+    return ctx
+
+
+def _render_upload_page(
+    request: Request,
+    file_request: FileRequest,
+    token: str,
+    app_settings,
+    *,
+    status_code: int | None = None,
+    **context_kwargs,
 ) -> HTMLResponse:
+    issue = request_access_issue(file_request)
+    if issue:
+        context_kwargs["access_issue"] = issue
+        if status_code is None:
+            status_code = _access_blocked_status(issue)
+    elif status_code is None:
+        status_code = 200
+    ctx = branding_context(app_settings)
+    ctx.update(_upload_page_context(request, file_request, token, **context_kwargs))
+    return templates.TemplateResponse(
+        request,
+        "public_upload.html",
+        ctx,
+        status_code=status_code,
+    )
+
+
+def _render_download_page(
+    request: Request,
+    transfer: Transfer,
+    app_settings,
+    *,
+    status_code: int | None = None,
+    **context_kwargs,
+) -> HTMLResponse:
+    issue = transfer_access_issue(
+        transfer,
+        session=request.session,
+        public_token=transfer.public_token,
+    )
+    if issue:
+        context_kwargs["access_issue"] = issue
+        if status_code is None:
+            status_code = _access_blocked_status(issue)
+    elif status_code is None:
+        status_code = 200
+    ctx = branding_context(app_settings)
+    ctx.update(_download_page_context(request, transfer, **context_kwargs))
+    return templates.TemplateResponse(
+        request,
+        "public_download.html",
+        ctx,
+        status_code=status_code,
+    )
+
+
+async def _grant_transfer_session(
+    request: Request,
+    db: AsyncSession,
+    transfer: Transfer,
+    app_settings,
+    creator_email: str | None,
+) -> bool:
+    token = transfer.public_token
+    if has_transfer_download_grant(request.session, token):
+        return True
+    if transfer_download_limit_reached(transfer):
+        return False
     grant_transfer_download(request.session, token)
-    return response
+    if mark_transfer_download_counted(request.session, token):
+        await record_download(db, transfer, app_settings, creator_email)
+    return True
 
 
 async def _handle_download_event(
     request: Request,
     db: AsyncSession,
     transfer,
-    app_settings,
-    creator_email: str | None,
     *,
     download_type: str,
     file_name: str | None = None,
@@ -133,8 +319,6 @@ async def _handle_download_event(
         download_type=download_type,
         file_name=file_name,
     )
-    if mark_transfer_download_counted(request.session, transfer.public_token):
-        await record_download(db, transfer, app_settings, creator_email)
 
 
 @router.get("/d/{token}", response_class=HTMLResponse)
@@ -146,20 +330,7 @@ async def download_page(token: str, request: Request, db: AsyncSession = Depends
     if isinstance(resolved, RedirectResponse):
         return resolved
     transfer = resolved
-    ensure_transfer_accessible(transfer)
-
-    password_required = bool(transfer.password_hash)
-    unlocked = is_transfer_unlocked(request, token, password_required=password_required)
-    needs_password = password_required and not unlocked
-
-    if unlocked and not has_transfer_download_grant(request.session, token):
-        grant_transfer_download(request.session, token)
-
-    can_download = unlocked and has_transfer_download_grant(request.session, token)
-
-    ctx = branding_context(app_settings)
-    ctx.update({"transfer": transfer, "needs_password": needs_password, "can_download": can_download})
-    return templates.TemplateResponse(request, "public_download.html", ctx)
+    return _render_download_page(request, transfer, app_settings)
 
 
 @router.post("/d/{token}", response_class=HTMLResponse)
@@ -171,25 +342,40 @@ async def download_unlock(token: str, request: Request, password: str = Form("")
     if isinstance(resolved, RedirectResponse):
         return resolved
     transfer = resolved
-    ensure_transfer_accessible(transfer)
+    issue = transfer_access_issue(transfer)
+    if issue:
+        return _render_download_page(request, transfer, app_settings, access_issue=issue)
     if not verify_transfer_password(transfer, password):
         log_invalid_unlock(request, "transfer")
-        ctx = branding_context(app_settings)
-        ctx.update({"transfer": transfer, "needs_password": True, "can_download": False, "error": _("Invalid password")})
-        return templates.TemplateResponse(request, "public_download.html", ctx, status_code=401)
+        return _render_download_page(
+            request,
+            transfer,
+            app_settings,
+            status_code=401,
+            error=_("Invalid password"),
+        )
 
-    response = templates.TemplateResponse(
+    password_required = bool(transfer.password_hash)
+    creator = await db.get(User, transfer.created_by)
+    granted = await _grant_transfer_session(
         request,
-        "public_download.html",
-        {
-            **branding_context(app_settings),
-            "transfer": transfer,
-            "needs_password": False,
-            "can_download": True,
-        },
+        db,
+        transfer,
+        app_settings,
+        creator.email if creator else None,
     )
-    set_transfer_unlock(response, token)
-    return _grant_response(request, token, response)
+    if not granted:
+        return _render_download_page(
+            request,
+            transfer,
+            app_settings,
+            access_issue=ACCESS_DOWNLOAD_LIMIT,
+        )
+
+    response = _render_download_page(request, transfer, app_settings)
+    if password_required:
+        set_transfer_unlock(response, token)
+    return response
 
 
 @router.get("/d/{token}/download")
@@ -202,7 +388,13 @@ async def download_files_zip(token: str, request: Request, db: AsyncSession = De
     if isinstance(resolved, RedirectResponse):
         return resolved
     transfer = resolved
-    ensure_transfer_accessible(transfer)
+    issue = transfer_access_issue(
+        transfer,
+        session=request.session,
+        public_token=token,
+    )
+    if issue:
+        return _render_download_page(request, transfer, app_settings, access_issue=issue)
     if not is_transfer_unlocked(request, token, password_required=bool(transfer.password_hash)):
         raise HTTPException(status_code=403, detail=_("Password required"))
 
@@ -211,8 +403,6 @@ async def download_files_zip(token: str, request: Request, db: AsyncSession = De
         request,
         db,
         transfer,
-        app_settings,
-        creator.email if creator else None,
         download_type="zip",
         file_name=f"{transfer.title or 'transfer'}.zip",
     )
@@ -240,18 +430,21 @@ async def download_single_file(
     if isinstance(resolved, RedirectResponse):
         return resolved
     transfer = resolved
-    ensure_transfer_accessible(transfer)
+    issue = transfer_access_issue(
+        transfer,
+        session=request.session,
+        public_token=token,
+    )
+    if issue:
+        return _render_download_page(request, transfer, app_settings, access_issue=issue)
     if not is_transfer_unlocked(request, token, password_required=bool(transfer.password_hash)):
         raise HTTPException(status_code=403, detail=_("Password required"))
     transfer_file = await get_transfer_file(transfer, file_id)
 
-    creator = await db.get(User, transfer.created_by)
     await _handle_download_event(
         request,
         db,
         transfer,
-        app_settings,
-        creator.email if creator else None,
         download_type="file",
         file_name=transfer_file.original_name,
     )
@@ -274,14 +467,7 @@ async def upload_page(token: str, request: Request, db: AsyncSession = Depends(g
     if isinstance(resolved, RedirectResponse):
         return resolved
     file_request = resolved
-    ensure_request_accessible(file_request)
-    password_required = bool(file_request.password_hash)
-    needs_password = password_required and not is_request_unlocked(
-        request, token, password_required=password_required
-    )
-    ctx = branding_context(app_settings)
-    ctx.update({"file_request": file_request, "needs_password": needs_password})
-    return templates.TemplateResponse(request, "public_upload.html", ctx)
+    return _render_upload_page(request, file_request, token, app_settings)
 
 
 @router.post("/r/{token}/staging")
@@ -298,7 +484,12 @@ async def stage_request_file(
         if isinstance(resolved, RedirectResponse):
             return resolved
         file_request = resolved
-        ensure_request_accessible(file_request)
+        issue = request_access_issue(file_request)
+        if issue:
+            raise HTTPException(
+                status_code=_access_blocked_status(issue),
+                detail=_access_blocked_copy(issue, kind="request")["access_blocked_title"],
+            )
         limits = StagingLimits.from_settings(app_settings)
         max_total_bytes = file_request.max_total_bytes
         scope = _request_staging_scope(token)
@@ -331,7 +522,12 @@ async def delete_staged_request_file(
     if isinstance(resolved, RedirectResponse):
         return resolved
     file_request = resolved
-    ensure_request_accessible(file_request)
+    issue = request_access_issue(file_request)
+    if issue:
+        raise HTTPException(
+            status_code=_access_blocked_status(issue),
+            detail=_access_blocked_copy(issue, kind="request")["access_blocked_title"],
+        )
     _require_request_unlock(request, token, password_required=bool(file_request.password_hash))
     await remove_staged_file(_request_staging_scope(token), file_id)
     return JSONResponse({"ok": True})
@@ -354,19 +550,22 @@ async def upload_handler(
     if isinstance(resolved, RedirectResponse):
         return resolved
     file_request = resolved
-    ensure_request_accessible(file_request)
+    issue = request_access_issue(file_request)
+    if issue:
+        return _render_upload_page(request, file_request, token, app_settings, access_issue=issue)
 
     if unlock:
         if not verify_request_password(file_request, password):
             log_invalid_unlock(request, "request")
-            ctx = branding_context(app_settings)
-            ctx.update({"file_request": file_request, "needs_password": True, "error": _("Invalid password")})
-            return templates.TemplateResponse(request, "public_upload.html", ctx, status_code=401)
-        response = templates.TemplateResponse(
-            request,
-            "public_upload.html",
-            {**branding_context(app_settings), "file_request": file_request, "needs_password": False},
-        )
+            return _render_upload_page(
+                request,
+                file_request,
+                token,
+                app_settings,
+                status_code=401,
+                error=_("Invalid password"),
+            )
+        response = _render_upload_page(request, file_request, token, app_settings)
         set_request_unlock(response, token)
         return response
 
@@ -393,15 +592,20 @@ async def upload_handler(
         )
     except HTTPException as exc:
         await restore_staged_files(scope, staged_files)
-        ctx = branding_context(app_settings)
-        ctx.update({
-            "file_request": file_request,
-            "needs_password": False,
-            "error": exc.detail if isinstance(exc.detail, str) else _("Upload failed"),
-        })
-        return templates.TemplateResponse(request, "public_upload.html", ctx, status_code=exc.status_code)
+        return _render_upload_page(
+            request,
+            file_request,
+            token,
+            app_settings,
+            status_code=exc.status_code,
+            error=exc.detail if isinstance(exc.detail, str) else _("Upload failed"),
+        )
     await discard_staged_paths(staged_files)
 
-    ctx = branding_context(app_settings)
-    ctx.update({"file_request": file_request, "needs_password": False, "success": _("Upload successful. Thank you!")})
-    return templates.TemplateResponse(request, "public_upload.html", ctx)
+    return _render_upload_page(
+        request,
+        file_request,
+        token,
+        app_settings,
+        success=_("Upload successful. Thank you!"),
+    )

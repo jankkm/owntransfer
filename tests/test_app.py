@@ -2,60 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import re
-import tempfile
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
 import pytest
-import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 from sqlalchemy import select
 
-_test_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-_test_db.close()
-os.environ.setdefault("DATABASE_URL", f"sqlite+aiosqlite:///{_test_db.name}")
-os.environ.setdefault("SECRET_KEY", "test-secret-key")
-os.environ.setdefault("UPLOAD_DIR", tempfile.mkdtemp())
-
 from app.auth.passwords import hash_password, verify_password
-from app.database import async_session, engine, get_db
-from app.logging_config import SECURITY_LOGGER_NAME, configure_logging
-from app.main import app
-from app.models import AppSettings, Base, FileRequest, Transfer, User
+from app.database import async_session, get_db
+from app.logging_config import SECURITY_LOGGER_NAME
+from app.models import AppSettings, FileRequest, Transfer, User
 from app.services.settings import generate_public_token, get_app_settings
-
-configure_logging()
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def prepare_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-    async with async_session() as session:
-        session.add(
-            AppSettings(
-                id=1,
-                app_name="Test",
-                max_file_size_bytes=10 * 1024 * 1024,
-                default_expiry_days=7,
-                max_share_expiry_days=365,
-                max_downloads_default=5,
-                purge_grace_days=7,
-                setup_completed=True,
-            )
-        )
-        session.add(
-            User(
-                email="admin@test.com",
-                password_hash=hash_password("password123"),
-                is_admin=True,
-            )
-        )
-        await session.commit()
-    yield
 
 
 async def _csrf_token(client: AsyncClient, path: str = "/auth/login") -> str:
@@ -64,19 +23,6 @@ async def _csrf_token(client: AsyncClient, path: str = "/auth/login") -> str:
     match = re.search(r'name="csrf-token" content="([^"]+)"', response.text)
     assert match, "CSRF token meta tag not found"
     return match.group(1)
-
-
-@pytest_asyncio.fixture
-async def client():
-    async def override_get_db():
-        async with async_session() as session:
-            yield session
-
-    app.dependency_overrides[get_db] = override_get_db
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
@@ -300,7 +246,12 @@ async def test_download_succeeds_when_notify_email_fails(client: AsyncClient):
 
     with patch("app.services.email.aiosmtplib.send", new_callable=AsyncMock) as mock_send:
         mock_send.side_effect = SMTPReadTimeoutError("Timed out waiting for server response")
-        await client.get("/d/dl-token")
+        csrf = await _csrf_token(client, "/d/dl-token")
+        await client.post(
+            "/d/dl-token",
+            data={"password": "", "csrf_token": csrf},
+            follow_redirects=False,
+        )
         response = await client.get(f"/d/dl-token/files/{file_id}")
         await asyncio.sleep(0)
 
@@ -343,11 +294,13 @@ async def test_expired_transfer_not_security_logged(client: AsyncClient, caplog:
     with caplog.at_level(logging.WARNING, logger=SECURITY_LOGGER_NAME):
         response = await client.get("/d/expired-transfer-token", follow_redirects=False)
     assert response.status_code == 410
+    assert "This link has expired" in response.text
+    assert "no longer available" in response.text
     assert not any("event=invalid_transfer_link" in record.message for record in caplog.records)
 
 
 @pytest.mark.asyncio
-async def test_disabled_transfer_redirects_to_login(client: AsyncClient, caplog: pytest.LogCaptureFixture):
+async def test_disabled_transfer_shows_friendly_page(client: AsyncClient, caplog: pytest.LogCaptureFixture):
     async with async_session() as session:
         user = (await session.execute(select(User))).scalar_one()
         session.add(
@@ -363,8 +316,9 @@ async def test_disabled_transfer_redirects_to_login(client: AsyncClient, caplog:
 
     with caplog.at_level(logging.WARNING, logger=SECURITY_LOGGER_NAME):
         response = await client.get("/d/disabled-transfer-token", follow_redirects=False)
-    assert response.status_code == 303
-    assert response.headers["location"] == "/auth/login"
+    assert response.status_code == 403
+    assert "This link has been disabled" in response.text
+    assert "no longer available" in response.text
     assert not any("event=invalid_transfer_link" in record.message for record in caplog.records)
 
 
@@ -387,6 +341,7 @@ async def test_disabled_request_not_security_logged(client: AsyncClient, caplog:
 
     with caplog.at_level(logging.WARNING, logger=SECURITY_LOGGER_NAME):
         response = await client.get("/r/disabled-request-token", follow_redirects=False)
-    assert response.status_code == 303
-    assert response.headers["location"] == "/auth/login"
+    assert response.status_code == 403
+    assert "This link has been disabled" in response.text
+    assert "file request" in response.text.lower()
     assert not any("event=invalid_request_link" in record.message for record in caplog.records)
