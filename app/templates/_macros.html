@@ -43,11 +43,12 @@
 </label>
 {%- endmacro %}
 
-{% macro share_active_badge(is_active, inactive_reason='') -%}
-{% if is_active %}
+{% macro share_active_badge(is_enabled, inactive_reason='', is_expired=false, inactive_reason_title='') -%}
+{% set show_active = is_enabled and not is_expired and inactive_reason != 'download_limit' and inactive_reason != 'upload_limit' %}
+{% if show_active %}
 <span class="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">{{ _('Active') }}</span>
-{% else %}
-<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium"{% if inactive_reason %} title="{{ inactive_reason }}"{% endif %}>{{ _('Inactive') }}</span>
+{% elif not is_enabled %}
+<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium"{% if inactive_reason_title %} title="{{ inactive_reason_title }}"{% endif %}>{{ _('Disabled') }}</span>
 {% endif %}
 {%- endmacro %}
 
@@ -69,22 +70,21 @@
 {% endif %}
 {%- endmacro %}
 
-{% macro share_status_badges(is_active, inactive_reason='', has_password=false, deletion_pending=false, notify_on_download=false) -%}
+{% macro share_status_badges(is_enabled, inactive_reason='', is_expired=false, has_password=false, deletion_pending=false, notify_on_download=false) -%}
+{% set show_active = is_enabled and not is_expired and inactive_reason != 'download_limit' and inactive_reason != 'upload_limit' %}
 <div class="flex flex-wrap gap-1">
-  {% if is_active %}
+  {% if show_active %}
   {{ status_badge(_('Active'), 'green') }}
-  {% elif inactive_reason == 'expired' %}
-  {{ status_badge(_('Expired'), 'red') }}
-  {% elif inactive_reason == 'disabled' %}
+  {% elif not is_enabled %}
   {{ status_badge(_('Disabled'), 'slate') }}
-  {% elif inactive_reason == 'download_limit' %}
-  {{ status_badge(_('Download limit'), 'slate') }}
-  {% elif inactive_reason == 'upload_limit' %}
-  {{ status_badge(_('Upload limit'), 'slate') }}
-  {% elif inactive_reason %}
-  {{ status_badge(_('Inactive'), 'slate') }}
-  {% else %}
-  {{ status_badge(_('Inactive'), 'slate') }}
+  {% endif %}
+  {% if is_expired %}
+  {{ status_badge(_('Expired'), 'red') }}
+  {% endif %}
+  {% if is_enabled and inactive_reason == 'download_limit' %}
+  {{ status_badge(_('Limit reached'), 'slate') }}
+  {% elif is_enabled and inactive_reason == 'upload_limit' %}
+  {{ status_badge(_('Limit reached'), 'slate') }}
   {% endif %}
   {% if deletion_pending %}
   {{ status_badge(_('Deletion pending'), 'orange') }}

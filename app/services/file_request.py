@@ -18,7 +18,6 @@ from app.services.audit import log_audit
 from app.services.email import send_request_email, send_upload_notify
 from app.services.datetime_display import ensure_expiry_within_limit, ensure_utc, format_datetime_with_tz, utc_now
 from app.services.settings import generate_public_token, is_extension_blocked, parse_blocklist
-from app.services.share_status import file_request_can_toggle
 from app.services.share_lifecycle import is_past_expiry, reset_expiry_notifications
 from app.services.staging import StagedFile
 from app.services.storage import get_storage
@@ -470,7 +469,7 @@ async def update_file_request(
     elif password:
         req.password_hash = hash_password(password)
 
-    if enabled is not None and file_request_can_toggle(req, now):
+    if enabled is not None:
         req.is_disabled = not enabled
 
     await db.commit()

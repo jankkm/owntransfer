@@ -21,7 +21,6 @@ from app.services.email import send_download_notify, send_share_email
 from app.services.datetime_display import ensure_expiry_within_limit, ensure_utc, format_datetime_with_tz, utc_now
 from app.services.download_limits import transfer_download_limit_reached
 from app.services.settings import generate_public_token, is_extension_blocked, parse_blocklist
-from app.services.share_status import transfer_can_toggle
 from app.services.share_lifecycle import is_past_expiry, reset_expiry_notifications
 from app.services.staging import StagedFile, _save_upload
 from app.services.storage import get_storage
@@ -465,7 +464,7 @@ async def update_transfer(
     elif password:
         transfer.password_hash = hash_password(password)
 
-    if enabled is not None and transfer_can_toggle(transfer, now):
+    if enabled is not None:
         transfer.is_disabled = not enabled
 
     await db.commit()

@@ -1,11 +1,22 @@
 {% import "_macros.html" as f %}
 <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 space-y-2">
-  <div>{{ f.share_active_badge(is_active, inactive_reason_label) }}</div>
-  {% if can_toggle or is_disabled or inactive_reason_code == 'expired' or admin_edit %}
+  <div class="flex flex-wrap items-center gap-2">
+    {{ f.share_active_badge(is_enabled, inactive_reason_code, is_expired, inactive_reason_label) }}
+    {% if is_expired %}
+    {{ f.status_badge(_('Expired'), 'red') }}
+    {% endif %}
+    {% if is_enabled and inactive_reason_code in ('download_limit', 'upload_limit') %}
+    {{ f.status_badge(_('Limit reached'), 'slate') }}
+    {% endif %}
+  </div>
   <input type="hidden" name="has_enabled_field" value="1">
-  {{ f.checkbox_input("enabled", _("Link is active"), checked=not is_disabled) }}
+  {{ f.checkbox_input("enabled", _("Link is active"), checked=is_enabled) }}
   <p class="text-xs text-slate-500">{{ _('Uncheck to temporarily disable this link without deleting it.') }}</p>
-  {% elif inactive_reason_label %}
-  <p class="text-xs text-slate-500">{{ inactive_reason_label }}</p>
+  {% if is_expired %}
+  <p class="text-xs text-amber-800">{{ _('This link has expired and is not publicly accessible until you extend the expiry date.') }}</p>
+  {% elif is_enabled and inactive_reason_code == 'download_limit' %}
+  <p class="text-xs text-amber-800">{{ _('This link has reached its download limit and is not publicly accessible until you raise the limit.') }}</p>
+  {% elif is_enabled and inactive_reason_code == 'upload_limit' %}
+  <p class="text-xs text-amber-800">{{ _('This link has reached its upload limit and is not publicly accessible until you raise the limit.') }}</p>
   {% endif %}
 </div>

@@ -39,11 +39,10 @@
   <input type="hidden" name="tab" value="{{ shares_tab }}">
   {% if shares_user %}<input type="hidden" name="user" value="{{ shares_user }}">{% endif %}
   {% endif %}
-  {% set is_active = transfer_is_active(transfer, now) %}
-  {% set can_toggle = transfer_can_toggle(transfer, now) %}
+  {% set is_enabled = transfer_is_enabled(transfer) %}
+  {% set is_expired = transfer_is_expired(transfer, now) %}
   {% set inactive_reason_code = transfer_inactive_reason_code(transfer, now) %}
   {% set inactive_reason_label = transfer_inactive_reason(transfer, now) %}
-  {% set is_disabled = transfer.is_disabled %}
   {% include "_share_active_controls.html" %}
   {{ f.text_input("title", _("Title"), transfer.title, required=true) }}
   {{ f.textarea_input("message", _("Message"), transfer.message or '') }}

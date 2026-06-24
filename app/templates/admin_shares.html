@@ -71,8 +71,9 @@
           <td class="py-3 px-4 font-medium">{{ t.title }}</td>
           <td class="py-3 px-4">
             {{ f.share_status_badges(
-              transfer_is_active(t, now),
+              transfer_is_enabled(t),
               transfer_inactive_reason_code(t, now),
+              transfer_is_expired(t, now),
               t.password_hash,
               transfer_deletion_pending(t, purge_grace_days, now),
               t.notify_on_download
@@ -138,8 +139,9 @@
           <td class="py-3 px-4 font-medium">{{ r.title }}</td>
           <td class="py-3 px-4">
             {{ f.share_status_badges(
-              file_request_is_active(r, now),
+              file_request_is_enabled(r),
               file_request_inactive_reason_code(r, now),
+              file_request_is_expired(r, now),
               r.password_hash,
               file_request_deletion_pending(r, purge_grace_days, now)
             ) }}

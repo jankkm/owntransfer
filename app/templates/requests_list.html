@@ -17,8 +17,9 @@
         <h2 class="font-semibold text-slate-900 truncate">{{ r.title }}</h2>
       </div>
       {{ f.share_status_badges(
-        file_request_is_active(r, now),
+        file_request_is_enabled(r),
         file_request_inactive_reason_code(r, now),
+        file_request_is_expired(r, now),
         r.password_hash,
         file_request_deletion_pending(r, purge_grace_days, now)
       ) }}

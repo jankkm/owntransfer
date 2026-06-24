@@ -736,6 +736,35 @@ msgstr ""
 "Deaktivieren Sie das Häkchen, um diesen Link vorübergehend zu "
 "deaktivieren, ohne ihn zu löschen."
 
+#: app/templates/_macros.html:85 app/templates/_macros.html:87
+#: app/templates/_share_active_controls.html:9
+msgid "Limit reached"
+msgstr "Limit erreicht"
+
+#: app/templates/_share_active_controls.html:16
+msgid ""
+"This link has expired and is not publicly accessible until you extend the "
+"expiry date."
+msgstr ""
+"Dieser Link ist abgelaufen und öffentlich nicht erreichbar, bis Sie das "
+"Ablaufdatum verlängern."
+
+#: app/templates/_share_active_controls.html:18
+msgid ""
+"This link has reached its download limit and is not publicly accessible "
+"until you raise the limit."
+msgstr ""
+"Dieser Link hat sein Download-Limit erreicht und ist öffentlich nicht "
+"erreichbar, bis Sie das Limit erhöhen."
+
+#: app/templates/_share_active_controls.html:20
+msgid ""
+"This link has reached its upload limit and is not publicly accessible until "
+"you raise the limit."
+msgstr ""
+"Dieser Link hat sein Upload-Limit erreicht und ist öffentlich nicht "
+"erreichbar, bis Sie das Limit erhöhen."
+
 #: app/templates/admin.html:3 app/templates/admin.html:5
 #: app/templates/admin.html:90 app/templates/admin_email.html:3
 #: app/templates/admin_email.html:5 app/templates/admin_shares.html:3

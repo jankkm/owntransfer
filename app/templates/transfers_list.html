@@ -15,8 +15,9 @@
         <h2 class="font-semibold text-slate-900 truncate">{{ t.title }}</h2>
       </div>
       {{ f.share_status_badges(
-        transfer_is_active(t, now),
+        transfer_is_enabled(t),
         transfer_inactive_reason_code(t, now),
+        transfer_is_expired(t, now),
         t.password_hash,
         transfer_deletion_pending(t, purge_grace_days, now),
         t.notify_on_download

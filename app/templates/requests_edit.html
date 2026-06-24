@@ -39,11 +39,10 @@
   <input type="hidden" name="tab" value="{{ shares_tab }}">
   {% if shares_user %}<input type="hidden" name="user" value="{{ shares_user }}">{% endif %}
   {% endif %}
-  {% set is_active = file_request_is_active(file_request, now) %}
-  {% set can_toggle = file_request_can_toggle(file_request, now) %}
+  {% set is_enabled = file_request_is_enabled(file_request) %}
+  {% set is_expired = file_request_is_expired(file_request, now) %}
   {% set inactive_reason_code = file_request_inactive_reason_code(file_request, now) %}
   {% set inactive_reason_label = file_request_inactive_reason(file_request, now) %}
-  {% set is_disabled = file_request.is_disabled %}
   {% include "_share_active_controls.html" %}
   {{ f.text_input("title", _("Title"), file_request.title, required=true) }}
   {{ f.textarea_input("instructions", _("Instructions for uploader"), file_request.instructions or '') }}
