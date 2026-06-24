@@ -1,3 +1,16 @@
+FROM node:20-slim AS frontend
+
+WORKDIR /build
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY tailwind.config.js ./
+COPY frontend/tailwind.css frontend/tailwind.css
+COPY app/templates app/templates
+COPY app/static app/static
+RUN npm run build:css
+
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -11,6 +24,7 @@ COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir .
 
 COPY app app
+COPY --from=frontend /build/app/static/tailwind.css app/static/tailwind.css
 COPY .env.example .env.example
 
 RUN mkdir -p /data/uploads

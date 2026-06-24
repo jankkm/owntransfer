@@ -294,7 +294,7 @@ pybabel compile -d app/locales
 
 ## Development
 
-Requirements: Python 3.11+
+Requirements: Python 3.11+, Node.js 18+ (for Tailwind CSS builds)
 
 ```bash
 python -m venv .venv
@@ -309,6 +309,15 @@ export SECRET_KEY=dev-secret
 uvicorn app.main:app --reload --port 8080
 pytest
 ```
+
+After changing HTML templates or frontend classes in `app/static/*.js`, rebuild the CSS locally:
+
+```bash
+npm install
+npm run build:css
+```
+
+Docker images (including GitHub Actions releases) build `app/static/tailwind.css` automatically during `docker build`.
 
 The database schema is created automatically on startup via `ensure_schema` in the application lifespan.
 

@@ -1,0 +1,10 @@
+{
+  "name": "owntransfer",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i frontend/tailwind.css -o app/static/tailwind.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}
