@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import html
+
 from jinja2.sandbox import SandboxedEnvironment
 
+from app.config import settings
 from app.i18n import _
 from app.models import AppSettings
 
 # Admin-editable templates are untrusted-ish: a compromised or careless admin
 # must not be able to escape into Python (SSTI -> RCE). The sandbox blocks
 # access to unsafe attributes and builtins.
-_sandbox = SandboxedEnvironment(autoescape=False)
+_sandbox = SandboxedEnvironment(autoescape=True)
 
 TEMPLATE_KEYS = (
     "share",
@@ -70,21 +73,41 @@ SUBJECT_FIELD_MAP = {
     "purge_reminder": "email_subj_purge_reminder",
 }
 
+_BASE_TEMPLATE_VARS = ["app_name", "base_url"]
+
 TEMPLATE_VARIABLES: dict[str, list[str]] = {
-    "share": ["app_name", "title", "message", "link", "password", "expires_at"],
-    "request": ["app_name", "sender", "title", "instructions", "link", "password", "expires_at"],
-    "upload_notify": ["app_name", "title", "dashboard_link"],
-    "download_notify": ["app_name", "title", "download_count", "max_downloads"],
-    "expired_unused": ["app_name", "title", "resource_label", "expires_at", "edit_link"],
-    "purge_reminder": ["app_name", "title", "resource_label", "expires_at", "edit_link", "purge_at", "days_until_purge"],
+    "share": [*_BASE_TEMPLATE_VARS, "title", "message", "link", "password", "expires_at"],
+    "request": [*_BASE_TEMPLATE_VARS, "sender", "title", "instructions", "link", "password", "expires_at"],
+    "upload_notify": [*_BASE_TEMPLATE_VARS, "title", "dashboard_link"],
+    "download_notify": [*_BASE_TEMPLATE_VARS, "title", "download_count", "max_downloads"],
+    "expired_unused": [*_BASE_TEMPLATE_VARS, "title", "resource_label", "expires_at", "edit_link"],
+    "purge_reminder": [
+        *_BASE_TEMPLATE_VARS,
+        "title",
+        "resource_label",
+        "expires_at",
+        "edit_link",
+        "purge_at",
+        "days_until_purge",
+    ],
 }
+
+
+def _normalize_template_source(source: str) -> str:
+    return html.unescape(source)
+
+
+def _email_context(**context) -> dict:
+    base = {"base_url": settings.base_url.rstrip("/")}
+    base.update(context)
+    return base
 
 
 def get_template_source(app_settings: AppSettings, key: str) -> str:
     field = TEMPLATE_FIELD_MAP[key]
     custom = getattr(app_settings, field, None)
     if custom and custom.strip():
-        return custom
+        return _normalize_template_source(custom)
     return _(DEFAULTS[key])
 
 
@@ -92,18 +115,18 @@ def get_subject_source(app_settings: AppSettings, key: str) -> str:
     field = SUBJECT_FIELD_MAP[key]
     custom = getattr(app_settings, field, None)
     if custom and custom.strip():
-        return custom
+        return _normalize_template_source(custom)
     return _(DEFAULT_SUBJECTS[key])
 
 
 def render_email_template(app_settings: AppSettings, key: str, **context) -> str:
     source = get_template_source(app_settings, key)
-    return _sandbox.from_string(source).render(**context)
+    return _sandbox.from_string(source).render(**_email_context(app_name=app_settings.app_name, **context))
 
 
 def render_email_subject(app_settings: AppSettings, key: str, **context) -> str:
     source = get_subject_source(app_settings, key)
-    return _sandbox.from_string(source).render(**context).strip()
+    return _sandbox.from_string(source).render(**_email_context(app_name=app_settings.app_name, **context)).strip()
 
 
 def templates_for_admin(app_settings: AppSettings) -> dict[str, str]:

@@ -71,6 +71,21 @@ def _html_to_plain_text(html_body: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", text).strip()
 
 
+def _wrap_email_html(body: str) -> str:
+    return (
+        "<!DOCTYPE html>\n"
+        "<html>\n"
+        "<head>\n"
+        '<meta charset="utf-8">\n'
+        "<style>strong,b{font-weight:700;}</style>\n"
+        "</head>\n"
+        '<body style="font-family: sans-serif; line-height: 1.5; color: #111;">\n'
+        f"{body}\n"
+        "</body>\n"
+        "</html>"
+    )
+
+
 async def _deliver_email(
     *,
     to: str | list[str],
@@ -91,7 +106,7 @@ async def _deliver_email(
     msg["Subject"] = subject
     plain = body_text if body_text is not None else _html_to_plain_text(body_html)
     msg.set_content(plain)
-    msg.add_alternative(body_html, subtype="html")
+    msg.add_alternative(_wrap_email_html(body_html), subtype="html")
 
     await aiosmtplib.send(
         msg,

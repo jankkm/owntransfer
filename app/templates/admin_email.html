@@ -13,7 +13,7 @@
     <h2 class="font-semibold text-lg">{{ label }}</h2>
     <p class="text-xs text-slate-500">{{ _('Jinja2 variables:') }} {{ variables|join(', ') }}</p>
     {{ f.text_input("subj_" ~ key, _("Subject"), subjects[key]) }}
-    {{ f.textarea_input("tpl_" ~ key, _("Body (HTML)"), templates[key], rows=8) }}
+    {{ f.textarea_input("tpl_" ~ key, _("Body (HTML)"), templates[key]|safe, rows=8) }}
   </div>
   {% endfor %}
   <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm">{{ _('Save email templates') }}</button>
