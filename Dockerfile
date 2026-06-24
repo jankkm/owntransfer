@@ -26,6 +26,7 @@ RUN pip install --no-cache-dir .
 COPY app app
 COPY --from=frontend /build/app/static/tailwind.css app/static/tailwind.css
 COPY .env.example .env.example
+RUN pybabel compile -d app/locales
 
 RUN mkdir -p /data/uploads
 

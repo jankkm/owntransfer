@@ -8,6 +8,14 @@
   <p class="text-sm text-slate-500 mb-6">
     {{ _('Expires %(expires)s · up to %(max_mb)s MB per upload') % {'expires': file_request.expires_at|format_datetime_with_tz, 'max_mb': (file_request.max_total_bytes / 1024 / 1024)|int} }}
   </p>
+  {% if success %}<p class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-4">{{ success }}</p>{% endif %}
+  {% if access_blocked %}
+  <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 mb-2">
+    <p class="text-base font-semibold text-slate-900 mb-2">{{ access_blocked_title }}</p>
+    <p class="text-sm text-slate-600">{{ access_blocked_message }}</p>
+  </div>
+  {% else %}
+  {% if error %}<p class="text-sm text-red-600 mb-4">{{ error }}</p>{% endif %}
   {% if needs_password %}
   <form method="post" class="space-y-4 mb-6">
     {{ csrf_input() }}
@@ -23,6 +31,7 @@
     {{ f.file_picker("/r/" ~ file_request.public_token ~ "/staging", "/r/" ~ file_request.public_token ~ "/staging/{id}", required_files_message=_('Add at least one file to upload'), upload_concurrency=upload_concurrency) }}
     <button type="submit" data-submit-btn class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Complete upload') }}</button>
   </form>
+  {% endif %}
   {% endif %}
 </div>
 {% endblock %}

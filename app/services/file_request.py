@@ -102,12 +102,28 @@ async def get_request_by_token(db: AsyncSession, token: str) -> FileRequest:
     return req
 
 
-def ensure_request_accessible(req: FileRequest) -> None:
+ACCESS_DISABLED = "disabled"
+ACCESS_EXPIRED = "expired"
+ACCESS_UPLOAD_LIMIT = "upload_limit"
+
+
+def request_access_issue(req: FileRequest) -> str | None:
     if req.is_disabled:
-        raise HTTPException(status_code=403, detail=_("This link has been disabled"))
+        return ACCESS_DISABLED
     if is_past_expiry(is_expired=req.is_expired, expires_at=req.expires_at):
-        raise HTTPException(status_code=410, detail=_("This link has expired"))
+        return ACCESS_EXPIRED
     if req.upload_count >= req.max_uploads:
+        return ACCESS_UPLOAD_LIMIT
+    return None
+
+
+def ensure_request_accessible(req: FileRequest) -> None:
+    issue = request_access_issue(req)
+    if issue == ACCESS_DISABLED:
+        raise HTTPException(status_code=403, detail=_("This link has been disabled"))
+    if issue == ACCESS_EXPIRED:
+        raise HTTPException(status_code=410, detail=_("This link has expired"))
+    if issue == ACCESS_UPLOAD_LIMIT:
         raise HTTPException(status_code=410, detail=_("Upload limit reached"))
 
 

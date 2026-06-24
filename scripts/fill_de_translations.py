@@ -114,6 +114,25 @@ TRANSLATIONS: dict[str | tuple[str, str], str | tuple[str, str]] = {
     "Download (ZIP)": "Herunterladen (ZIP)",
     "Download limit": "Download-Limit",
     "Download limit reached": "Download-Limit erreicht",
+    "All available downloads for this transfer have been used. Contact the person who shared these files if you still need them.": "Alle verfügbaren Downloads für diese Übertragung wurden bereits genutzt. Wenden Sie sich an die Person, die Ihnen die Dateien geteilt hat, falls Sie sie noch benötigen.",
+    "All available uploads for this request have been used. Contact the person who requested these files if you still need to upload.": "Alle verfügbaren Uploads für diese Dateianfrage wurden bereits genutzt. Wenden Sie sich an die Person, die die Dateien angefordert hat, falls Sie noch etwas hochladen müssen.",
+    "This transfer is no longer available because it has expired.": "Diese Übertragung ist nicht mehr verfügbar, weil sie abgelaufen ist.",
+    "This file request is no longer available because it has expired.": "Diese Dateianfrage ist nicht mehr verfügbar, weil sie abgelaufen ist.",
+    "This transfer is no longer available.": "Diese Übertragung ist nicht mehr verfügbar.",
+    "This file request is no longer available.": "Diese Dateianfrage ist nicht mehr verfügbar.",
+    "This link is no longer available.": "Dieser Link ist nicht mehr verfügbar.",
+    "Unavailable": "Nicht verfügbar",
+    (
+        "This transfer allows %(max)s download. Unlocking uses one download; "
+        "you can then download all files in this browser session.",
+        "This transfer allows %(max)s downloads. Unlocking uses one download; "
+        "you can then download all files in this browser session.",
+    ): (
+        "Diese Übertragung erlaubt %(max)s Download. Das Entsperren verbraucht einen Download; "
+        "anschließend können Sie alle Dateien in dieser Browser-Sitzung herunterladen.",
+        "Diese Übertragung erlaubt %(max)s Downloads. Das Entsperren verbraucht einen Download; "
+        "anschließend können Sie alle Dateien in dieser Browser-Sitzung herunterladen.",
+    ),
     "Download log": "Download-Protokoll",
     "Download notification": "Download-Benachrichtigung",
     "Downloads": "Downloads",
@@ -364,6 +383,7 @@ TRANSLATIONS: dict[str | tuple[str, str], str | tuple[str, str]] = {
     "You cannot delete your own account": "Sie können Ihr eigenes Konto nicht löschen",
     "You cannot demote your own account": "Sie können Ihr eigenes Konto nicht degradieren",
     "Your email (optional)": "Ihre E-Mail (optional)",
+    "You have unsaved changes. Leave this page?": "Sie haben ungespeicherte Änderungen. Seite verlassen?",
     "Your name (optional)": "Ihr Name (optional)",
     "—": "—",
     "less than a minute": "weniger als eine Minute",
