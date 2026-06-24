@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import html
+import logging
 import re
 from email.message import EmailMessage
 from typing import Optional, TypedDict
 
 import aiosmtplib
+
+logger = logging.getLogger(__name__)
 
 from app.config import settings
 from app.i18n import _, activate
@@ -113,18 +116,22 @@ async def send_email(
         return False
 
     host, port, user, password, from_addr, use_tls = resolved
-    await _deliver_email(
-        to=to,
-        subject=subject,
-        body_html=body_html,
-        body_text=body_text,
-        host=host,
-        port=port,
-        username=user,
-        password=password,
-        from_addr=from_addr,
-        use_tls=use_tls,
-    )
+    try:
+        await _deliver_email(
+            to=to,
+            subject=subject,
+            body_html=body_html,
+            body_text=body_text,
+            host=host,
+            port=port,
+            username=user,
+            password=password,
+            from_addr=from_addr,
+            use_tls=use_tls,
+        )
+    except Exception:
+        logger.exception("Failed to send email to %s", to)
+        return False
     return True
 
 

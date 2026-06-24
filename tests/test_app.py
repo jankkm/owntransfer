@@ -261,6 +261,54 @@ async def test_password_protected_transfer_cannot_be_bypassed_with_forged_cookie
 
 
 @pytest.mark.asyncio
+async def test_download_succeeds_when_notify_email_fails(client: AsyncClient):
+    from unittest.mock import AsyncMock, patch
+
+    from aiosmtplib.errors import SMTPReadTimeoutError
+
+    from app.models import Transfer, TransferFile
+    from app.services.storage import get_storage
+
+    storage = get_storage()
+    rel_path = "test-user/transfer-id/hello.txt"
+    await storage.save_file(rel_path, b"hello")
+
+    async with async_session() as session:
+        user = (await session.execute(select(User))).scalar_one()
+        settings = await get_app_settings(session)
+        settings.smtp_host = "smtp.example.com"
+        settings.smtp_port = 587
+        transfer = Transfer(
+            public_token="dl-token",
+            created_by=user.id,
+            title="Test",
+            notify_on_download=True,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+        )
+        session.add(transfer)
+        await session.flush()
+        transfer_file = TransferFile(
+            transfer_id=transfer.id,
+            original_name="hello.txt",
+            storage_path=rel_path,
+            size_bytes=5,
+            content_type="text/plain",
+        )
+        session.add(transfer_file)
+        await session.commit()
+        file_id = transfer_file.id
+
+    with patch("app.services.email.aiosmtplib.send", new_callable=AsyncMock) as mock_send:
+        mock_send.side_effect = SMTPReadTimeoutError("Timed out waiting for server response")
+        await client.get("/d/dl-token")
+        response = await client.get(f"/d/dl-token/files/{file_id}")
+        await asyncio.sleep(0)
+
+    assert response.status_code == 200
+    assert response.content == b"hello"
+
+
+@pytest.mark.asyncio
 async def test_invalid_transfer_token_security_log(client: AsyncClient, caplog: pytest.LogCaptureFixture):
     with caplog.at_level(logging.WARNING, logger=SECURITY_LOGGER_NAME):
         response = await client.get("/d/not-a-real-token", follow_redirects=False)

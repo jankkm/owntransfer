@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import re
 from datetime import datetime
 from pathlib import Path
@@ -208,12 +209,14 @@ async def record_download(
     )
     if transfer.notify_on_download and creator_email:
         max_label = "∞" if transfer.max_downloads <= 0 else str(transfer.max_downloads)
-        await send_download_notify(
-            app_settings,
-            to=creator_email,
-            title=transfer.title,
-            download_count=transfer.download_count,
-            max_downloads=max_label,
+        asyncio.create_task(
+            send_download_notify(
+                app_settings,
+                to=creator_email,
+                title=transfer.title,
+                download_count=transfer.download_count,
+                max_downloads=max_label,
+            )
         )
 
 
