@@ -68,6 +68,13 @@
     return message;
   }
 
+  function readConcurrency(root, fallback) {
+    const raw = root.dataset.uploadConcurrency;
+    if (raw === undefined || raw === "") return fallback;
+    const value = Number(raw);
+    return Number.isFinite(value) && value >= 1 ? value : fallback;
+  }
+
   function initFilePicker(root) {
     const uploadUrl = root.dataset.uploadUrl;
     const deleteUrlTemplate = root.dataset.deleteUrlTemplate;
@@ -80,7 +87,7 @@
     const submitBtn = form ? form.querySelector("[data-submit-btn]") : null;
     const requireFiles = root.dataset.requireFiles === "true";
     const requiredMessage = root.dataset.requiredMessage || t("Add at least one file");
-    const concurrency = Number(root.dataset.uploadConcurrency) || DEFAULT_CONCURRENCY;
+    const concurrency = readConcurrency(root, DEFAULT_CONCURRENCY);
     const uploadQueue = createUploadQueue(concurrency);
     const files = new Map();
 

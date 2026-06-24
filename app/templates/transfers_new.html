@@ -7,7 +7,7 @@
   {{ csrf_input() }}
   {{ f.text_input("title", _("Title"), required=true) }}
   {{ f.textarea_input("message", _("Message (optional)")) }}
-  {{ f.file_picker("/transfers/staging", "/transfers/staging/{id}") }}
+  {{ f.file_picker("/transfers/staging", "/transfers/staging/{id}", upload_concurrency=upload_concurrency) }}
   {% if allow_user_share_emails %}
   {{ f.text_input("recipient_emails", _("Recipient emails"), hint=_("Comma-separated. Recipients will receive the download link by email.")) }}
   {% endif %}

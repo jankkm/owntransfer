@@ -244,7 +244,7 @@
 <button type="button" data-show-confirm="{{ panel_id }}" class="{{ button_class }}">{{ label }}</button>
 {%- endmacro %}
 
-{% macro file_picker(upload_url, delete_url_template, require_files=true, required_files_message=none) -%}
+{% macro file_picker(upload_url, delete_url_template, require_files=true, required_files_message=none, upload_concurrency=5) -%}
 <div data-file-picker
      data-upload-url="{{ upload_url }}"
      data-delete-url-template="{{ delete_url_template }}"

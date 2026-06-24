@@ -20,7 +20,7 @@
     {{ csrf_input() }}
     {{ f.text_input("uploader_name", _("Your name (optional)")) }}
     {{ f.text_input("uploader_email", _("Your email (optional)"), type="email") }}
-    {{ f.file_picker("/r/" ~ file_request.public_token ~ "/staging", "/r/" ~ file_request.public_token ~ "/staging/{id}", required_files_message=_('Add at least one file to upload')) }}
+    {{ f.file_picker("/r/" ~ file_request.public_token ~ "/staging", "/r/" ~ file_request.public_token ~ "/staging/{id}", required_files_message=_('Add at least one file to upload'), upload_concurrency=upload_concurrency) }}
     <button type="submit" data-submit-btn class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Complete upload') }}</button>
   </form>
   {% endif %}

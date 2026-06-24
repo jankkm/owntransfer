@@ -70,6 +70,13 @@
     return { enqueue };
   }
 
+  function readConcurrency(root, fallback) {
+    const raw = root.dataset.uploadConcurrency;
+    if (raw === undefined || raw === "") return fallback;
+    const value = Number(raw);
+    return Number.isFinite(value) && value >= 1 ? value : fallback;
+  }
+
   function initTransferFiles(root) {
     const uploadUrl = root.dataset.uploadUrl;
     const deleteUrlTemplate = root.dataset.deleteUrlTemplate;
@@ -83,7 +90,7 @@
     const errorEl = root.querySelector("[data-files-error]");
     const pendingUploads = new Set();
     const uploadStates = new Map();
-    const concurrency = Number(root.dataset.uploadConcurrency) || 5;
+    const concurrency = readConcurrency(root, 5);
     const uploadQueue = createUploadQueue(concurrency);
 
     function setError(message) {
