@@ -1696,38 +1696,31 @@ msgstr "0 für unbegrenzte Downloads verwenden."
 msgid "Create transfer"
 msgstr "Übertragung erstellen"
 
-#: app/i18n/__init__.py:JS_MESSAGE_KEYS
 msgid "Remove file?"
 msgstr "Datei entfernen?"
 
-#: app/i18n/__init__.py:JS_MESSAGE_KEYS
 msgid "Yes, remove file"
 msgstr "Ja, Datei entfernen"
 
-#: app/i18n/__init__.py:JS_MESSAGE_KEYS
 msgid "Removing…"
 msgstr "Wird entfernt…"
 
-#: app/i18n/__init__.py:JS_MESSAGE_KEYS
 msgid "Could not show confirmation dialog."
 msgstr "Bestätigungsdialog konnte nicht angezeigt werden."
 
-#: app/i18n/__init__.py:JS_MESSAGE_KEYS
 msgid "Could not remove file"
-msgstr "Datei konnte nicht entfernt werden."
+msgstr "Datei konnte nicht entfernt werden"
 
-#: app/i18n/__init__.py:JS_MESSAGE_KEYS
 msgid "this file"
 msgstr "diese Datei"
 
-#: app/i18n/__init__.py:JS_MESSAGE_KEYS
-msgid ""
-"\"%(name)s\" will be permanently removed. This cannot be undone."
+#, python-format
+msgid "\"%(name)s\" will be permanently removed. This cannot be undone."
 msgstr ""
-"\"%(name)s\" wird dauerhaft entfernt. Dies kann nicht rückgängig "
-"gemacht werden."
+"\"%(name)s\" wird dauerhaft entfernt. Dies kann nicht rückgängig gemacht "
+"werden."
 
-#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+#, python-format
 msgid ""
 "\"%(name)s\" will be permanently removed from this transfer. This cannot "
 "be undone."
@@ -1735,13 +1728,56 @@ msgstr ""
 "\"%(name)s\" wird dauerhaft aus dieser Übertragung entfernt. Dies kann "
 "nicht rückgängig gemacht werden."
 
-#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+#, python-format
 msgid "Remove \"%(name)s\" from the list?"
 msgstr "\"%(name)s\" aus der Liste entfernen?"
 
-#: app/i18n/__init__.py:JS_MESSAGE_KEYS
 msgid "Remove file from transfer?"
 msgstr "Datei aus Übertragung entfernen?"
+
+#: app/i18n/__init__.py:1
+msgid "Request failed"
+msgstr "Anfrage fehlgeschlagen"
+
+#: app/i18n/__init__.py:1
+msgid "Uploading…"
+msgstr "Wird hochgeladen…"
+
+#: app/i18n/__init__.py:1
+msgid "Upload timed out — try Retry"
+msgstr "Upload-Timeout — Erneut versuchen"
+
+#: app/i18n/__init__.py:1
+msgid "No files selected"
+msgstr "Keine Dateien ausgewählt"
+
+#: app/i18n/__init__.py:1
+msgid "Wait for uploads to finish"
+msgstr "Warten Sie, bis die Uploads abgeschlossen sind"
+
+#: app/i18n/__init__.py:1
+msgid "Ready"
+msgstr "Bereit"
+
+#: app/i18n/__init__.py:1
+msgid "Waiting…"
+msgstr "Warten…"
+
+#: app/i18n/__init__.py:1
+msgid "Retry"
+msgstr "Erneut versuchen"
+
+#: app/i18n/__init__.py:1
+msgid "Network error"
+msgstr "Netzwerkfehler"
+
+#: app/i18n/__init__.py:1
+msgid "Sending…"
+msgstr "Wird gesendet…"
+
+#: app/i18n/__init__.py:1
+msgid "Transfer must have at least one file."
+msgstr "Übertragung muss mindestens eine Datei enthalten."
 
 #~ msgid "Wait for uploads to finish"
 #~ msgstr "Warten Sie, bis die Uploads abgeschlossen sind"
