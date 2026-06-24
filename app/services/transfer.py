@@ -229,7 +229,7 @@ async def record_download(
     db: AsyncSession,
     transfer: Transfer,
     app_settings: AppSettings,
-    creator_email: str | None,
+    creator: User | None,
 ) -> None:
     transfer.download_count += 1
     await db.commit()
@@ -239,15 +239,17 @@ async def record_download(
         resource_type="transfer",
         resource_id=str(transfer.id),
     )
-    if transfer.notify_on_download and creator_email:
+    if transfer.notify_on_download and creator and creator.email:
         max_label = "∞" if transfer.max_downloads <= 0 else str(transfer.max_downloads)
+        recipient_locale = creator.locale
         asyncio.create_task(
             send_download_notify(
                 app_settings,
-                to=creator_email,
+                to=creator.email,
                 title=transfer.title,
                 download_count=transfer.download_count,
                 max_downloads=max_label,
+                locale=recipient_locale,
             )
         )
 

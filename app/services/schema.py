@@ -17,6 +17,12 @@ def _apply_migrations(sync_conn) -> None:
         )
         sync_conn.commit()
 
+    if "users" in insp.get_table_names():
+        user_columns = {col["name"] for col in insp.get_columns("users")}
+        if "locale" not in user_columns:
+            sync_conn.execute(text("ALTER TABLE users ADD COLUMN locale VARCHAR(8)"))
+            sync_conn.commit()
+
 
 async def ensure_schema(conn: AsyncConnection) -> None:
     await conn.run_sync(Base.metadata.create_all)

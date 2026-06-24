@@ -22,6 +22,7 @@ class User(Base, TimestampMixin):
     totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    locale: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
 
     transfers = relationship("Transfer", back_populates="creator")
     file_requests = relationship("FileRequest", back_populates="creator")

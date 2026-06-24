@@ -5,7 +5,7 @@ import html
 from jinja2.sandbox import SandboxedEnvironment
 
 from app.config import settings
-from app.i18n import _
+from app.i18n import N_, _, activate, email_locale
 from app.models import AppSettings
 
 # Admin-editable templates are untrusted-ish: a compromised or careless admin
@@ -23,36 +23,36 @@ TEMPLATE_KEYS = (
 )
 
 DEFAULTS: dict[str, str] = {
-    "share": """<p>You have received files via {{ app_name }}.</p>
+    "share": N_("""<p>You have received files via {{ app_name }}.</p>
 <p><strong>{{ title }}</strong></p>
 {% if message %}<p>{{ message }}</p>{% endif %}
 <p><a href="{{ link }}">Download files</a></p>
 {% if password %}<p>Password: <strong>{{ password }}</strong></p>{% endif %}
-<p>This link expires on {{ expires_at }}.</p>""",
-    "request": """<p>{{ sender }} has requested files from you via {{ app_name }}.</p>
+<p>This link expires on {{ expires_at }}.</p>"""),
+    "request": N_("""<p>{{ sender }} has requested files from you via {{ app_name }}.</p>
 <p><strong>{{ title }}</strong></p>
 {% if instructions %}<p>{{ instructions }}</p>{% endif %}
 <p><a href="{{ link }}">Upload files</a></p>
 {% if password %}<p>Password: <strong>{{ password }}</strong></p>{% endif %}
-<p>This link expires on {{ expires_at }}.</p>""",
-    "upload_notify": """<p>New files were uploaded to your file request <strong>{{ title }}</strong>.</p>
-<p><a href="{{ dashboard_link }}">View in dashboard</a></p>""",
-    "download_notify": """<p>Your transfer <strong>{{ title }}</strong> was downloaded.</p>
-<p>Downloads: {{ download_count }} / {{ max_downloads }}</p>""",
-    "expired_unused": """<p>Your {{ resource_label }} <strong>{{ title }}</strong> has expired without any {% if resource_label == 'transfer' %}downloads{% else %}uploads{% endif %}.</p>
+<p>This link expires on {{ expires_at }}.</p>"""),
+    "upload_notify": N_("""<p>New files were uploaded to your file request <strong>{{ title }}</strong>.</p>
+<p><a href="{{ dashboard_link }}">View in dashboard</a></p>"""),
+    "download_notify": N_("""<p>Your transfer <strong>{{ title }}</strong> was downloaded.</p>
+<p>Downloads: {{ download_count }} / {{ max_downloads }}</p>"""),
+    "expired_unused": N_("""<p>Your {{ resource_label }} <strong>{{ title }}</strong> has expired without any {% if resource_type == 'transfer' %}downloads{% else %}uploads{% endif %}.</p>
 <p>Expired on {{ expires_at }}.</p>
-<p><a href="{{ edit_link }}">Extend expiry or delete it</a></p>""",
-    "purge_reminder": """<p>Your expired {{ resource_label }} <strong>{{ title }}</strong> will be permanently deleted on {{ purge_at }} (in {{ days_until_purge }} day{% if days_until_purge != 1 %}s{% endif %}).</p>
-<p><a href="{{ edit_link }}">Extend expiry to keep it</a></p>""",
+<p><a href="{{ edit_link }}">Extend expiry or delete it</a></p>"""),
+    "purge_reminder": N_("""<p>Your expired {{ resource_label }} <strong>{{ title }}</strong> will be permanently deleted on {{ purge_at }} (in {{ days_until_purge }} day{% if days_until_purge != 1 %}s{% endif %}).</p>
+<p><a href="{{ edit_link }}">Extend expiry to keep it</a></p>"""),
 }
 
 DEFAULT_SUBJECTS: dict[str, str] = {
-    "share": "{{ app_name }}: Files shared with you",
-    "request": "{{ app_name }}: File upload requested",
-    "upload_notify": "{{ app_name }}: New upload received",
-    "download_notify": "{{ app_name }}: Transfer downloaded",
-    "expired_unused": "{{ app_name }}: {{ resource_label }} expired unused",
-    "purge_reminder": "{{ app_name }}: {{ resource_label }} will be deleted soon",
+    "share": N_("{{ app_name }}: Files shared with you"),
+    "request": N_("{{ app_name }}: File upload requested"),
+    "upload_notify": N_("{{ app_name }}: New upload received"),
+    "download_notify": N_("{{ app_name }}: Transfer downloaded"),
+    "expired_unused": N_("{{ app_name }}: {{ resource_label }} expired unused"),
+    "purge_reminder": N_("{{ app_name }}: {{ resource_label }} will be deleted soon"),
 }
 
 TEMPLATE_FIELD_MAP = {
@@ -80,10 +80,11 @@ TEMPLATE_VARIABLES: dict[str, list[str]] = {
     "request": [*_BASE_TEMPLATE_VARS, "sender", "title", "instructions", "link", "password", "expires_at"],
     "upload_notify": [*_BASE_TEMPLATE_VARS, "title", "dashboard_link"],
     "download_notify": [*_BASE_TEMPLATE_VARS, "title", "download_count", "max_downloads"],
-    "expired_unused": [*_BASE_TEMPLATE_VARS, "title", "resource_label", "expires_at", "edit_link"],
+    "expired_unused": [*_BASE_TEMPLATE_VARS, "title", "resource_type", "resource_label", "expires_at", "edit_link"],
     "purge_reminder": [
         *_BASE_TEMPLATE_VARS,
         "title",
+        "resource_type",
         "resource_label",
         "expires_at",
         "edit_link",

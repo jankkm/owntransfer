@@ -1,19 +1,31 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.deps import get_current_user_optional
 from app.config import settings
+from app.database import get_db
 from app.i18n import LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, SUPPORTED_LOCALES, normalize_locale
+from app.models import User
 
 router = APIRouter(tags=["locale"])
 
 
 @router.post("/locale")
-async def set_locale(request: Request, locale: str = Form(...)) -> RedirectResponse:
+async def set_locale(
+    request: Request,
+    locale: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user_optional),
+) -> RedirectResponse:
     resolved = normalize_locale(locale)
     if resolved not in SUPPORTED_LOCALES:
         resolved = "en"
+    if user is not None:
+        user.locale = resolved
+        await db.commit()
     referer = request.headers.get("referer") or "/"
     response = RedirectResponse(referer, status_code=303)
     response.set_cookie(

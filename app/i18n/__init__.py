@@ -95,14 +95,22 @@ def negotiate_from_header(accept_language: str | None) -> str | None:
     return normalize_locale(matched)
 
 
-def resolve_locale(request: Request) -> str:
+def resolve_locale(request: Request, saved_locale: str | None = None) -> str:
     cookie_locale = normalize_locale(request.cookies.get(LOCALE_COOKIE))
     if cookie_locale:
         return cookie_locale
+    stored_locale = normalize_locale(saved_locale)
+    if stored_locale:
+        return stored_locale
     header_locale = negotiate_from_header(request.headers.get("accept-language"))
     if header_locale:
         return header_locale
     return normalize_locale(settings.default_locale) or "en"
+
+
+def email_locale(user_locale: str | None) -> str:
+    """Locale for outbound email to a known user (falls back to site default)."""
+    return normalize_locale(user_locale) or normalize_locale(settings.default_locale) or "en"
 
 
 def activate(locale: str) -> str:
@@ -125,6 +133,11 @@ def ngettext(singular: str, plural: str, n: int) -> str:
 
 def _(message: str) -> str:
     return gettext(message)
+
+
+def N_(message: str) -> str:
+    """Mark a string for translation without translating at definition time."""
+    return message
 
 
 def locale_display_name(locale: str) -> str:

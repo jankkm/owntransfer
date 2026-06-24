@@ -186,6 +186,7 @@ async def finalize_request_upload(
         to=creator.email,
         title=req.title,
         dashboard_link=f"{settings.base_url.rstrip('/')}/requests",
+        locale=creator.locale,
     )
     await log_audit(
         db,
@@ -264,6 +265,7 @@ async def handle_public_upload(
         to=creator.email,
         title=req.title,
         dashboard_link=f"{settings.base_url.rstrip('/')}/requests",
+        locale=creator.locale,
     )
     await log_audit(
         db,

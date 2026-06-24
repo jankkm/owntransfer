@@ -16,7 +16,7 @@ from app.config import settings
 from app.auth.totp import verify_totp
 from app.config.oauth_providers import get_oauth_providers
 from app.database import get_db
-from app.i18n import _
+from app.i18n import LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, _, normalize_locale
 from app.models import User
 from app.http.client_ip import get_client_ip
 from app.http.external_url import external_url
@@ -50,6 +50,16 @@ def _login_response(request: Request, user: User) -> RedirectResponse:
         samesite="lax",
         secure=settings.cookies_secure,
     )
+    saved_locale = normalize_locale(user.locale)
+    if saved_locale and not request.cookies.get(LOCALE_COOKIE):
+        response.set_cookie(
+            LOCALE_COOKIE,
+            saved_locale,
+            max_age=LOCALE_COOKIE_MAX_AGE,
+            httponly=True,
+            samesite="lax",
+            secure=settings.cookies_secure,
+        )
     return response
 
 

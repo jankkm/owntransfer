@@ -502,6 +502,82 @@ TRANSLATIONS: dict[str | tuple[str, str], str | tuple[str, str]] = {
     "{{ app_name }}: Transfer downloaded": "{{ app_name }}: Übertragung heruntergeladen",
     "{{ app_name }}: {{ resource_label }} expired unused": "{{ app_name }}: {{ resource_label }} abgelaufen ohne Nutzung",
     "{{ app_name }}: {{ resource_label }} will be deleted soon": "{{ app_name }}: {{ resource_label }} wird bald gelöscht",
+    "transfer": "Übertragung",
+    "file request": "Dateianfrage",
+    "Extend expiry or delete it": "Ablauf verlängern oder löschen",
+    "Extend expiry to keep it": "Ablauf verlängern, um es zu behalten",
+    "Expired on": "Abgelaufen am",
+    "This link expires on": "Dieser Link läuft ab am",
+    (
+        "<p>You have received files via {{ app_name }}.</p>\n"
+        "<p><strong>{{ title }}</strong></p>\n"
+        "{% if message %}<p>{{ message }}</p>{% endif %}\n"
+        '<p><a href="{{ link }}">Download files</a></p>\n'
+        "{% if password %}<p>Password: <strong>{{ password }}</strong></p>{% endif %}\n"
+        "<p>This link expires on {{ expires_at }}.</p>"
+    ): (
+        "<p>Sie haben Dateien über {{ app_name }} erhalten.</p>\n"
+        "<p><strong>{{ title }}</strong></p>\n"
+        "{% if message %}<p>{{ message }}</p>{% endif %}\n"
+        '<p><a href="{{ link }}">Dateien herunterladen</a></p>\n'
+        "{% if password %}<p>Passwort: <strong>{{ password }}</strong></p>{% endif %}\n"
+        "<p>Dieser Link läuft ab am {{ expires_at }}.</p>"
+    ),
+    (
+        "<p>{{ sender }} has requested files from you via {{ app_name }}.</p>\n"
+        "<p><strong>{{ title }}</strong></p>\n"
+        "{% if instructions %}<p>{{ instructions }}</p>{% endif %}\n"
+        '<p><a href="{{ link }}">Upload files</a></p>\n'
+        "{% if password %}<p>Password: <strong>{{ password }}</strong></p>{% endif %}\n"
+        "<p>This link expires on {{ expires_at }}.</p>"
+    ): (
+        "<p>{{ sender }} hat Dateien von Ihnen über {{ app_name }} angefordert.</p>\n"
+        "<p><strong>{{ title }}</strong></p>\n"
+        "{% if instructions %}<p>{{ instructions }}</p>{% endif %}\n"
+        '<p><a href="{{ link }}">Dateien hochladen</a></p>\n'
+        "{% if password %}<p>Passwort: <strong>{{ password }}</strong></p>{% endif %}\n"
+        "<p>Dieser Link läuft ab am {{ expires_at }}.</p>"
+    ),
+    (
+        "<p>New files were uploaded to your file request <strong>{{ title "
+        "}}</strong>.</p>\n"
+        '<p><a href="{{ dashboard_link }}">View in dashboard</a></p>'
+    ): (
+        "<p>Neue Dateien wurden zu Ihrer Dateianfrage <strong>{{ title "
+        "}}</strong> hochgeladen.</p>\n"
+        '<p><a href="{{ dashboard_link }}">Im Dashboard anzeigen</a></p>'
+    ),
+    (
+        "<p>Your transfer <strong>{{ title }}</strong> was downloaded.</p>\n"
+        "<p>Downloads: {{ download_count }} / {{ max_downloads }}</p>"
+    ): (
+        "<p>Ihre Übertragung <strong>{{ title }}</strong> wurde heruntergeladen.</p>\n"
+        "<p>Downloads: {{ download_count }} / {{ max_downloads }}</p>"
+    ),
+    (
+        "<p>Your {{ resource_label }} <strong>{{ title }}</strong> has expired "
+        "without any {% if resource_type == 'transfer' %}downloads{% else "
+        "%}uploads{% endif %}.</p>\n"
+        "<p>Expired on {{ expires_at }}.</p>\n"
+        '<p><a href="{{ edit_link }}">Extend expiry or delete it</a></p>'
+    ): (
+        "<p>Ihre {{ resource_label }} <strong>{{ title }}</strong> ist abgelaufen, "
+        "ohne dass {% if resource_type == 'transfer' %}Downloads{% else "
+        "%}Uploads{% endif %} erfolgt sind.</p>\n"
+        "<p>Abgelaufen am {{ expires_at }}.</p>\n"
+        '<p><a href="{{ edit_link }}">Ablauf verlängern oder löschen</a></p>'
+    ),
+    (
+        "<p>Your expired {{ resource_label }} <strong>{{ title }}</strong> will be"
+        " permanently deleted on {{ purge_at }} (in {{ days_until_purge }} day{% "
+        "if days_until_purge != 1 %}s{% endif %}).</p>\n"
+        '<p><a href="{{ edit_link }}">Extend expiry to keep it</a></p>'
+    ): (
+        "<p>Ihre abgelaufene {{ resource_label }} <strong>{{ title }}</strong> wird am "
+        "{{ purge_at }} dauerhaft gelöscht (in {{ days_until_purge }} Tag{% "
+        "if days_until_purge != 1 %}en{% endif %}).</p>\n"
+        '<p><a href="{{ edit_link }}">Ablauf verlängern, um sie zu behalten</a></p>'
+    ),
 }
 
 

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import settings
+from app.i18n import _, activate, email_locale
 from app.models import FileRequest, RequestUpload, Transfer, User
 from app.services.audit import log_audit
 from app.services.datetime_display import format_datetime_with_tz, utc_now
@@ -22,6 +23,13 @@ def _utcnow() -> datetime:
 
 def _utcnow_naive() -> datetime:
     return utc_now().replace(tzinfo=None)
+
+
+def _resource_email_labels(locale: str | None, resource_type: str) -> tuple[str, str]:
+    activate(email_locale(locale))
+    if resource_type == "transfer":
+        return resource_type, _("transfer")
+    return "file_request", _("file request")
 
 
 async def mark_expired(db: AsyncSession) -> int:
@@ -63,13 +71,16 @@ async def notify_expired_unused(db: AsyncSession) -> int:
             transfer.expired_unused_notified = True
             continue
         try:
+            resource_type, resource_label = _resource_email_labels(creator.locale, "transfer")
             if await send_expired_unused(
                 app_settings,
                 to=creator.email,
                 title=transfer.title,
-                resource_label="transfer",
+                resource_type=resource_type,
+                resource_label=resource_label,
                 expires_at=format_datetime_with_tz(transfer.expires_at),
                 edit_link=f"{base_url}/transfers/{transfer.id}/edit",
+                locale=creator.locale,
             ):
                 sent += 1
         except Exception:
@@ -89,13 +100,16 @@ async def notify_expired_unused(db: AsyncSession) -> int:
             req.expired_unused_notified = True
             continue
         try:
+            resource_type, resource_label = _resource_email_labels(creator.locale, "file_request")
             if await send_expired_unused(
                 app_settings,
                 to=creator.email,
                 title=req.title,
-                resource_label="file request",
+                resource_type=resource_type,
+                resource_label=resource_label,
                 expires_at=format_datetime_with_tz(req.expires_at),
                 edit_link=f"{base_url}/requests/{req.id}/edit",
+                locale=creator.locale,
             ):
                 sent += 1
         except Exception:
@@ -131,15 +145,18 @@ async def send_purge_reminders(db: AsyncSession) -> int:
             continue
         days_until = max(1, (purge_at - now).days)
         try:
+            resource_type, resource_label = _resource_email_labels(creator.locale, "transfer")
             if await send_purge_reminder(
                 app_settings,
                 to=creator.email,
                 title=transfer.title,
-                resource_label="transfer",
+                resource_type=resource_type,
+                resource_label=resource_label,
                 expires_at=format_datetime_with_tz(transfer.expires_at),
                 edit_link=f"{base_url}/transfers/{transfer.id}/edit",
                 purge_at=format_datetime_with_tz(purge_at),
                 days_until_purge=days_until,
+                locale=creator.locale,
             ):
                 sent += 1
         except Exception:
@@ -160,15 +177,18 @@ async def send_purge_reminders(db: AsyncSession) -> int:
             continue
         days_until = max(1, (purge_at - now).days)
         try:
+            resource_type, resource_label = _resource_email_labels(creator.locale, "file_request")
             if await send_purge_reminder(
                 app_settings,
                 to=creator.email,
                 title=req.title,
-                resource_label="file request",
+                resource_type=resource_type,
+                resource_label=resource_label,
                 expires_at=format_datetime_with_tz(req.expires_at),
                 edit_link=f"{base_url}/requests/{req.id}/edit",
                 purge_at=format_datetime_with_tz(purge_at),
                 days_until_purge=days_until,
+                locale=creator.locale,
             ):
                 sent += 1
         except Exception:

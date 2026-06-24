@@ -11,7 +11,7 @@ import aiosmtplib
 logger = logging.getLogger(__name__)
 
 from app.config import settings
-from app.i18n import _, activate
+from app.i18n import _, activate, email_locale
 from app.models import AppSettings
 from app.services.email_templates import render_email_subject, render_email_template
 
@@ -150,6 +150,20 @@ async def send_email(
     return True
 
 
+def _render_default_template_email(
+    app_settings: AppSettings,
+    template_key: str,
+    *,
+    locale: str | None,
+    **context,
+) -> tuple[str, str]:
+    activate(email_locale(locale))
+    return (
+        render_email_subject(app_settings, template_key, **context),
+        render_email_template(app_settings, template_key, **context),
+    )
+
+
 async def send_smtp_test_email(
     app_settings: AppSettings,
     *,
@@ -195,11 +209,17 @@ async def send_share_email(
         "password": password,
         "expires_at": expires_at,
     }
+    subject, body_html = _render_default_template_email(
+        app_settings,
+        "share",
+        locale=None,
+        **ctx,
+    )
     return await send_email(
         app_settings,
         to=recipients,
-        subject=render_email_subject(app_settings, "share", **ctx),
-        body_html=render_email_template(app_settings, "share", **ctx),
+        subject=subject,
+        body_html=body_html,
     )
 
 
@@ -223,11 +243,17 @@ async def send_request_email(
         "password": password,
         "expires_at": expires_at,
     }
+    subject, body_html = _render_default_template_email(
+        app_settings,
+        "request",
+        locale=None,
+        **ctx,
+    )
     return await send_email(
         app_settings,
         to=recipients,
-        subject=render_email_subject(app_settings, "request", **ctx),
-        body_html=render_email_template(app_settings, "request", **ctx),
+        subject=subject,
+        body_html=body_html,
     )
 
 
@@ -237,17 +263,24 @@ async def send_upload_notify(
     to: str,
     title: str,
     dashboard_link: str,
+    locale: str | None = None,
 ) -> bool:
     ctx = {
         "app_name": app_settings.app_name,
         "title": title,
         "dashboard_link": dashboard_link,
     }
+    subject, body_html = _render_default_template_email(
+        app_settings,
+        "upload_notify",
+        locale=locale,
+        **ctx,
+    )
     return await send_email(
         app_settings,
         to=to,
-        subject=render_email_subject(app_settings, "upload_notify", **ctx),
-        body_html=render_email_template(app_settings, "upload_notify", **ctx),
+        subject=subject,
+        body_html=body_html,
     )
 
 
@@ -258,6 +291,7 @@ async def send_download_notify(
     title: str,
     download_count: int,
     max_downloads: int | str,
+    locale: str | None = None,
 ) -> bool:
     ctx = {
         "app_name": app_settings.app_name,
@@ -265,11 +299,17 @@ async def send_download_notify(
         "download_count": download_count,
         "max_downloads": max_downloads,
     }
+    subject, body_html = _render_default_template_email(
+        app_settings,
+        "download_notify",
+        locale=locale,
+        **ctx,
+    )
     return await send_email(
         app_settings,
         to=to,
-        subject=render_email_subject(app_settings, "download_notify", **ctx),
-        body_html=render_email_template(app_settings, "download_notify", **ctx),
+        subject=subject,
+        body_html=body_html,
     )
 
 
@@ -278,23 +318,31 @@ async def send_expired_unused(
     *,
     to: str,
     title: str,
+    resource_type: str,
     resource_label: str,
     expires_at: str,
     edit_link: str,
+    locale: str | None = None,
 ) -> bool:
-    activate(settings.default_locale)
     ctx = {
         "app_name": app_settings.app_name,
         "title": title,
+        "resource_type": resource_type,
         "resource_label": resource_label,
         "expires_at": expires_at,
         "edit_link": edit_link,
     }
+    subject, body_html = _render_default_template_email(
+        app_settings,
+        "expired_unused",
+        locale=locale,
+        **ctx,
+    )
     return await send_email(
         app_settings,
         to=to,
-        subject=render_email_subject(app_settings, "expired_unused", **ctx),
-        body_html=render_email_template(app_settings, "expired_unused", **ctx),
+        subject=subject,
+        body_html=body_html,
     )
 
 
@@ -303,25 +351,33 @@ async def send_purge_reminder(
     *,
     to: str,
     title: str,
+    resource_type: str,
     resource_label: str,
     expires_at: str,
     edit_link: str,
     purge_at: str,
     days_until_purge: int,
+    locale: str | None = None,
 ) -> bool:
-    activate(settings.default_locale)
     ctx = {
         "app_name": app_settings.app_name,
         "title": title,
+        "resource_type": resource_type,
         "resource_label": resource_label,
         "expires_at": expires_at,
         "edit_link": edit_link,
         "purge_at": purge_at,
         "days_until_purge": days_until_purge,
     }
+    subject, body_html = _render_default_template_email(
+        app_settings,
+        "purge_reminder",
+        locale=locale,
+        **ctx,
+    )
     return await send_email(
         app_settings,
         to=to,
-        subject=render_email_subject(app_settings, "purge_reminder", **ctx),
-        body_html=render_email_template(app_settings, "purge_reminder", **ctx),
+        subject=subject,
+        body_html=body_html,
     )

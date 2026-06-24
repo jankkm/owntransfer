@@ -5,7 +5,7 @@ import html
 import pytest
 
 from app.models import AppSettings
-from app.services.email import _wrap_email_html
+from app.services.email import _render_default_template_email, _wrap_email_html
 from app.services.email_templates import render_email_subject, render_email_template
 
 
@@ -15,15 +15,30 @@ def app_settings() -> AppSettings:
 
 
 def test_render_email_subject_allows_duplicate_app_name_in_context(app_settings: AppSettings):
-    subject = render_email_subject(
+    subject, _ = _render_default_template_email(
         app_settings,
         "download_notify",
+        locale=None,
         app_name=app_settings.app_name,
         title="My Transfer",
         download_count=1,
         max_downloads=5,
     )
     assert subject == "OwnTransfer: Transfer downloaded"
+
+
+def test_render_email_subject_uses_recipient_locale(app_settings: AppSettings):
+    subject, body = _render_default_template_email(
+        app_settings,
+        "download_notify",
+        locale="de",
+        app_name=app_settings.app_name,
+        title="Meine Übertragung",
+        download_count=1,
+        max_downloads=5,
+    )
+    assert subject == "OwnTransfer: Übertragung heruntergeladen"
+    assert "wurde heruntergeladen" in body
 
 
 def test_render_email_template_keeps_strong_tags(app_settings: AppSettings):

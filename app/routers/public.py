@@ -291,7 +291,7 @@ async def _grant_transfer_session(
     db: AsyncSession,
     transfer: Transfer,
     app_settings,
-    creator_email: str | None,
+    creator: User | None,
 ) -> bool:
     token = transfer.public_token
     if has_transfer_download_grant(request.session, token):
@@ -300,7 +300,7 @@ async def _grant_transfer_session(
         return False
     grant_transfer_download(request.session, token)
     if mark_transfer_download_counted(request.session, token):
-        await record_download(db, transfer, app_settings, creator_email)
+        await record_download(db, transfer, app_settings, creator)
     return True
 
 
@@ -362,7 +362,7 @@ async def download_unlock(token: str, request: Request, password: str = Form("")
         db,
         transfer,
         app_settings,
-        creator.email if creator else None,
+        creator,
     )
     if not granted:
         return _render_download_page(

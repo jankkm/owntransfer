@@ -17,6 +17,7 @@ os.environ.setdefault("UPLOAD_DIR", tempfile.mkdtemp())
 from app.i18n import (
     LOCALE_COOKIE,
     activate,
+    email_locale,
     gettext,
     negotiate_from_header,
     ngettext,
@@ -141,6 +142,34 @@ async def test_footer_language_switcher_present(client: AsyncClient):
     assert 'value="en"' in response.text
 
 
+@pytest.mark.asyncio
+async def test_post_locale_saves_user_preference_when_logged_in(client: AsyncClient):
+    from sqlalchemy import select
+
+    login_page = await client.get("/auth/login")
+    token = re.search(r'name="csrf-token" content="([^"]+)"', login_page.text).group(1)
+    await client.post(
+        "/auth/login/local",
+        data={"email": "admin@test.com", "password": "password123", "csrf_token": token},
+        follow_redirects=True,
+    )
+
+    page = await client.get("/dashboard")
+    token = re.search(r'name="csrf-token" content="([^"]+)"', page.text).group(1)
+    response = await client.post(
+        "/locale",
+        data={"locale": "de", "csrf_token": token},
+        headers={"Referer": "http://test/dashboard"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+
+    async with async_session() as session:
+        result = await session.execute(select(User).where(User.email == "admin@test.com"))
+        user = result.scalar_one()
+        assert user.locale == "de"
+
+
 def test_resolve_locale_fallback():
     from starlette.requests import Request
 
@@ -157,3 +186,27 @@ def test_resolve_locale_fallback():
 
     request = Request(scope, receive)
     assert resolve_locale(request) == "en"
+
+
+def test_resolve_locale_uses_saved_user_locale():
+    from starlette.requests import Request
+
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/",
+        "headers": [(b"accept-language", b"en-US,en;q=0.9")],
+        "query_string": b"",
+    }
+
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    request = Request(scope, receive)
+    assert resolve_locale(request, saved_locale="de") == "de"
+
+
+def test_email_locale_falls_back_to_default():
+    assert email_locale(None) == "en"
+    assert email_locale("de") == "de"
+    assert email_locale("fr") == "en"
