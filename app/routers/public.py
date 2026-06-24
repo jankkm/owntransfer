@@ -17,7 +17,7 @@ from app.auth.unlock_cookies import (
     set_request_unlock,
     set_transfer_unlock,
 )
-from app.database import get_db
+from app.database import async_session, get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
 from app.limiter import limiter
@@ -35,6 +35,7 @@ from app.services.security_log import (
 )
 from app.services.settings import get_app_settings
 from app.services.staging import (
+    StagingLimits,
     add_staged_file,
     discard_staged_paths,
     remove_staged_file,
@@ -289,21 +290,24 @@ async def stage_request_file(
     token: str,
     request: Request,
     file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db),
 ):
-    app_settings = await get_app_settings(db)
-    file_request = await lookup_request_by_token(db, token)
-    resolved = _resolve_request(file_request, request)
-    if isinstance(resolved, RedirectResponse):
-        return resolved
-    file_request = resolved
-    ensure_request_accessible(file_request)
+    async with async_session() as db:
+        app_settings = await get_app_settings(db)
+        file_request = await lookup_request_by_token(db, token)
+        resolved = _resolve_request(file_request, request)
+        if isinstance(resolved, RedirectResponse):
+            return resolved
+        file_request = resolved
+        ensure_request_accessible(file_request)
+        limits = StagingLimits.from_settings(app_settings)
+        max_total_bytes = file_request.max_total_bytes
+        scope = _request_staging_scope(token)
     _require_request_unlock(request, token, password_required=bool(file_request.password_hash))
     staged = await add_staged_file(
-        _request_staging_scope(token),
+        scope,
         file,
-        app_settings,
-        max_total_bytes=file_request.max_total_bytes,
+        limits,
+        max_total_bytes=max_total_bytes,
     )
     return JSONResponse(
         {

@@ -67,7 +67,8 @@
 
 <div class="bg-white border rounded-xl p-6 mb-4" data-transfer-files
      data-upload-url="{{ files_upload_url or ('/transfers/' ~ transfer.id ~ '/files') }}"
-     data-delete-url-template="{{ files_delete_url_template or ('/transfers/' ~ transfer.id ~ '/files/{id}') }}">
+     data-delete-url-template="{{ files_delete_url_template or ('/transfers/' ~ transfer.id ~ '/files/{id}') }}"
+     data-upload-concurrency="{{ upload_concurrency }}">
   <div class="flex items-center justify-between gap-3 mb-1">
     <p class="text-sm font-medium text-slate-700" data-files-title>{{ _('Files (%(count)s)') % {'count': transfer.files|length} }}</p>
     <div class="flex items-center gap-3 shrink-0">
@@ -171,7 +172,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/password_toggle.js"></script>
-<script src="/static/inline_remove_confirm.js"></script>
-<script src="/static/transfer_files.js"></script>
+<script src="{{ static_url('password_toggle.js') }}"></script>
+<script src="{{ static_url('inline_remove_confirm.js') }}"></script>
+<script src="{{ static_url('transfer_files.js') }}"></script>
 {% endblock %}

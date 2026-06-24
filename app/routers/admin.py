@@ -91,6 +91,12 @@ async def admin_home(
     })
     if request.query_params.get("branding_saved"):
         ctx["success"] = _("Branding saved.")
+    if request.query_params.get("uploads_saved"):
+        ctx["success"] = _("File upload settings saved.")
+    if request.query_params.get("shares_saved"):
+        ctx["success"] = _("Share settings saved.")
+    if request.query_params.get("access_saved"):
+        ctx["success"] = _("Access settings saved.")
     if request.query_params.get("impressum_saved") or request.query_params.get("legal_saved"):
         ctx["success"] = _("Legal pages saved.")
     if request.query_params.get("user_added"):
@@ -477,32 +483,54 @@ async def save_branding(
     return RedirectResponse("/admin?branding_saved=1", status_code=303)
 
 
-@router.post("/limits")
-async def save_limits(
+@router.post("/limits/uploads")
+async def save_upload_settings(
     max_file_size_mb: int = Form(...),
+    upload_concurrency: int = Form(...),
+    file_type_blocklist: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_admin),
+):
+    app_settings = await get_app_settings(db)
+    app_settings.max_file_size_bytes = max_file_size_mb * 1024 * 1024
+    app_settings.upload_concurrency = min(50, max(1, upload_concurrency))
+    app_settings.file_type_blocklist = file_type_blocklist or None
+    await db.commit()
+    return RedirectResponse("/admin?uploads_saved=1", status_code=303)
+
+
+@router.post("/limits/shares")
+async def save_share_settings(
     default_expiry_days: int = Form(...),
     max_share_expiry_days: int = Form(...),
     max_downloads_default: int = Form(...),
     purge_grace_days: int = Form(...),
     purge_notify_days: int = Form(...),
-    file_type_blocklist: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_admin),
+):
+    app_settings = await get_app_settings(db)
+    app_settings.default_expiry_days = default_expiry_days
+    app_settings.max_share_expiry_days = max(1, max_share_expiry_days)
+    app_settings.max_downloads_default = max_downloads_default
+    app_settings.purge_grace_days = max(0, purge_grace_days)
+    app_settings.purge_notify_days = max(0, purge_notify_days)
+    await db.commit()
+    return RedirectResponse("/admin?shares_saved=1", status_code=303)
+
+
+@router.post("/limits/access")
+async def save_access_settings(
     allow_local_login: str = Form(""),
     allow_user_share_emails: str = Form(""),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_admin),
 ):
     app_settings = await get_app_settings(db)
-    app_settings.max_file_size_bytes = max_file_size_mb * 1024 * 1024
-    app_settings.default_expiry_days = default_expiry_days
-    app_settings.max_share_expiry_days = max(1, max_share_expiry_days)
-    app_settings.max_downloads_default = max_downloads_default
-    app_settings.purge_grace_days = max(0, purge_grace_days)
-    app_settings.purge_notify_days = max(0, purge_notify_days)
-    app_settings.file_type_blocklist = file_type_blocklist or None
     app_settings.allow_local_login = bool(allow_local_login)
     app_settings.allow_user_share_emails = bool(allow_user_share_emails)
     await db.commit()
-    return RedirectResponse("/admin", status_code=303)
+    return RedirectResponse("/admin?access_saved=1", status_code=303)
 
 
 @router.get("/email", response_class=HTMLResponse)

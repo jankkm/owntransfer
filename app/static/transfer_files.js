@@ -19,7 +19,13 @@
   }
 
   function parseErrorResponse(xhr) {
-    let message = t("Request failed");
+    if (xhr.status === 502 || xhr.status === 504) {
+      return t("Upload timed out — try Retry");
+    }
+    if (xhr.status === 0) {
+      return t("Network error");
+    }
+    let message = t("Upload failed");
     try {
       const payload = JSON.parse(xhr.responseText);
       if (typeof payload.detail === "string") {
@@ -31,6 +37,37 @@
       message = xhr.responseText || message;
     }
     return message;
+  }
+
+  function createUploadQueue(maxConcurrent) {
+    const pending = [];
+    let active = 0;
+
+    function pump() {
+      while (active < maxConcurrent && pending.length > 0) {
+        const job = pending.shift();
+        if (job.cancelled) continue;
+        active++;
+        Promise.resolve()
+          .then(() => job.run())
+          .catch(() => {})
+          .finally(() => {
+            active--;
+            pump();
+          });
+      }
+    }
+
+    function enqueue(run) {
+      const job = { run, cancelled: false };
+      pending.push(job);
+      pump();
+      return function cancel() {
+        job.cancelled = true;
+      };
+    }
+
+    return { enqueue };
   }
 
   function initTransferFiles(root) {
@@ -45,6 +82,9 @@
     const input = root.querySelector("[data-file-input]");
     const errorEl = root.querySelector("[data-files-error]");
     const pendingUploads = new Set();
+    const uploadStates = new Map();
+    const concurrency = Number(root.dataset.uploadConcurrency) || 5;
+    const uploadQueue = createUploadQueue(concurrency);
 
     function setError(message) {
       if (!errorEl) return;
@@ -109,43 +149,64 @@
       info.appendChild(progressWrap);
       info.appendChild(errorElRow);
 
+      const actions = document.createElement("div");
+      actions.className = "flex flex-col items-end gap-1 shrink-0";
+
+      const retryBtn = document.createElement("button");
+      retryBtn.type = "button";
+      retryBtn.dataset.fileRetry = "";
+      retryBtn.className = "text-xs text-primary hover:underline hidden";
+      retryBtn.textContent = t("Retry");
+
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
       removeBtn.dataset.fileRemove = "";
       removeBtn.className = "text-xs text-slate-500 hover:text-red-600 shrink-0 hidden";
       removeBtn.textContent = t("Remove");
 
+      actions.appendChild(retryBtn);
+      actions.appendChild(removeBtn);
       wrap.appendChild(info);
-      wrap.appendChild(removeBtn);
+      wrap.appendChild(actions);
       row.appendChild(wrap);
 
       updateRowState(row, { uploading, progress, error, sizeBytes });
       return row;
     }
 
-    function updateRowState(row, { uploading, progress, error, sizeBytes }) {
+    function updateRowState(row, { uploading, queued, progress, error, sizeBytes }) {
       const metaEl = row.querySelector("[data-file-meta]");
       const progressWrap = row.querySelector("[data-file-progress]");
       const progressBar = progressWrap ? progressWrap.firstElementChild : null;
       const errorElRow = row.querySelector("[data-file-error]");
       const removeBtn = row.querySelector("[data-file-remove]");
+      const retryBtn = row.querySelector("[data-file-retry]");
 
       if (uploading) {
         metaEl.textContent = `${formatSize(sizeBytes || 0)} · ${t("Uploading…")}`;
         progressWrap.classList.remove("hidden");
         if (progressBar) progressBar.style.width = `${progress}%`;
         removeBtn.disabled = true;
+        retryBtn.classList.add("hidden");
+      } else if (queued) {
+        metaEl.textContent = `${formatSize(sizeBytes || 0)} · ${t("Waiting…")}`;
+        progressWrap.classList.remove("hidden");
+        if (progressBar) progressBar.style.width = "0%";
+        removeBtn.disabled = false;
+        retryBtn.classList.add("hidden");
       } else if (error) {
         metaEl.textContent = `${formatSize(sizeBytes || 0)} · ${t("Upload failed")}`;
         progressWrap.classList.add("hidden");
         errorElRow.textContent = error;
         errorElRow.classList.remove("hidden");
         removeBtn.disabled = false;
+        retryBtn.classList.remove("hidden");
       } else {
         metaEl.textContent = formatSize(sizeBytes || 0);
         progressWrap.classList.add("hidden");
         errorElRow.classList.add("hidden");
         removeBtn.disabled = false;
+        retryBtn.classList.add("hidden");
       }
     }
 
@@ -182,9 +243,31 @@
       return row.dataset.fileId || row.getAttribute("data-file-id") || "";
     }
 
+    function cancelPendingUpload(clientId) {
+      const upload = uploadStates.get(clientId);
+      if (!upload) return;
+      upload.state.cancelQueue?.();
+      if (upload.state.xhr) {
+        upload.state.aborted = true;
+        upload.state.xhr.abort();
+      }
+      pendingUploads.delete(clientId);
+      uploadStates.delete(clientId);
+      upload.row.remove();
+      delete upload.row.dataset.pendingClientId;
+      updateTitle();
+      updateDoneState();
+    }
+
     async function removeFile(row) {
+      const pendingClientId = row.dataset.pendingClientId;
+      if (pendingClientId) {
+        cancelPendingUpload(pendingClientId);
+        return;
+      }
+
       const fileId = rowFileId(row);
-      if (!fileId || row.dataset.uploading === "true") return;
+      if (!fileId) return;
 
       const fileName = fileNameForRow(row);
       const isServer = row.dataset.serverFile === "true";
@@ -237,58 +320,92 @@
       }
     }
 
+    function retryUpload(clientId) {
+      const upload = uploadStates.get(clientId);
+      if (!upload) return;
+      if (upload.state.cancelQueue) upload.state.cancelQueue();
+      pendingUploads.add(clientId);
+      upload.row.dataset.pendingClientId = clientId;
+      updateDoneState();
+      setError("");
+      updateRowState(upload.row, { queued: true, sizeBytes: upload.file.size });
+      upload.state.cancelQueue = uploadQueue.enqueue(() =>
+        startUpload(clientId, upload.file, upload.row, upload.state)
+      );
+    }
+
     function uploadFile(file) {
       const clientId = crypto.randomUUID();
-      const row = createFileRow(clientId, file.name, file.size, { uploading: true, progress: 0 });
-      row.dataset.uploading = "true";
+      const row = createFileRow(clientId, file.name, file.size, { queued: true });
+      row.dataset.pendingClientId = clientId;
       list.appendChild(row);
       setEditMode(true);
       pendingUploads.add(clientId);
       updateDoneState();
       setError("");
 
-      const xhr = new XMLHttpRequest();
-      const formData = new FormData();
-      formData.append("file", file, file.name);
+      const state = { xhr: null, aborted: false, cancelQueue: null };
+      uploadStates.set(clientId, { row, state, file });
+      state.cancelQueue = uploadQueue.enqueue(() => startUpload(clientId, file, row, state));
+    }
 
-      xhr.upload.addEventListener("progress", (event) => {
-        if (!event.lengthComputable) return;
-        updateRowState(row, {
-          uploading: true,
-          progress: Math.round((event.loaded / event.total) * 100),
-          sizeBytes: file.size,
+    function startUpload(clientId, file, row, state) {
+      if (!pendingUploads.has(clientId)) return Promise.resolve();
+
+      updateRowState(row, { uploading: true, progress: 0, sizeBytes: file.size });
+
+      return new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append("file", file, file.name);
+        state.xhr = xhr;
+
+        xhr.upload.addEventListener("progress", (event) => {
+          if (!event.lengthComputable) return;
+          updateRowState(row, {
+            uploading: true,
+            progress: Math.round((event.loaded / event.total) * 100),
+            sizeBytes: file.size,
+          });
         });
+
+        xhr.addEventListener("load", () => {
+          pendingUploads.delete(clientId);
+          updateDoneState();
+          row.dataset.uploading = "false";
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            uploadStates.delete(clientId);
+            delete row.dataset.pendingClientId;
+            const payload = JSON.parse(xhr.responseText);
+            row.dataset.fileId = payload.id;
+            row.dataset.serverFile = "true";
+            updateRowState(row, { sizeBytes: payload.size_bytes });
+            row.querySelector("[data-file-remove]").classList.remove("hidden");
+            updateTitle();
+            resolve();
+            return;
+          }
+
+          updateRowState(row, { error: parseErrorResponse(xhr), sizeBytes: file.size });
+          resolve();
+        });
+
+        xhr.addEventListener("error", () => {
+          pendingUploads.delete(clientId);
+          updateDoneState();
+          row.dataset.uploading = "false";
+          if (!state.aborted) {
+            updateRowState(row, { error: t("Network error"), sizeBytes: file.size });
+          }
+          resolve();
+        });
+
+        xhr.open("POST", uploadUrl);
+        xhr.withCredentials = true;
+        xhr.setRequestHeader("X-CSRF-Token", csrfToken());
+        xhr.send(formData);
       });
-
-      xhr.addEventListener("load", () => {
-        pendingUploads.delete(clientId);
-        updateDoneState();
-        row.dataset.uploading = "false";
-
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const payload = JSON.parse(xhr.responseText);
-          row.dataset.fileId = payload.id;
-          row.dataset.serverFile = "true";
-          updateRowState(row, { sizeBytes: payload.size_bytes });
-          row.querySelector("[data-file-remove]").classList.remove("hidden");
-          updateTitle();
-          return;
-        }
-
-        updateRowState(row, { error: parseErrorResponse(xhr), sizeBytes: file.size });
-      });
-
-      xhr.addEventListener("error", () => {
-        pendingUploads.delete(clientId);
-        updateDoneState();
-        row.dataset.uploading = "false";
-        updateRowState(row, { error: t("Network error"), sizeBytes: file.size });
-      });
-
-      xhr.open("POST", uploadUrl);
-      xhr.withCredentials = true;
-      xhr.setRequestHeader("X-CSRF-Token", csrfToken());
-      xhr.send(formData);
     }
 
     function addFiles(fileList) {
@@ -302,6 +419,15 @@
     });
 
     list.addEventListener("click", (event) => {
+      const retryBtn = event.target.closest("[data-file-retry]");
+      if (retryBtn && list.contains(retryBtn)) {
+        event.preventDefault();
+        event.stopPropagation();
+        const row = retryBtn.closest("[data-file-id]");
+        const clientId = row?.dataset.pendingClientId;
+        if (clientId) retryUpload(clientId);
+        return;
+      }
       const removeBtn = event.target.closest("[data-file-remove]");
       if (!removeBtn || !list.contains(removeBtn)) return;
       event.preventDefault();

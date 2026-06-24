@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -49,12 +50,21 @@ class LocalStorage(StorageBackend):
 
     async def save_file(self, relative_path: str, data: bytes) -> str:
         path = self._resolve(relative_path)
+        await asyncio.to_thread(self._write_bytes, path, data)
+        return relative_path
+
+    @staticmethod
+    def _write_bytes(path: Path, data: bytes) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
-        return relative_path
 
     async def save_stream(self, relative_path: str, stream: BinaryIO, chunk_size: int = 1024 * 1024) -> str:
         path = self._resolve(relative_path)
+        await asyncio.to_thread(self._write_stream, path, stream, chunk_size)
+        return relative_path
+
+    @staticmethod
+    def _write_stream(path: Path, stream: BinaryIO, chunk_size: int) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "wb") as f:
             while True:
@@ -62,7 +72,6 @@ class LocalStorage(StorageBackend):
                 if not chunk:
                     break
                 f.write(chunk)
-        return relative_path
 
     async def open_file(self, relative_path: str) -> AsyncIterator[bytes]:
         import aiofiles

@@ -29,6 +29,7 @@ class AppSettings(Base):
     allow_local_login: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     allow_user_share_emails: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     file_type_blocklist: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    upload_concurrency: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
     purge_grace_days: Mapped[int] = mapped_column(Integer, nullable=False, default=7)
     purge_notify_days: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     setup_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

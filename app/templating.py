@@ -38,6 +38,7 @@ from app.services.share_lifecycle import (
 )
 
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.add_extension("jinja2.ext.i18n")
 templates.env.install_gettext_callables(gettext, ngettext)
@@ -73,6 +74,17 @@ templates.env.filters["format_download_limit_short"] = format_download_limit_sho
 templates.env.filters["user_initials"] = user_initials
 
 
+def static_url(path: str) -> str:
+    """Return a cache-busted URL for a file under app/static/."""
+    clean = path.removeprefix("/static/").lstrip("/")
+    full = STATIC_DIR / clean
+    version = int(full.stat().st_mtime) if full.is_file() else 0
+    return f"/static/{clean}?v={version}"
+
+
+templates.env.globals["static_url"] = static_url
+
+
 def branding_context(app_settings: AppSettings) -> dict:
     return {
         "app_name": app_settings.app_name,
@@ -97,4 +109,5 @@ def branding_context(app_settings: AppSettings) -> dict:
         "display_timezone": settings.display_timezone,
         "locale": get_locale(),
         "js_messages": js_messages(),
+        "upload_concurrency": app_settings.upload_concurrency,
     }

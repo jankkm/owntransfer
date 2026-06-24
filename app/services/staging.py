@@ -17,6 +17,7 @@ from app.services.settings import is_extension_blocked, parse_blocklist
 from app.services.storage import get_storage
 
 MANIFEST_FILENAME = "manifest.json"
+_CHUNK_SIZE = 1024 * 1024
 T = TypeVar("T")
 
 
@@ -27,6 +28,19 @@ class StagedFile:
     storage_path: str
     size_bytes: int
     content_type: str | None
+
+
+@dataclass(frozen=True)
+class StagingLimits:
+    max_file_size_bytes: int
+    file_type_blocklist: str | None = None
+
+    @classmethod
+    def from_settings(cls, app_settings: AppSettings) -> StagingLimits:
+        return cls(
+            max_file_size_bytes=app_settings.max_file_size_bytes,
+            file_type_blocklist=app_settings.file_type_blocklist,
+        )
 
 
 def _safe_filename(name: str) -> str:
@@ -120,48 +134,93 @@ def get_staged_files(scope: str) -> list[StagedFile]:
     )
 
 
+class _StagingUploadError(Exception):
+    def __init__(self, status_code: int, detail: str) -> None:
+        self.status_code = status_code
+        self.detail = detail
+
+
+def _save_upload_sync(relative_path: str, upload: UploadFile, max_file_size_bytes: int) -> int:
+    storage = get_storage()
+    path = storage.absolute_path(relative_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    source = upload.file
+    if source is None:
+        raise _StagingUploadError(400, _("Missing filename"))
+    source.seek(0)
+    size = 0
+    try:
+        with open(path, "wb") as out:
+            while True:
+                chunk = source.read(_CHUNK_SIZE)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > max_file_size_bytes:
+                    raise _StagingUploadError(
+                        400,
+                        _("File exceeds maximum size (%(max_mb)s MB)")
+                        % {"max_mb": max_file_size_bytes // (1024 * 1024)},
+                    )
+                out.write(chunk)
+    except _StagingUploadError:
+        if path.exists():
+            path.unlink()
+        raise
+    except OSError as exc:
+        if path.exists():
+            path.unlink()
+        raise _StagingUploadError(500, _("Could not save uploaded file")) from exc
+
+    if size == 0:
+        if path.exists():
+            path.unlink()
+        raise _StagingUploadError(400, _("Empty file"))
+    return size
+
+
+async def _save_upload(relative_path: str, upload: UploadFile, max_file_size_bytes: int) -> int:
+    try:
+        return await asyncio.to_thread(_save_upload_sync, relative_path, upload, max_file_size_bytes)
+    except _StagingUploadError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+
+
 async def add_staged_file(
     scope: str,
     upload: UploadFile,
-    app_settings: AppSettings,
+    limits: StagingLimits | AppSettings,
     *,
     max_total_bytes: int | None = None,
 ) -> StagedFile:
+    if not isinstance(limits, StagingLimits):
+        limits = StagingLimits.from_settings(limits)
+
     if not upload.filename:
         raise HTTPException(status_code=400, detail=_("Missing filename"))
 
-    blocklist = parse_blocklist(app_settings.file_type_blocklist)
+    blocklist = parse_blocklist(limits.file_type_blocklist)
     if is_extension_blocked(upload.filename, blocklist):
         raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": upload.filename})
-
-    content = await upload.read()
-    if not content:
-        raise HTTPException(status_code=400, detail=_("Empty file"))
-    if len(content) > app_settings.max_file_size_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail=_("File exceeds maximum size (%(max_mb)s MB)")
-            % {"max_mb": app_settings.max_file_size_bytes // (1024 * 1024)},
-        )
 
     file_id = str(uuid.uuid4())
     safe_name = _safe_filename(upload.filename)
     storage_path = f"staging/{scope}/{file_id}/{safe_name}"
     storage = get_storage()
-    await storage.save_file(storage_path, content)
+    size_bytes = await _save_upload(storage_path, upload, limits.max_file_size_bytes)
 
-    limit = max_total_bytes if max_total_bytes is not None else app_settings.max_file_size_bytes
+    total_limit = max_total_bytes if max_total_bytes is not None else limits.max_file_size_bytes
 
     def updater(staged: list[StagedFile]) -> tuple[list[StagedFile], StagedFile]:
-        total_size = sum(f.size_bytes for f in staged) + len(content)
-        if total_size > limit:
+        total_size = sum(f.size_bytes for f in staged) + size_bytes
+        if total_size > total_limit:
             raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum allowed size"))
 
         staged_file = StagedFile(
             id=file_id,
             original_name=upload.filename,
             storage_path=storage_path,
-            size_bytes=len(content),
+            size_bytes=size_bytes,
             content_type=upload.content_type,
         )
         staged.append(staged_file)

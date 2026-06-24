@@ -249,6 +249,7 @@
      data-upload-url="{{ upload_url }}"
      data-delete-url-template="{{ delete_url_template }}"
      data-require-files="{{ 'true' if require_files else 'false' }}"
+     data-upload-concurrency="{{ upload_concurrency }}"
      data-required-message="{{ required_files_message or _('Add at least one file') }}"
      class="space-y-3">
   <label class="block text-sm font-medium text-slate-700">{{ _('Files') }}</label>

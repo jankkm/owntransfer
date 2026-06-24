@@ -22,7 +22,7 @@ from app.services.download_limits import transfer_download_limit_reached
 from app.services.settings import generate_public_token, is_extension_blocked, parse_blocklist
 from app.services.share_status import transfer_can_toggle
 from app.services.share_lifecycle import is_past_expiry, reset_expiry_notifications
-from app.services.staging import StagedFile
+from app.services.staging import StagedFile, _save_upload
 from app.services.storage import get_storage
 
 
@@ -271,32 +271,23 @@ async def add_transfer_file(
     if is_extension_blocked(upload.filename, blocklist):
         raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": upload.filename})
 
-    content = await upload.read()
-    if not content:
-        raise HTTPException(status_code=400, detail=_("Empty file"))
-    if len(content) > app_settings.max_file_size_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail=_("File exceeds maximum size (%(max_mb)s MB)")
-            % {"max_mb": app_settings.max_file_size_bytes // (1024 * 1024)},
-        )
-
-    total_size = _transfer_total_bytes(transfer) + len(content)
-    if total_size > app_settings.max_file_size_bytes:
-        raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
-
     file_id = uuid4()
     safe_name = _safe_filename(upload.filename)
     rel_path = f"transfers/{transfer.id}/{file_id}/{safe_name}"
     storage = get_storage()
-    await storage.save_file(rel_path, content)
+    size_bytes = await _save_upload(rel_path, upload, app_settings.max_file_size_bytes)
+
+    total_size = _transfer_total_bytes(transfer) + size_bytes
+    if total_size > app_settings.max_file_size_bytes:
+        await storage.delete_file(rel_path)
+        raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
 
     transfer_file = TransferFile(
         id=file_id,
         transfer_id=transfer.id,
         original_name=upload.filename,
         storage_path=rel_path,
-        size_bytes=len(content),
+        size_bytes=size_bytes,
         content_type=upload.content_type,
     )
     db.add(transfer_file)

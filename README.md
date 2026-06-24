@@ -115,6 +115,7 @@ See [.env.example](.env.example) for the full list. Important variables:
 | `SQLITE_PATH` | SQLite database file (default `/data/owntransfer.db`) |
 | `DATABASE_URL` | Optional full database URL override |
 | `UPLOAD_DIR` | Local file storage path (default `/data/uploads`) |
+| `UPLOAD_CONCURRENCY` | Default for **Admin → Limits → Parallel file uploads** on first boot (default `5`, range 1–50) |
 | `DISPLAY_TIMEZONE` | IANA timezone for UI and emails (e.g. `Europe/Berlin`) |
 | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | Microsoft OAuth (optional) |
 | `SMTP_*` | Email defaults (overridable in admin after first boot) |
@@ -136,6 +137,56 @@ Any environment variable supports a `VAR_FILE` companion that points to a file w
 ### Reverse proxy
 
 Run OwnTransfer behind nginx, Caddy, or Traefik in production. Set `BASE_URL` to your public HTTPS URL. If the app receives HTTP internally behind TLS termination, set `PUBLIC_SCHEME=https` so OAuth callbacks and other generated URLs use HTTPS. Enable `TRUST_PROXY_HEADERS=true` so security logging and rate limiting see the real client IP (and so `X-Forwarded-Proto` is honored when present).
+
+Large multi-file uploads need a **longer proxy timeout** than the common 60-second default. Without this, uploads fail with **502 Bad Gateway** once the limit is hit. Examples:
+
+**nginx**
+
+```nginx
+proxy_read_timeout 600s;
+proxy_send_timeout 600s;
+client_body_timeout 600s;
+```
+
+**Traefik** (Docker labels on the router/service, or static/dynamic file):
+
+```yaml
+# Dynamic configuration (e.g. dynamic.yml)
+http:
+  services:
+    owntransfer:
+      loadBalancer:
+        servers:
+          - url: "http://owntransfer-app-1:8080"
+        responseForwarding:
+          flushInterval: 100ms
+  middlewares:
+    owntransfer-timeouts:
+      buffering:
+        maxRequestBodyBytes: 0  # disable buffering for large uploads
+  routers:
+    owntransfer:
+      rule: "Host(`your-domain`)"
+      service: owntransfer
+      middlewares:
+        - owntransfer-timeouts
+```
+
+For Traefik v2/v3, set transport timeouts on the serversTransport (or per-service in newer versions):
+
+```yaml
+# dynamic.yml — serversTransport
+serversTransports:
+  owntransfer-transport:
+    forwardingTimeouts:
+      dialTimeout: 30s
+      responseHeaderTimeout: 600s
+      idleConnTimeout: 600s
+```
+
+Link the transport to your service via `serversTransport: owntransfer-transport@file`.
+
+**Caddy** — increase `response_header_timeout` / upstream timeouts in your site block as needed.
 
 ## Microsoft Entra ID
 

@@ -24,20 +24,31 @@
     {{ f.color_input("color_scheme", _("Color scheme"), app_settings.color_scheme) }}
     <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save branding') }}</button>
   </form>
-  <form method="post" action="/admin/limits" class="bg-white border rounded-xl p-6 space-y-4">
+  <form method="post" action="/admin/limits/uploads" class="bg-white border rounded-xl p-6 space-y-4">
     {{ csrf_input() }}
-    <h2 class="font-semibold text-lg">{{ _('Limits') }}</h2>
+    <h2 class="font-semibold text-lg">{{ _('File uploads') }}</h2>
     {{ f.text_input("max_file_size_mb", _("Max file size (MB)"), app_settings.max_file_size_bytes // (1024*1024), type="number", required=true) }}
+    {{ f.text_input("upload_concurrency", _("Parallel file uploads"), app_settings.upload_concurrency, type="number", required=true, hint=_("How many files the browser uploads at once when staging (1–50). Lower values are gentler on slow links and reverse proxies.")) }}
+    {{ f.text_input("file_type_blocklist", _("Blocked file extensions"), app_settings.file_type_blocklist or '', hint=_("Comma-separated (e.g. .exe,.bat) or JSON array")) }}
+    <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save file uploads') }}</button>
+  </form>
+  <form method="post" action="/admin/limits/shares" class="bg-white border rounded-xl p-6 space-y-4">
+    {{ csrf_input() }}
+    <h2 class="font-semibold text-lg">{{ _('Shares') }}</h2>
     {{ f.text_input("default_expiry_days", _("Default expiry (days)"), app_settings.default_expiry_days, type="number", required=true) }}
     {{ f.text_input("max_share_expiry_days", _("Max share lifetime (days)"), app_settings.max_share_expiry_days, type="number", required=true, hint=_("How far in the future users can set expiry dates for transfers and file requests.")) }}
     {{ f.text_input("max_downloads_default", _("Default max downloads"), app_settings.max_downloads_default, type="number", required=true, hint=_("0 = unlimited downloads.")) }}
     {{ f.text_input("purge_grace_days", _("Delete after expiry (days)"), app_settings.purge_grace_days, type="number", required=true, hint=_("Expired shares are permanently deleted this many days after expiry. 0 = disabled (no auto-delete).")) }}
     {{ f.text_input("purge_notify_days", _("Deletion reminder (days before purge)"), app_settings.purge_notify_days, type="number", required=true, hint=_("Email owners this many days before auto-delete. 0 = disabled.")) }}
-    {{ f.text_input("file_type_blocklist", _("Blocked file extensions"), app_settings.file_type_blocklist or '', hint=_("Comma-separated (e.g. .exe,.bat) or JSON array")) }}
+    <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save shares') }}</button>
+  </form>
+  <form method="post" action="/admin/limits/access" class="bg-white border rounded-xl p-6 space-y-4">
+    {{ csrf_input() }}
+    <h2 class="font-semibold text-lg">{{ _('Access') }}</h2>
     {{ f.checkbox_input("allow_local_login", _("Allow local login"), checked=app_settings.allow_local_login) }}
     {{ f.checkbox_input("allow_user_share_emails", _("Allow users to email share links to recipients"), checked=app_settings.allow_user_share_emails) }}
     <p class="text-xs text-slate-500">{{ _('Internal notifications (download alerts, upload received) are always sent when enabled per transfer.') }}</p>
-    <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save limits') }}</button>
+    <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save access') }}</button>
   </form>
   <form id="smtp-form" method="post" action="/admin/smtp" class="bg-white border rounded-xl p-6 space-y-4">
     {{ csrf_input() }}

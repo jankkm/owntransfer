@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.deps import get_current_user
-from app.database import get_db
+from app.auth.deps import get_current_user, require_user_id
+from app.database import async_session, get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
 from app.models import User
@@ -16,6 +16,7 @@ from app.services.datetime_display import parse_expiry_date
 from app.services.settings import get_app_settings
 from app.services.share_list import apply_transfer_list_query, parse_share_list_query
 from app.services.staging import (
+    StagingLimits,
     add_staged_file,
     discard_staged_paths,
     remove_staged_file,
@@ -45,14 +46,15 @@ def _transfer_staging_scope(user_id: uuid.UUID) -> str:
 async def stage_transfer_file(
     request: Request,
     file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user_id: uuid.UUID = Depends(require_user_id),
 ):
-    app_settings = await get_app_settings(db)
+    async with async_session() as db:
+        app_settings = await get_app_settings(db)
+        limits = StagingLimits.from_settings(app_settings)
     staged = await add_staged_file(
-        _transfer_staging_scope(user.id),
+        _transfer_staging_scope(user_id),
         file,
-        app_settings,
+        limits,
     )
     return JSONResponse(
         {
@@ -67,9 +69,9 @@ async def stage_transfer_file(
 async def delete_staged_transfer_file(
     file_id: str,
     request: Request,
-    user: User = Depends(get_current_user),
+    user_id: uuid.UUID = Depends(require_user_id),
 ):
-    await remove_staged_file(_transfer_staging_scope(user.id), file_id)
+    await remove_staged_file(_transfer_staging_scope(user_id), file_id)
     return JSONResponse({"ok": True})
 
 
@@ -203,19 +205,22 @@ async def add_transfer_file_route(
     transfer_id: uuid.UUID,
     request: Request,
     file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user_id: uuid.UUID = Depends(require_user_id),
 ):
-    app_settings = await get_app_settings(db)
-    transfer = await get_user_transfer(db, transfer_id, user.id)
-    transfer_file = await add_transfer_file(
-        db,
-        transfer=transfer,
-        upload=file,
-        app_settings=app_settings,
-        user=user,
-        ip_address=get_client_ip(request),
-    )
+    async with async_session() as db:
+        app_settings = await get_app_settings(db)
+        transfer = await get_user_transfer(db, transfer_id, user_id)
+        user = await db.get(User, user_id)
+        if user is None:
+            raise HTTPException(status_code=401, detail=_("Not authenticated"))
+        transfer_file = await add_transfer_file(
+            db,
+            transfer=transfer,
+            upload=file,
+            app_settings=app_settings,
+            user=user,
+            ip_address=get_client_ip(request),
+        )
     return JSONResponse(
         {
             "id": str(transfer_file.id),

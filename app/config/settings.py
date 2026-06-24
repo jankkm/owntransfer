@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     allow_user_share_emails: bool = Field(default=True, alias="ALLOW_USER_SHARE_EMAILS")
     purge_grace_days: int = Field(default=7, alias="PURGE_GRACE_DAYS")
     purge_notify_days: int = Field(default=0, alias="PURGE_NOTIFY_DAYS")
+    upload_concurrency: int = Field(default=5, alias="UPLOAD_CONCURRENCY", ge=1, le=50)
 
     entra_tenant_id: Optional[str] = Field(default=None, alias="ENTRA_TENANT_ID")
     entra_client_id: Optional[str] = Field(default=None, alias="ENTRA_CLIENT_ID")
