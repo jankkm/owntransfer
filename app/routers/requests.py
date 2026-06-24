@@ -16,12 +16,14 @@ from app.services.file_request import (
     create_file_request,
     delete_file_request,
     delete_request_upload_file,
+    find_request_upload,
     get_request_upload_file,
     get_user_request,
     iter_upload_file,
     list_user_requests,
     regenerate_file_request_link,
     file_request_zip_entries,
+    request_upload_zip_entries,
     update_file_request,
 )
 from app.services.zip_stream import stream_zip
@@ -243,6 +245,26 @@ async def download_request_zip(
     file_request = await get_user_request(db, request_id, user.id)
     entries = file_request_zip_entries(file_request)
     filename = f"{file_request.title or 'file-request'}.zip".replace("/", "-").replace('"', "")
+    return StreamingResponse(
+        stream_zip(entries),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{request_id}/uploads/{upload_id}/download")
+async def download_request_upload_zip(
+    request_id: uuid.UUID,
+    upload_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    file_request = await get_user_request(db, request_id, user.id)
+    upload = find_request_upload(file_request, upload_id)
+    entries = request_upload_zip_entries(upload)
+    date_part = upload.created_at.strftime("%Y-%m-%d")
+    base = (file_request.title or "file-request").replace("/", "-").replace('"', "")
+    filename = f"{base}-{date_part}.zip"
     return StreamingResponse(
         stream_zip(entries),
         media_type="application/zip",

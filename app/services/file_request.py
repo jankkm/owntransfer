@@ -381,6 +381,26 @@ def file_request_zip_entries(req: FileRequest) -> list[tuple[Path, str]]:
     return entries
 
 
+def find_request_upload(req: FileRequest, upload_id: UUID) -> RequestUpload:
+    for upload in req.uploads:
+        if upload.id == upload_id:
+            return upload
+    raise HTTPException(status_code=404, detail=_("Upload not found"))
+
+
+def request_upload_zip_entries(upload: RequestUpload) -> list[tuple[Path, str]]:
+    storage = get_storage()
+    used: dict[str, int] = {}
+    entries: list[tuple[Path, str]] = []
+    for upload_file in upload.files:
+        path = storage.absolute_path(upload_file.storage_path)
+        arcname = _unique_zip_name(_safe_filename(upload_file.original_name), used)
+        entries.append((path, arcname))
+    if not entries:
+        raise HTTPException(status_code=404, detail=_("No files to download"))
+    return entries
+
+
 async def list_user_requests(db: AsyncSession, user_id: UUID) -> list[FileRequest]:
     result = await db.execute(
         select(FileRequest)

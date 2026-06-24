@@ -1480,6 +1480,18 @@ msgstr ""
 msgid "Recent uploads"
 msgstr ""
 
+#: app/templates/requests_edit.html:100 app/templates/requests_list.html:64
+msgid "Download (ZIP)"
+msgstr ""
+
+#: app/templates/requests_list.html:81 app/templates/requests_list.html:83
+msgid "Show all uploads"
+msgstr ""
+
+#: app/templates/requests_list.html:82
+msgid "Show less"
+msgstr ""
+
 #: app/templates/requests_list.html:80
 msgid "No file requests match your search or filters."
 msgstr ""

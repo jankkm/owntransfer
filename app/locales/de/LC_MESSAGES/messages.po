@@ -1517,6 +1517,18 @@ msgstr "Empfangene Dateien"
 msgid "Recent uploads"
 msgstr "Aktuelle Uploads"
 
+#: app/templates/requests_edit.html:100 app/templates/requests_list.html:64
+msgid "Download (ZIP)"
+msgstr "Herunterladen (ZIP)"
+
+#: app/templates/requests_list.html:81 app/templates/requests_list.html:83
+msgid "Show all uploads"
+msgstr "Alle Uploads anzeigen"
+
+#: app/templates/requests_list.html:82
+msgid "Show less"
+msgstr "Weniger anzeigen"
+
 #: app/templates/requests_list.html:80
 msgid "No file requests match your search or filters."
 msgstr "Keine Dateianfragen entsprechen Ihrer Suche oder den Filtern."
@@ -1683,6 +1695,53 @@ msgstr "0 für unbegrenzte Downloads verwenden."
 #: app/templates/transfers_new.html:29
 msgid "Create transfer"
 msgstr "Übertragung erstellen"
+
+#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+msgid "Remove file?"
+msgstr "Datei entfernen?"
+
+#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+msgid "Yes, remove file"
+msgstr "Ja, Datei entfernen"
+
+#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+msgid "Removing…"
+msgstr "Wird entfernt…"
+
+#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+msgid "Could not show confirmation dialog."
+msgstr "Bestätigungsdialog konnte nicht angezeigt werden."
+
+#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+msgid "Could not remove file"
+msgstr "Datei konnte nicht entfernt werden."
+
+#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+msgid "this file"
+msgstr "diese Datei"
+
+#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+msgid ""
+"\"%(name)s\" will be permanently removed. This cannot be undone."
+msgstr ""
+"\"%(name)s\" wird dauerhaft entfernt. Dies kann nicht rückgängig "
+"gemacht werden."
+
+#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+msgid ""
+"\"%(name)s\" will be permanently removed from this transfer. This cannot "
+"be undone."
+msgstr ""
+"\"%(name)s\" wird dauerhaft aus dieser Übertragung entfernt. Dies kann "
+"nicht rückgängig gemacht werden."
+
+#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+msgid "Remove \"%(name)s\" from the list?"
+msgstr "\"%(name)s\" aus der Liste entfernen?"
+
+#: app/i18n/__init__.py:JS_MESSAGE_KEYS
+msgid "Remove file from transfer?"
+msgstr "Datei aus Übertragung entfernen?"
 
 #~ msgid "Wait for uploads to finish"
 #~ msgstr "Warten Sie, bis die Uploads abgeschlossen sind"
