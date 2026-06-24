@@ -30,8 +30,12 @@
   function initUnsavedGuard(form) {
     const initial = formSnapshot(form);
     let allowLeave = false;
+    // After a failed save the browser may restore field values, so the snapshot
+    // matches "initial" even though nothing was persisted.
+    const forceDirty = Boolean(document.querySelector("[data-page-error]"));
 
     function isDirty() {
+      if (forceDirty) return true;
       if (hasStagedFiles(form)) return true;
       return formSnapshot(form) !== initial;
     }
@@ -40,8 +44,14 @@
       return window.confirm(t("You have unsaved changes. Leave this page?"));
     }
 
-    form.addEventListener("submit", () => {
-      allowLeave = true;
+    form.addEventListener("submit", (event) => {
+      // Run after other submit handlers (e.g. file-picker validation) so we
+      // do not treat a cancelled submit as an intentional leave.
+      queueMicrotask(() => {
+        if (!event.defaultPrevented) {
+          allowLeave = true;
+        }
+      });
     });
 
     window.addEventListener("beforeunload", (event) => {

@@ -136,7 +136,7 @@
     </div>
   </header>
   <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full">
-    {% if error %}<div class="mb-4 p-3 rounded bg-red-50 text-red-700 border border-red-200">{{ error }}</div>{% endif %}
+    {% if error %}<div class="mb-4 p-3 rounded bg-red-50 text-red-700 border border-red-200" data-page-error>{{ error }}</div>{% endif %}
     {% if success %}<div class="mb-4 p-3 rounded bg-green-50 text-green-700 border border-green-200">{{ success }}</div>{% endif %}
     {% block content %}{% endblock %}
   </main>
