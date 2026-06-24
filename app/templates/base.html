@@ -47,6 +47,9 @@
       object-position: left center;
       flex-shrink: 0;
     }
+    .app-logo-default {
+      max-width: 2.5rem;
+    }
     .legal-content a { color: var(--primary); text-decoration: underline; }
     .legal-content p { margin-bottom: 0.75rem; }
     .legal-content p:last-child { margin-bottom: 0; }
@@ -72,9 +75,13 @@
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
   <header class="bg-white border-b border-slate-200">
     <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-3 font-semibold text-lg min-w-0">
-        <img src="{{ logo_path }}" alt="{{ app_name }}" class="app-logo">
+      <a href="/" class="flex items-center gap-3 font-semibold text-lg shrink-0{% if has_custom_logo %} min-w-0{% endif %}">
+        <img src="{{ logo_path }}" alt="" class="app-logo{% if not has_custom_logo %} app-logo-default{% endif %}" role="presentation">
+        {% if has_custom_logo %}
         <span class="truncate">{{ app_name }}</span>
+        {% else %}
+        <span class="whitespace-nowrap">{{ app_name }}</span>
+        {% endif %}
       </a>
       {% if user %}
       <nav class="flex items-center gap-1 sm:gap-5 text-sm min-w-0">
