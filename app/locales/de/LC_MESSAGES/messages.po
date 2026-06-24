@@ -32,18 +32,16 @@ msgid "Branding saved."
 msgstr "Branding gespeichert."
 
 #: app/routers/admin.py:95
-#, fuzzy
 msgid "File upload settings saved."
-msgstr "E-Mail-Vorlagen gespeichert."
+msgstr "Einstellungen für Datei-Uploads gespeichert."
 
 #: app/routers/admin.py:97
-#, fuzzy
 msgid "Share settings saved."
-msgstr "Branding gespeichert."
+msgstr "Freigabe-Einstellungen gespeichert."
 
 #: app/routers/admin.py:99
 msgid "Access settings saved."
-msgstr ""
+msgstr "Zugriffs-Einstellungen gespeichert."
 
 #: app/routers/admin.py:101
 msgid "Legal pages saved."
@@ -169,19 +167,21 @@ msgid "Provider not configured"
 msgstr "Anbieter nicht konfiguriert"
 
 #: app/routers/auth.py:191
-#, fuzzy
 msgid "OAuth provider did not return an email address"
-msgstr "OAuth-Anbieter hat keine E-Mail zurückgegeben"
+msgstr "OAuth-Anbieter hat keine E-Mail-Adresse zurückgegeben"
 
 #: app/routers/auth.py:197
 msgid "Your email address is not verified with the identity provider"
-msgstr ""
+msgstr "Ihre E-Mail-Adresse ist beim Identitätsanbieter nicht verifiziert"
 
 #: app/routers/auth.py:220
 msgid ""
 "An account with this email already exists. Sign in with your existing "
 "method, or ask an administrator to link your account."
 msgstr ""
+"Ein Konto mit dieser E-Mail existiert bereits. Melden Sie sich mit Ihrer "
+"bestehenden Methode an oder bitten Sie einen Administrator, Ihr Konto zu "
+"verknüpfen."
 
 #: app/routers/branding.py:46 app/templates/admin.html:72
 #: app/templates/base.html:147
@@ -289,7 +289,6 @@ msgid "This transfer is no longer available."
 msgstr "Diese Übertragung ist nicht mehr verfügbar."
 
 #: app/routers/public.py:150
-#, fuzzy
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
 
@@ -437,9 +436,8 @@ msgid "No files to download"
 msgstr "Keine Dateien zum Herunterladen"
 
 #: app/services/file_request.py:388
-#, fuzzy
 msgid "Upload not found"
-msgstr "Datei nicht gefunden"
+msgstr "Upload nicht gefunden"
 
 #: app/services/file_request.py:436
 #, python-format
@@ -500,9 +498,8 @@ msgid "File exceeds maximum size (%(max_mb)s MB)"
 msgstr "Datei überschreitet die maximale Größe (%(max_mb)s MB)"
 
 #: app/services/staging.py:173
-#, fuzzy
 msgid "Could not save uploaded file"
-msgstr "Übertragung konnte nicht erstellt werden"
+msgstr "Hochgeladene Datei konnte nicht gespeichert werden"
 
 #: app/services/staging.py:178
 msgid "Empty file"
@@ -743,8 +740,8 @@ msgstr "Limit erreicht"
 
 #: app/templates/_share_active_controls.html:16
 msgid ""
-"This link has expired and is not publicly accessible until you extend the "
-"expiry date."
+"This link has expired and is not publicly accessible until you extend the"
+" expiry date."
 msgstr ""
 "Dieser Link ist abgelaufen und öffentlich nicht erreichbar, bis Sie das "
 "Ablaufdatum verlängern."
@@ -759,8 +756,8 @@ msgstr ""
 
 #: app/templates/_share_active_controls.html:20
 msgid ""
-"This link has reached its upload limit and is not publicly accessible until "
-"you raise the limit."
+"This link has reached its upload limit and is not publicly accessible "
+"until you raise the limit."
 msgstr ""
 "Dieser Link hat sein Upload-Limit erreicht und ist öffentlich nicht "
 "erreichbar, bis Sie das Limit erhöhen."
@@ -813,24 +810,24 @@ msgid "Save branding"
 msgstr "Branding speichern"
 
 #: app/templates/admin.html:29
-#, fuzzy
 msgid "File uploads"
-msgstr "Uploads"
+msgstr "Datei-Uploads"
 
 #: app/templates/admin.html:30
 msgid "Max file size (MB)"
 msgstr "Max. Dateigröße (MB)"
 
 #: app/templates/admin.html:31
-#, fuzzy
 msgid "Parallel file uploads"
-msgstr "Aktuelle Uploads"
+msgstr "Parallele Datei-Uploads"
 
 #: app/templates/admin.html:31
 msgid ""
 "How many files the browser uploads at once when staging (1–50). Lower "
 "values are gentler on slow links and reverse proxies."
 msgstr ""
+"Wie viele Dateien der Browser beim Staging gleichzeitig hochlädt (1–50). "
+"Niedrigere Werte schonen langsame Verbindungen und Reverse Proxies."
 
 #: app/templates/admin.html:32
 msgid "Blocked file extensions"
@@ -841,14 +838,12 @@ msgid "Comma-separated (e.g. .exe,.bat) or JSON array"
 msgstr "Kommagetrennt (z. B. .exe,.bat) oder JSON-Array"
 
 #: app/templates/admin.html:33
-#, fuzzy
 msgid "Save file uploads"
-msgstr "Alle Uploads anzeigen"
+msgstr "Datei-Uploads speichern"
 
 #: app/templates/admin.html:37
-#, fuzzy
 msgid "Shares"
-msgstr "zu Freigaben"
+msgstr "Freigaben"
 
 #: app/templates/admin.html:38
 msgid "Default expiry (days)"
@@ -897,13 +892,12 @@ msgstr ""
 "deaktiviert."
 
 #: app/templates/admin.html:43
-#, fuzzy
 msgid "Save shares"
-msgstr "Änderungen speichern"
+msgstr "Freigaben speichern"
 
 #: app/templates/admin.html:47
 msgid "Access"
-msgstr ""
+msgstr "Zugriff"
 
 #: app/templates/admin.html:48
 msgid "Allow local login"
@@ -922,9 +916,8 @@ msgstr ""
 "immer gesendet, wenn sie pro Übertragung aktiviert sind."
 
 #: app/templates/admin.html:51
-#, fuzzy
 msgid "Save access"
-msgstr "Änderungen speichern"
+msgstr "Zugriff speichern"
 
 #: app/templates/admin.html:55
 msgid "SMTP"
@@ -1362,7 +1355,7 @@ msgstr "6-stelliger Code"
 msgid "Continue"
 msgstr "Weiter"
 
-#: app/templates/_macros.html:163 app/static/copy_to_clipboard.js:0
+#: app/static/copy_to_clipboard.js app/templates/_macros.html:163
 msgid "Copied!"
 msgstr "Kopiert!"
 
