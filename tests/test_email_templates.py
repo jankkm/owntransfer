@@ -6,12 +6,24 @@ import pytest
 
 from app.models import AppSettings
 from app.services.email import _wrap_email_html
-from app.services.email_templates import render_email_template
+from app.services.email_templates import render_email_subject, render_email_template
 
 
 @pytest.fixture
 def app_settings() -> AppSettings:
     return AppSettings(id=1, app_name="OwnTransfer")
+
+
+def test_render_email_subject_allows_duplicate_app_name_in_context(app_settings: AppSettings):
+    subject = render_email_subject(
+        app_settings,
+        "download_notify",
+        app_name=app_settings.app_name,
+        title="My Transfer",
+        download_count=1,
+        max_downloads=5,
+    )
+    assert subject == "OwnTransfer: Transfer downloaded"
 
 
 def test_render_email_template_keeps_strong_tags(app_settings: AppSettings):

@@ -98,9 +98,11 @@ def _normalize_template_source(source: str) -> str:
 
 
 def _email_context(**context) -> dict:
-    base = {"base_url": settings.base_url.rstrip("/")}
-    base.update(context)
-    return base
+    return {**context, "base_url": settings.base_url.rstrip("/")}
+
+
+def _render_context(app_settings: AppSettings, **context) -> dict:
+    return _email_context(**{**context, "app_name": app_settings.app_name})
 
 
 def get_template_source(app_settings: AppSettings, key: str) -> str:
@@ -121,12 +123,12 @@ def get_subject_source(app_settings: AppSettings, key: str) -> str:
 
 def render_email_template(app_settings: AppSettings, key: str, **context) -> str:
     source = get_template_source(app_settings, key)
-    return _sandbox.from_string(source).render(**_email_context(app_name=app_settings.app_name, **context))
+    return _sandbox.from_string(source).render(**_render_context(app_settings, **context))
 
 
 def render_email_subject(app_settings: AppSettings, key: str, **context) -> str:
     source = get_subject_source(app_settings, key)
-    return _sandbox.from_string(source).render(**_email_context(app_name=app_settings.app_name, **context)).strip()
+    return _sandbox.from_string(source).render(**_render_context(app_settings, **context)).strip()
 
 
 def templates_for_admin(app_settings: AppSettings) -> dict[str, str]:
