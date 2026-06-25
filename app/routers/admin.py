@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_admin
-from app.auth.passwords import hash_password
+from app.auth.passwords import hash_password, is_password_long_enough
 from app.database import get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
@@ -676,6 +676,11 @@ async def create_user(
     normalized_email = email.strip().lower()
     if not normalized_email or not password:
         return RedirectResponse("/admin?error=" + _("Email and password are required").replace(" ", "+"), status_code=303)
+    if not is_password_long_enough(password):
+        return RedirectResponse(
+            "/admin?error=" + _("Password must be at least 8 characters").replace(" ", "+"),
+            status_code=303,
+        )
 
     existing = await db.execute(select(User).where(User.email == normalized_email))
     if existing.scalar_one_or_none():
@@ -769,6 +774,11 @@ async def set_user_password(
 ):
     if not password:
         return RedirectResponse("/admin?error=" + _("Password is required").replace(" ", "+"), status_code=303)
+    if not is_password_long_enough(password):
+        return RedirectResponse(
+            "/admin?error=" + _("Password must be at least 8 characters").replace(" ", "+"),
+            status_code=303,
+        )
 
     user = await db.get(User, user_id)
     if not user or not user.is_active:

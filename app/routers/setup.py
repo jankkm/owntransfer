@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.passwords import hash_password
+from app.auth.passwords import hash_password, is_password_long_enough
 from app.database import get_db
 from app.http.client_ip import get_client_ip
 from app.i18n import _
@@ -56,7 +56,7 @@ async def setup_post(
             status_code=400,
         )
 
-    if len(password) < 8:
+    if not is_password_long_enough(password):
         return templates.TemplateResponse(
             request,
             "setup.html",

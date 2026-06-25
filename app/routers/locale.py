@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user_optional
+from app.http.safe_redirect import safe_redirect_target
 from app.config import settings
 from app.database import get_db
 from app.i18n import LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, SUPPORTED_LOCALES, normalize_locale
@@ -26,7 +27,7 @@ async def set_locale(
     if user is not None:
         user.locale = resolved
         await db.commit()
-    referer = request.headers.get("referer") or "/"
+    referer = safe_redirect_target(request)
     response = RedirectResponse(referer, status_code=303)
     response.set_cookie(
         LOCALE_COOKIE,

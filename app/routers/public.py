@@ -37,7 +37,7 @@ from app.services.security_log import (
     log_invalid_unlock,
 )
 from app.services.settings import get_app_settings
-from app.services.download_limits import transfer_download_limit_reached
+from app.services.download_limits import try_reserve_download_slot
 from app.services.staging import (
     StagingLimits,
     add_staged_file,
@@ -307,11 +307,16 @@ async def _grant_transfer_session(
     token = transfer.public_token
     if has_transfer_download_grant(request.session, token):
         return True
-    if transfer_download_limit_reached(transfer):
+    if not mark_transfer_download_counted(request.session, token):
+        grant_transfer_download(request.session, token)
+        return True
+
+    if not await try_reserve_download_slot(db, transfer.id, max_downloads=transfer.max_downloads):
         return False
+
+    await db.refresh(transfer)
     grant_transfer_download(request.session, token)
-    if mark_transfer_download_counted(request.session, token):
-        await record_download(db, transfer, app_settings, creator)
+    await record_download(db, transfer, app_settings, creator)
     return True
 
 

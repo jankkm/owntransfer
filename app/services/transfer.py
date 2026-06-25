@@ -231,8 +231,6 @@ async def record_download(
     app_settings: AppSettings,
     creator: User | None,
 ) -> None:
-    transfer.download_count += 1
-    await db.commit()
     await log_audit(
         db,
         action="transfer.downloaded",
