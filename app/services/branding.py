@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import mimetypes
+import re
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
@@ -22,6 +23,16 @@ _EXTENSION_TO_MIME = {
     ".svg": "image/svg+xml",
     ".webp": "image/webp",
 }
+
+
+_HEX_COLOR = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+
+def normalize_hex_color(value: str) -> str | None:
+    normalized = value.strip()
+    if not _HEX_COLOR.fullmatch(normalized):
+        return None
+    return normalized.lower()
 
 
 def has_custom_logo(app_settings: AppSettings) -> bool:

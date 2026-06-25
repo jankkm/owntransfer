@@ -37,6 +37,7 @@ from app.services.security_log import (
     log_invalid_unlock,
 )
 from app.services.settings import get_app_settings
+from app.services.download_limits import transfer_download_limit_reached
 from app.services.staging import (
     StagingLimits,
     add_staged_file,
@@ -45,7 +46,6 @@ from app.services.staging import (
     restore_staged_files,
     take_staged_files,
 )
-from app.services.download_limits import transfer_download_limit_reached
 from app.services.transfer import (
     ACCESS_DISABLED,
     ACCESS_DOWNLOAD_LIMIT,
@@ -59,6 +59,11 @@ from app.services.transfer import (
     transfer_zip_entries,
     verify_transfer_password,
 )
+from app.services.unlock_lockout import (
+    is_unlock_locked,
+    record_failed_unlock,
+    reset_unlock_lockout,
+)
 from app.services.zip_stream import stream_zip
 from app.templating import branding_context, templates
 
@@ -69,6 +74,12 @@ _LOGIN_URL = "/auth/login"
 
 def _login_redirect() -> RedirectResponse:
     return RedirectResponse(_LOGIN_URL, status_code=303)
+
+
+async def _unlock_lockout_error(kind: str, token: str) -> str | None:
+    if await is_unlock_locked(kind, token):
+        return _("Too many failed password attempts. Try again later.")
+    return None
 
 
 def _invalid_transfer_redirect(request: Request) -> RedirectResponse:
@@ -345,7 +356,17 @@ async def download_unlock(token: str, request: Request, password: str = Form("")
     issue = transfer_access_issue(transfer)
     if issue:
         return _render_download_page(request, transfer, app_settings, access_issue=issue)
+    lockout_error = await _unlock_lockout_error("transfer", token)
+    if lockout_error:
+        return _render_download_page(
+            request,
+            transfer,
+            app_settings,
+            status_code=429,
+            error=lockout_error,
+        )
     if not verify_transfer_password(transfer, password):
+        await record_failed_unlock("transfer", token)
         log_invalid_unlock(request, "transfer")
         return _render_download_page(
             request,
@@ -354,6 +375,8 @@ async def download_unlock(token: str, request: Request, password: str = Form("")
             status_code=401,
             error=_("Invalid password"),
         )
+
+    await reset_unlock_lockout("transfer", token)
 
     password_required = bool(transfer.password_hash)
     creator = await db.get(User, transfer.created_by)
@@ -555,7 +578,18 @@ async def upload_handler(
         return _render_upload_page(request, file_request, token, app_settings, access_issue=issue)
 
     if unlock:
+        lockout_error = await _unlock_lockout_error("request", token)
+        if lockout_error:
+            return _render_upload_page(
+                request,
+                file_request,
+                token,
+                app_settings,
+                status_code=429,
+                error=lockout_error,
+            )
         if not verify_request_password(file_request, password):
+            await record_failed_unlock("request", token)
             log_invalid_unlock(request, "request")
             return _render_upload_page(
                 request,
@@ -565,6 +599,7 @@ async def upload_handler(
                 status_code=401,
                 error=_("Invalid password"),
             )
+        await reset_unlock_lockout("request", token)
         response = _render_upload_page(request, file_request, token, app_settings)
         set_request_unlock(response, token)
         return response

@@ -11,6 +11,7 @@ from app.auth.deps import get_current_user, require_user_id
 from app.database import async_session, get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
+from app.limiter import limiter
 from app.models import User
 from app.services.datetime_display import parse_expiry_date
 from app.services.settings import get_app_settings
@@ -43,6 +44,7 @@ def _transfer_staging_scope(user_id: uuid.UUID) -> str:
 
 
 @router.post("/staging")
+@limiter.limit("30/minute")
 async def stage_transfer_file(
     request: Request,
     file: UploadFile = File(...),
@@ -66,6 +68,7 @@ async def stage_transfer_file(
 
 
 @router.delete("/staging/{file_id}")
+@limiter.limit("30/minute")
 async def delete_staged_transfer_file(
     file_id: str,
     request: Request,
@@ -201,6 +204,7 @@ async def edit_transfer_page(
 
 
 @router.post("/{transfer_id}/files")
+@limiter.limit("30/minute")
 async def add_transfer_file_route(
     transfer_id: uuid.UUID,
     request: Request,

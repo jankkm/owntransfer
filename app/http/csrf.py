@@ -17,7 +17,7 @@ SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
 # Largest form body we will buffer in order to read the token from a form field
 # when no X-CSRF-Token header is present. JS-driven uploads always send the
 # header (and skip this path); only small HTML form posts are buffered.
-_MAX_BUFFERED_BODY = 25 * 1024 * 1024
+_MAX_BUFFERED_BODY = 64 * 1024
 
 _csrf_token_var: ContextVar[str] = ContextVar("csrf_token", default="")
 
@@ -28,6 +28,16 @@ def get_csrf_token() -> str:
 
 def _generate_token() -> str:
     return secrets.token_urlsafe(32)
+
+
+def _content_length(scope: Scope) -> int | None:
+    raw = Headers(scope=scope).get("content-length")
+    if not raw:
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return None
 
 
 async def _empty_receive() -> Message:
@@ -121,6 +131,10 @@ class CSRFMiddleware:
                 if content_type.startswith(
                     ("application/x-www-form-urlencoded", "multipart/form-data")
                 ):
+                    content_length = _content_length(scope)
+                    if content_length is not None and content_length > _MAX_BUFFERED_BODY:
+                        await self._reject(scope, send)
+                        return
                     body, downstream_receive = await _buffer_body(receive)
                     if body is None:
                         await self._reject(scope, send)

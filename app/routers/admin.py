@@ -23,7 +23,7 @@ from app.services.admin_overview import (
     list_all_transfers,
 )
 from app.services.audit import log_audit
-from app.services.branding import apply_logo_upload, clear_logo
+from app.services.branding import apply_logo_upload, clear_logo, normalize_hex_color
 from app.services.datetime_display import parse_expiry_date
 from app.services.email_templates import (
     SUBJECT_FIELD_MAP,
@@ -472,7 +472,13 @@ async def save_branding(
 ):
     app_settings = await get_app_settings(db)
     app_settings.app_name = app_name
-    app_settings.color_scheme = color_scheme
+    validated_color = normalize_hex_color(color_scheme)
+    if validated_color is None:
+        return RedirectResponse(
+            "/admin?error=" + _("Color scheme must be a hex color like #2563eb").replace(" ", "+"),
+            status_code=303,
+        )
+    app_settings.color_scheme = validated_color
 
     if remove_logo:
         clear_logo(app_settings)
