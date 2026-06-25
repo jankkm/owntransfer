@@ -10,6 +10,7 @@ from app.auth.download_grants import (
     grant_transfer_download,
     has_transfer_download_grant,
     mark_transfer_download_counted,
+    mark_transfer_download_notified,
 )
 from app.auth.unlock_cookies import (
     is_request_unlocked,
@@ -301,8 +302,6 @@ async def _grant_transfer_session(
     request: Request,
     db: AsyncSession,
     transfer: Transfer,
-    app_settings,
-    creator: User | None,
 ) -> bool:
     token = transfer.public_token
     if has_transfer_download_grant(request.session, token):
@@ -316,14 +315,15 @@ async def _grant_transfer_session(
 
     await db.refresh(transfer)
     grant_transfer_download(request.session, token)
-    await record_download(db, transfer, app_settings, creator)
     return True
 
 
 async def _handle_download_event(
     request: Request,
     db: AsyncSession,
-    transfer,
+    transfer: Transfer,
+    app_settings,
+    creator: User | None,
     *,
     download_type: str,
     file_name: str | None = None,
@@ -335,6 +335,9 @@ async def _handle_download_event(
         download_type=download_type,
         file_name=file_name,
     )
+    if mark_transfer_download_notified(request.session, transfer.public_token):
+        await db.refresh(transfer)
+        await record_download(db, transfer, app_settings, creator)
 
 
 @router.get("/d/{token}", response_class=HTMLResponse)
@@ -384,13 +387,10 @@ async def download_unlock(token: str, request: Request, password: str = Form("")
     await reset_unlock_lockout("transfer", token)
 
     password_required = bool(transfer.password_hash)
-    creator = await db.get(User, transfer.created_by)
     granted = await _grant_transfer_session(
         request,
         db,
         transfer,
-        app_settings,
-        creator,
     )
     if not granted:
         return _render_download_page(
@@ -431,6 +431,8 @@ async def download_files_zip(token: str, request: Request, db: AsyncSession = De
         request,
         db,
         transfer,
+        app_settings,
+        creator,
         download_type="zip",
         file_name=f"{transfer.title or 'transfer'}.zip",
     )
@@ -468,11 +470,14 @@ async def download_single_file(
     if not is_transfer_unlocked(request, token, password_required=bool(transfer.password_hash)):
         raise HTTPException(status_code=403, detail=_("Password required"))
     transfer_file = await get_transfer_file(transfer, file_id)
+    creator = await db.get(User, transfer.created_by)
 
     await _handle_download_event(
         request,
         db,
         transfer,
+        app_settings,
+        creator,
         download_type="file",
         file_name=transfer_file.original_name,
     )
