@@ -25,7 +25,7 @@ async def _unlock_transfer(client: AsyncClient, token: str, *, password: str = "
     response = await client.post(
         f"/d/{token}",
         data={"password": password, "csrf_token": token_value},
-        follow_redirects=False,
+        follow_redirects=True,
     )
     assert response.status_code == 200, response.text
 
@@ -221,3 +221,39 @@ async def test_passwordless_transfer_requires_explicit_unlock(client: AsyncClien
     download = await client.get(f"/d/plain-unlock/files/{file_id}")
     assert download.status_code == 200
     assert download.content == b"plain"
+
+
+@pytest.mark.asyncio
+async def test_request_unlock_shows_upload_form_after_one_password(client: AsyncClient):
+    from app.auth.passwords import hash_password as _hash
+    from app.models import FileRequest
+
+    async with async_session() as session:
+        user = (await session.execute(select(User))).scalar_one()
+        session.add(
+            FileRequest(
+                public_token="req-unlock",
+                created_by=user.id,
+                title="Upload docs",
+                password_hash=_hash("secret"),
+                expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+                max_uploads=5,
+                max_total_bytes=10 * 1024 * 1024,
+            )
+        )
+        await session.commit()
+
+    page = await client.get("/r/req-unlock")
+    assert page.status_code == 200
+    assert 'name="unlock"' in page.text
+    assert "Complete upload" not in page.text
+
+    csrf = await _csrf_token(client, "/r/req-unlock")
+    unlocked = await client.post(
+        "/r/req-unlock",
+        data={"unlock": "1", "password": "secret", "csrf_token": csrf},
+        follow_redirects=True,
+    )
+    assert unlocked.status_code == 200
+    assert 'name="unlock"' not in unlocked.text
+    assert "Complete upload" in unlocked.text

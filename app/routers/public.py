@@ -400,7 +400,7 @@ async def download_unlock(token: str, request: Request, password: str = Form("")
             access_issue=ACCESS_DOWNLOAD_LIMIT,
         )
 
-    response = _render_download_page(request, transfer, app_settings)
+    response = RedirectResponse(f"/d/{token}", status_code=303)
     if password_required:
         set_transfer_unlock(response, token)
     return response
@@ -605,7 +605,7 @@ async def upload_handler(
                 error=_("Invalid password"),
             )
         await reset_unlock_lockout("request", token)
-        response = _render_upload_page(request, file_request, token, app_settings)
+        response = RedirectResponse(f"/r/{token}", status_code=303)
         set_request_unlock(response, token)
         return response
 
