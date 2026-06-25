@@ -3,6 +3,10 @@
     return window.__(key, vars);
   }
 
+  function tn(singular, plural, n, vars) {
+    return window.__n(singular, plural, n, vars);
+  }
+
   function csrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]');
     return meta ? meta.content : "";
@@ -110,7 +114,7 @@
 
     function updateTitle() {
       if (!titleEl) return;
-      titleEl.textContent = `Files (${fileCount()})`;
+      titleEl.textContent = t("Files (%(count)s)", { count: fileCount() });
     }
 
     function updateDoneState() {

@@ -49,6 +49,12 @@ JS_MESSAGE_KEYS = (
     'Remove "%(name)s" from the list?',
     '"%(name)s" will be permanently removed. This cannot be undone.',
     "You have unsaved changes. Leave this page?",
+    "Files (%(count)s)",
+    "Received uploads (%(uploads)s)",
+)
+
+JS_NGETTEXT_PAIRS = (
+    ("%(count)s file", "%(count)s files"),
 )
 
 _locale_var: ContextVar[str] = ContextVar("locale", default="en")
@@ -148,4 +154,8 @@ def locale_display_name(locale: str) -> str:
 
 
 def js_messages() -> dict[str, str]:
-    return {key: gettext(key) for key in JS_MESSAGE_KEYS}
+    msgs = {key: gettext(key) for key in JS_MESSAGE_KEYS}
+    for singular, plural in JS_NGETTEXT_PAIRS:
+        msgs[f"@n|{singular}|{plural}|1"] = ngettext(singular, plural, 1)
+        msgs[f"@n|{singular}|{plural}|other"] = ngettext(singular, plural, 2)
+    return msgs

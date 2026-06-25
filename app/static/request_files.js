@@ -3,6 +3,10 @@
     return window.__(key, vars);
   }
 
+  function tn(singular, plural, n, vars) {
+    return window.__n(singular, plural, n, vars);
+  }
+
   function csrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]');
     return meta ? meta.content : "";
@@ -50,7 +54,7 @@
       if (!titleEl) return;
       const uploads = uploadCount();
       const files = fileCount();
-      titleEl.textContent = `Received uploads (${uploads}) · ${files} file${files === 1 ? "" : "s"}`;
+      titleEl.textContent = `${t("Received uploads (%(uploads)s)", { uploads })} · ${tn("%(count)s file", "%(count)s files", files, { count: files })}`;
       if (emptyState) {
         emptyState.classList.toggle("hidden", uploads > 0);
       }

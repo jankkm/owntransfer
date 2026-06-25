@@ -19,6 +19,14 @@
       }
       return s;
     };
+    window.__n = (singular, plural, n, vars) => {
+      const form = n === 1 ? "1" : "other";
+      const key = `@n|${singular}|${plural}|${form}`;
+      if (window.__i18n && window.__i18n[key]) {
+        return window.__(key, vars);
+      }
+      return window.__(n === 1 ? singular : plural, vars);
+    };
   </script>
   <style>
     :root {
