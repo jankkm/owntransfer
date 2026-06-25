@@ -12,6 +12,7 @@ _test_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
 _test_db.close()
 os.environ.setdefault("DATABASE_URL", f"sqlite+aiosqlite:///{_test_db.name}")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
+os.environ.setdefault("SETUP_TOKEN", "test-setup-token")
 os.environ.setdefault("UPLOAD_DIR", tempfile.mkdtemp())
 
 from app.auth.passwords import hash_password

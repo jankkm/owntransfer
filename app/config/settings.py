@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     app_name: str = Field(default="OwnTransfer", alias="APP_NAME")
     secret_key: str = Field(..., alias="SECRET_KEY")
+    setup_token: Optional[str] = Field(default=None, alias="SETUP_TOKEN")
     db_backend: DbBackend = Field(default="sqlite", alias="DB_BACKEND")
     database_url: Optional[str] = Field(default=None, alias="DATABASE_URL")
     sqlite_path: str = Field(default="/data/owntransfer.db", alias="SQLITE_PATH")

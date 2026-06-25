@@ -95,10 +95,19 @@ Transfers and file requests display clear status badges: Active, Expired, Disabl
 git clone https://github.com/your-org/owntransfer.git
 cd owntransfer
 cp .env.example .env
+# Set SECRET_KEY in .env (see Configuration below)
 docker compose up --build
 ```
 
-Open http://localhost:8080 and complete the setup wizard to create your admin account.
+On first boot, the app prints a **one-time setup token** to the container logs. Look for a line like:
+
+```text
+Setup token (required once): <long-random-string>
+```
+
+Open http://localhost:8080/setup, paste that token, and create your admin account. If you restart the container before finishing setup, check the logs again — a new token is generated each time.
+
+To use a fixed token instead (for example in automation), set `SETUP_TOKEN` in `.env` before starting the app.
 
 ## Configuration
 
@@ -108,7 +117,8 @@ See [.env.example](.env.example) for the full list. Important variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `SECRET_KEY` | Session signing — **change in production** |
+| `SECRET_KEY` | Session signing — **required**; generate a long random string |
+| `SETUP_TOKEN` | Optional fixed token for the first-boot setup wizard; when unset, a random token is logged at startup |
 | `BASE_URL` | Public URL used in share links and emails (e.g. `https://transfer.example.com`) |
 | `PUBLIC_SCHEME` | `http` or `https` — override scheme behind a TLS-terminating reverse proxy (OAuth callbacks) |
 | `DB_BACKEND` | `sqlite` (default) or `postgres` |
@@ -223,6 +233,7 @@ Run the same container image with a persistent volume claim for `/data`, configu
 
 ## Security
 
+- First-boot setup requires a one-time token (printed to container logs, or set via `SETUP_TOKEN`)
 - Public link tokens are cryptographically random; passwords are bcrypt-hashed
 - Rate limiting on public download and upload routes
 - Session cookies are HTTP-only

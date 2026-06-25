@@ -22,6 +22,7 @@ from app.middleware.setup import SetupMiddleware
 from app.routers import admin, auth, branding, dashboard, locale, profile, public, requests, setup, transfers
 from app.services.cleanup import run_cleanup
 from app.services.schema import ensure_schema
+from app.services.setup_token import init_setup_token, log_setup_token_if_needed
 
 scheduler = AsyncIOScheduler()
 
@@ -35,6 +36,10 @@ async def _cleanup_job() -> None:
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await ensure_schema(conn)
+
+    init_setup_token(app)
+    async with async_session() as db:
+        await log_setup_token_if_needed(app, db)
 
     scheduler.add_job(_cleanup_job, "interval", minutes=15, id="cleanup")
     scheduler.start()

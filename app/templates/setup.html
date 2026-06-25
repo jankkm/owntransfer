@@ -3,9 +3,29 @@
 {% block content %}
 <div class="max-w-md mx-auto bg-white rounded-xl shadow-sm border p-8">
   <h1 class="text-2xl font-bold mb-2">{{ _('Welcome to %(app_name)s') % {'app_name': app_name} }}</h1>
-  <p class="text-slate-600 mb-6">{{ _('Create the initial admin account to get started.') }}</p>
+  <p class="text-slate-600 mb-4">{{ _('Create the initial admin account to get started.') }}</p>
+
+  <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+    <p class="font-medium mb-2">{{ _('Before you continue') }}</p>
+    <ol class="list-decimal list-inside space-y-1">
+      <li>{{ _('Start the app (for example with Docker Compose) and open the container or server logs.') }}</li>
+      <li>{{ _('Find the one-time setup token printed at startup (a long random string).') }}</li>
+      <li>{{ _('Enter that token below together with your admin account details.') }}</li>
+    </ol>
+    <p class="mt-2 text-amber-900">{{ _('If you restart the app before finishing setup, a new token is generated — check the logs again.') }}</p>
+  </div>
+
+  {% if error %}
+  <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ error }}</div>
+  {% endif %}
+
   <form method="post" class="space-y-4">
     {{ csrf_input() }}
+    <div>
+      <label class="block text-sm font-medium mb-1">{{ _('Setup token') }}</label>
+      <input name="setup_token" autocomplete="off" class="w-full border rounded-lg px-3 py-2 font-mono text-sm" required>
+      <p class="mt-1 text-xs text-slate-500">{{ _('From the container or server logs, not shown on this page.') }}</p>
+    </div>
     <div>
       <label class="block text-sm font-medium mb-1">{{ _('App name') }}</label>
       <input name="app_name" value="{{ app_name }}" class="w-full border rounded-lg px-3 py-2" required>

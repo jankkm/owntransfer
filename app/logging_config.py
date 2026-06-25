@@ -4,6 +4,7 @@ import logging
 import sys
 
 SECURITY_LOGGER_NAME = "owntransfer.security"
+SETUP_LOGGER_NAME = "owntransfer.setup"
 
 
 def configure_logging() -> None:
@@ -28,5 +29,11 @@ def configure_logging() -> None:
     if not security_logger.handlers:
         security_logger.addHandler(handler)
     security_logger.propagate = False
+
+    setup_logger = logging.getLogger(SETUP_LOGGER_NAME)
+    setup_logger.setLevel(logging.WARNING)
+    if not setup_logger.handlers:
+        setup_logger.addHandler(handler)
+    setup_logger.propagate = False
 
     configure_logging._configured = True  # type: ignore[attr-defined]
