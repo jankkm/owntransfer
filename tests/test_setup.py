@@ -85,3 +85,34 @@ async def test_setup_requires_valid_token(client: AsyncClient):
     async with async_session() as db:
         settings = await get_app_settings(db)
         assert settings.setup_completed is True
+
+
+@pytest.mark.asyncio
+async def test_locale_switch_works_during_setup(client: AsyncClient):
+    import re
+
+    from app.i18n import LOCALE_COOKIE
+
+    async with async_session() as db:
+        settings = await get_app_settings(db)
+        settings.setup_completed = False
+        await db.commit()
+
+    page = await client.get("/setup")
+    assert page.status_code == 200
+    assert "Welcome to" in page.text
+
+    token = re.search(r'name="csrf-token" content="([^"]+)"', page.text).group(1)
+    response = await client.post(
+        "/locale",
+        data={"locale": "de", "csrf_token": token},
+        headers={"Referer": "http://test/setup"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/setup"
+    assert response.cookies[LOCALE_COOKIE] == "de"
+
+    german = await client.get("/setup", cookies=response.cookies)
+    assert german.status_code == 200
+    assert "Willkommen bei" in german.text

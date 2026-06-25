@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse, Response
 from app.database import async_session
 from app.services.settings import is_setup_complete
 
-SETUP_ALLOWLIST = {"/setup", "/health", "/ready", "/static", "/branding"}
+SETUP_ALLOWLIST = {"/setup", "/locale", "/health", "/ready", "/static", "/branding"}
 
 
 class SetupMiddleware(BaseHTTPMiddleware):
