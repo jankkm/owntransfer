@@ -13,6 +13,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.database import async_session, engine
 from app.http.csrf import CSRFMiddleware
+from app.http.proxy_warnings import warn_unrestricted_proxy_trust
 from app.limiter import limiter
 from app.logging_config import configure_logging
 from app.middleware.public_scheme import PublicSchemeMiddleware
@@ -38,6 +39,7 @@ async def lifespan(app: FastAPI):
         await ensure_schema(conn)
 
     init_setup_token(app)
+    warn_unrestricted_proxy_trust()
     async with async_session() as db:
         await log_setup_token_if_needed(app, db)
 

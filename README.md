@@ -130,7 +130,7 @@ See [.env.example](.env.example) for the full list. Important variables:
 | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | Microsoft OAuth (optional) |
 | `SMTP_*` | Email defaults (overridable in admin after first boot) |
 | `TRUST_PROXY_HEADERS` | Set `true` behind a reverse proxy so client IPs and URLs are correct |
-| `TRUSTED_PROXY_HOPS` / `TRUSTED_PROXY_IPS` | Fine-tune which proxies to trust |
+| `TRUSTED_PROXY_HOPS` / `TRUSTED_PROXY_IPS` | **Required when proxy headers are enabled** — limit which peers may send `X-Forwarded-For` / `X-Real-IP` |
 
 ### PostgreSQL
 
@@ -146,7 +146,7 @@ Any environment variable supports a `VAR_FILE` companion that points to a file w
 
 ### Reverse proxy
 
-Run OwnTransfer behind nginx, Caddy, or Traefik in production. Set `BASE_URL` to your public HTTPS URL. If the app receives HTTP internally behind TLS termination, set `PUBLIC_SCHEME=https` so OAuth callbacks and other generated URLs use HTTPS. Enable `TRUST_PROXY_HEADERS=true` so security logging and rate limiting see the real client IP (and so `X-Forwarded-Proto` is honored when present).
+Run OwnTransfer behind nginx, Caddy, or Traefik in production. Set `BASE_URL` to your public HTTPS URL. If the app receives HTTP internally behind TLS termination, set `PUBLIC_SCHEME=https` so OAuth callbacks and other generated URLs use HTTPS. Enable `TRUST_PROXY_HEADERS=true` so security logging and rate limiting see the real client IP (and so `X-Forwarded-Proto` is honored when present). **Also set `TRUSTED_PROXY_IPS`** to the proxy's address (for example `127.0.0.1` or your Docker network CIDR). If `TRUSTED_PROXY_IPS` is empty, the app logs a startup warning because any client could spoof forwarded headers.
 
 Large multi-file uploads need a **longer proxy timeout** than the common 60-second default. Without this, uploads fail with **502 Bad Gateway** once the limit is hit. Examples:
 
