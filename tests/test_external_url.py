@@ -39,3 +39,27 @@ def test_public_scheme_validator_rejects_invalid(monkeypatch):
 
     with pytest.raises(ValueError, match="PUBLIC_SCHEME must be http or https"):
         Settings()
+
+
+def test_secret_key_is_required(monkeypatch):
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+
+    from pydantic import ValidationError
+    from pydantic_settings import SettingsConfigDict
+
+    from app.config.settings import Settings
+
+    class IsolatedSettings(Settings):
+        model_config = SettingsConfigDict(env_file=None, extra="ignore")
+
+    with pytest.raises(ValidationError):
+        IsolatedSettings()
+
+
+def test_secret_key_rejects_placeholder(monkeypatch):
+    monkeypatch.setenv("SECRET_KEY", "change-me")
+
+    from app.config.settings import Settings
+
+    with pytest.raises(ValueError, match="not the placeholder"):
+        Settings()

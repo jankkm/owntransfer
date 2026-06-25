@@ -11,12 +11,14 @@ from app.config.env_files import resolve_env_file_variables
 
 DbBackend = Literal["sqlite", "postgres"]
 
+_INSECURE_SECRET_KEYS = frozenset({"change-me", "change-me-to-a-random-string"})
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = Field(default="OwnTransfer", alias="APP_NAME")
-    secret_key: str = Field(default="change-me", alias="SECRET_KEY")
+    secret_key: str = Field(..., alias="SECRET_KEY")
     db_backend: DbBackend = Field(default="sqlite", alias="DB_BACKEND")
     database_url: Optional[str] = Field(default=None, alias="DATABASE_URL")
     sqlite_path: str = Field(default="/data/owntransfer.db", alias="SQLITE_PATH")
@@ -56,6 +58,18 @@ class Settings(BaseSettings):
     smtp_password: Optional[str] = Field(default=None, alias="SMTP_PASSWORD")
     smtp_from: Optional[str] = Field(default=None, alias="SMTP_FROM")
     smtp_use_tls: bool = Field(default=True, alias="SMTP_USE_TLS")
+
+    @field_validator("secret_key")
+    @classmethod
+    def validate_secret_key(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("SECRET_KEY is required")
+        if normalized in _INSECURE_SECRET_KEYS:
+            raise ValueError(
+                "SECRET_KEY must be set to a strong random value (not the placeholder from .env.example)"
+            )
+        return normalized
 
     @field_validator("base_url")
     @classmethod

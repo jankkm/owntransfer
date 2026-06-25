@@ -10,7 +10,6 @@ services:
     environment:
       - DB_BACKEND=${DB_BACKEND:-sqlite}
       - SQLITE_PATH=/data/owntransfer.db
-      - SECRET_KEY=change-me
       - UPLOAD_DIR=/data/uploads
       - BASE_URL=${BASE_URL:-http://localhost:8080}
     volumes:
