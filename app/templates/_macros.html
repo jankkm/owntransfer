@@ -156,8 +156,7 @@
   <input readonly {% if input_id %}id="{{ input_id }}"{% endif %}
          value="{{ url }}"
          data-copy-url-input
-         class="{% if compact %}w-full min-w-0 text-xs border border-slate-200 rounded-lg pl-2 pr-8 py-1 bg-slate-50 font-mono text-slate-600 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]{% else %}w-full min-w-0 text-xs font-mono border border-slate-200 rounded-lg pl-3 pr-10 py-2 bg-slate-50 text-slate-600 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]{% endif %}"
-         onclick="this.select()">
+         class="{% if compact %}w-full min-w-0 text-xs border border-slate-200 rounded-lg pl-2 pr-8 py-1 bg-slate-50 font-mono text-slate-600 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]{% else %}w-full min-w-0 text-xs font-mono border border-slate-200 rounded-lg pl-3 pr-10 py-2 bg-slate-50 text-slate-600 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]{% endif %}">
   <button type="button"
           data-copy-url-btn
           data-copied-label="{{ _('Copied!') }}"

@@ -53,4 +53,10 @@
       }
     });
   });
+
+  document.querySelectorAll("[data-copy-url-input]").forEach((input) => {
+    input.addEventListener("click", () => {
+      input.select();
+    });
+  });
 })();
