@@ -116,3 +116,5 @@ async def test_locale_switch_works_during_setup(client: AsyncClient):
     german = await client.get("/setup", cookies=response.cookies)
     assert german.status_code == 200
     assert "Willkommen bei" in german.text
+    assert "Bevor Sie fortfahren" in german.text
+    assert "Setup-Token" in german.text
