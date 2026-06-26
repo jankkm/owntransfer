@@ -6,7 +6,7 @@
 {% set active = 'settings' %}
 {% include "_admin_nav.html" %}
 <div class="grid md:grid-cols-2 gap-6">
-  <form method="post" action="/admin/branding" enctype="multipart/form-data" class="bg-white border rounded-xl p-6 space-y-4">
+  <form id="branding-form" method="post" action="/admin/branding" enctype="multipart/form-data" class="bg-white border rounded-xl p-6 space-y-4">
     {{ csrf_input() }}
     <h2 class="font-semibold text-lg">{{ _('Branding') }}</h2>
     {{ f.text_input("app_name", _("App name"), app_settings.app_name, required=true) }}
@@ -22,7 +22,8 @@
       {% endif %}
     </div>
     {{ f.color_input("color_scheme", _("Color scheme"), app_settings.color_scheme) }}
-    <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save branding') }}</button>
+    <p id="branding-form-status" class="hidden text-xs rounded p-2 border" role="status" aria-live="polite"></p>
+    <button type="submit" class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save branding') }}</button>
   </form>
   <form method="post" action="/admin/limits/uploads" class="bg-white border rounded-xl p-6 space-y-4">
     {{ csrf_input() }}
@@ -169,6 +170,59 @@
 {% endblock %}
 {% block scripts %}
 <script>
+(() => {
+  const form = document.getElementById("branding-form");
+  const status = document.getElementById("branding-form-status");
+  const submitBtn = form?.querySelector('button[type="submit"]');
+  if (!form || !status || !submitBtn) return;
+
+  const i18n = window.__i18n || {};
+  const defaultLabel = submitBtn.textContent;
+  const savingLabel = i18n["Saving…"] || "Saving…";
+
+  function showStatus(message, ok) {
+    status.textContent = message;
+    status.classList.remove("hidden", "bg-red-50", "text-red-700", "border-red-200", "bg-green-50", "text-green-700", "border-green-200");
+    if (ok) {
+      status.classList.add("bg-green-50", "text-green-700", "border-green-200");
+    } else {
+      status.classList.add("bg-red-50", "text-red-700", "border-red-200");
+    }
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = savingLabel;
+    status.classList.add("hidden");
+
+    try {
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
+      const response = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        credentials: "same-origin",
+        headers: { "X-CSRF-Token": csrf },
+      });
+      if (response.redirected) {
+        window.location.assign(response.url);
+        return;
+      }
+      if (!response.ok) {
+        const text = await response.text();
+        showStatus(text.trim() || i18n["Request failed"] || "Request failed", false);
+        return;
+      }
+      window.location.reload();
+    } catch {
+      showStatus(i18n["Network error"] || "Network error", false);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = defaultLabel;
+    }
+  });
+})();
+
 (() => {
   const form = document.getElementById("smtp-form");
   const btn = document.getElementById("smtp-test-btn");

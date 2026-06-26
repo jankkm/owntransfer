@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import mimetypes
 import re
 from pathlib import Path
@@ -41,7 +42,8 @@ def has_custom_logo(app_settings: AppSettings) -> bool:
 
 def logo_url(app_settings: AppSettings) -> str:
     if has_custom_logo(app_settings):
-        return CUSTOM_LOGO_URL
+        version = hashlib.sha256(app_settings.logo_data).hexdigest()[:12]
+        return f"{CUSTOM_LOGO_URL}?v={version}"
     return DEFAULT_LOGO_URL
 
 
