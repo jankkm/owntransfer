@@ -21,7 +21,8 @@
         file_request_inactive_reason_code(r, now),
         file_request_is_expired(r, now),
         r.password_hash,
-        file_request_deletion_pending(r, purge_grace_days, now)
+        file_request_deletion_pending(r, purge_grace_days, now),
+        file_request_expiry_pending(r, now)
       ) }}
     </div>
 

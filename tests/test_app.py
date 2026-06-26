@@ -96,6 +96,33 @@ def test_expiry_notice_only_within_seven_days():
     assert at_seven_days is None
 
 
+def test_expiry_pending_badge_matches_timeline_notice():
+    from app.services.share_lifecycle import is_expiry_pending
+
+    now = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+
+    assert is_expiry_pending(
+        is_expired=False,
+        expires_at=now + timedelta(days=30),
+        now=now,
+    ) is False
+    assert is_expiry_pending(
+        is_expired=False,
+        expires_at=now + timedelta(days=3),
+        now=now,
+    ) is True
+    assert is_expiry_pending(
+        is_expired=False,
+        expires_at=now + timedelta(days=7),
+        now=now,
+    ) is False
+    assert is_expiry_pending(
+        is_expired=True,
+        expires_at=now - timedelta(days=1),
+        now=now,
+    ) is False
+
+
 def test_deletion_notice_always_when_pending():
     from app.services.share_lifecycle import build_share_timeline_notice
 

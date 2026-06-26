@@ -164,7 +164,7 @@ TRANSLATIONS: dict[str | tuple[str, str], str | tuple[str, str]] = {
     "Expired on %(date)s.": "Abgelaufen am %(date)s.",
     "Expired unused": "Abgelaufen ohne Nutzung",
     "Expired without activity": "Abgelaufen ohne Aktivität",
-    "Expiration pending": "Ablauf ausstehend",
+    "Expiration pending": "Läuft ab",
     "Expires": "Läuft ab",
     "Expires latest": "Spätestes Ablaufdatum",
     "Expires soonest": "Frühestes Ablaufdatum",

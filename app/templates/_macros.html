@@ -70,7 +70,7 @@
 {% endif %}
 {%- endmacro %}
 
-{% macro share_status_badges(is_enabled, inactive_reason='', is_expired=false, has_password=false, deletion_pending=false, notify_on_download=false) -%}
+{% macro share_status_badges(is_enabled, inactive_reason='', is_expired=false, has_password=false, deletion_pending=false, expiry_pending=false, notify_on_download=false) -%}
 {% set show_active = is_enabled and not is_expired and inactive_reason != 'download_limit' and inactive_reason != 'upload_limit' %}
 <div class="flex flex-wrap gap-1">
   {% if show_active %}
@@ -85,6 +85,9 @@
   {{ status_badge(_('Limit reached'), 'slate') }}
   {% elif is_enabled and inactive_reason == 'upload_limit' %}
   {{ status_badge(_('Limit reached'), 'slate') }}
+  {% endif %}
+  {% if expiry_pending %}
+  {{ status_badge(_('Expiration pending'), 'amber') }}
   {% endif %}
   {% if deletion_pending %}
   {{ status_badge(_('Deletion pending'), 'orange') }}
@@ -219,6 +222,7 @@
         <option value="expired" {% if list_query.status == 'expired' %}selected{% endif %}>{{ _('Expired') }}</option>
         <option value="disabled" {% if list_query.status == 'disabled' %}selected{% endif %}>{{ _('Disabled') }}</option>
         <option value="deletion_pending" {% if list_query.status == 'deletion_pending' %}selected{% endif %}>{{ _('Deletion pending') }}</option>
+        <option value="expiry_pending" {% if list_query.status == 'expiry_pending' %}selected{% endif %}>{{ _('Expiration pending') }}</option>
       </select>
     </div>
     <div>

@@ -33,8 +33,10 @@ from app.auth.users import uses_local_auth, user_initials
 
 from app.services.share_lifecycle import (
     file_request_deletion_pending,
+    file_request_expiry_pending,
     share_timeline_notice,
     transfer_deletion_pending,
+    transfer_expiry_pending,
 )
 
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
@@ -74,6 +76,8 @@ templates.env.globals["file_request_inactive_reason"] = share_status.file_reques
 templates.env.globals["file_request_inactive_reason_code"] = share_status.file_request_inactive_reason_code
 templates.env.globals["transfer_deletion_pending"] = transfer_deletion_pending
 templates.env.globals["file_request_deletion_pending"] = file_request_deletion_pending
+templates.env.globals["transfer_expiry_pending"] = transfer_expiry_pending
+templates.env.globals["file_request_expiry_pending"] = file_request_expiry_pending
 templates.env.globals["share_timeline_notice"] = share_timeline_notice
 templates.env.filters["format_download_limit"] = format_download_limit
 templates.env.filters["format_download_limit_short"] = format_download_limit_short

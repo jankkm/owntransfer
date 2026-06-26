@@ -5,7 +5,12 @@ from datetime import datetime
 from typing import Callable, TypeVar
 
 from app.models import FileRequest, Transfer
-from app.services.share_lifecycle import file_request_deletion_pending, transfer_deletion_pending
+from app.services.share_lifecycle import (
+    file_request_deletion_pending,
+    file_request_expiry_pending,
+    transfer_deletion_pending,
+    transfer_expiry_pending,
+)
 from app.services.share_status import (
     file_request_is_accessible,
     file_request_is_expired,
@@ -31,6 +36,7 @@ VALID_STATUS = frozenset({
     "expired",
     "disabled",
     "deletion_pending",
+    "expiry_pending",
 })
 
 T = TypeVar("T")
@@ -92,6 +98,8 @@ def _matches_status_transfer(
         return transfer.is_disabled
     if status == "deletion_pending":
         return transfer_deletion_pending(transfer, purge_grace_days, now)
+    if status == "expiry_pending":
+        return transfer_expiry_pending(transfer, now)
     return True
 
 
@@ -114,6 +122,8 @@ def _matches_status_request(
         return req.is_disabled
     if status == "deletion_pending":
         return file_request_deletion_pending(req, purge_grace_days, now)
+    if status == "expiry_pending":
+        return file_request_expiry_pending(req, now)
     return True
 
 

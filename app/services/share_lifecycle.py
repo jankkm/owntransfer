@@ -82,6 +82,35 @@ def reset_expiry_notifications(
 EXPIRY_NOTICE_WITHIN_DAYS = 7
 
 
+def is_expiry_pending(
+    *,
+    is_expired: bool,
+    expires_at: datetime,
+    now: datetime | None = None,
+) -> bool:
+    now = now or _utcnow()
+    if is_past_expiry(is_expired=is_expired, expires_at=expires_at, now=now):
+        return False
+    remaining = ensure_utc(expires_at) - ensure_utc(now)
+    return timedelta(0) < remaining < timedelta(days=EXPIRY_NOTICE_WITHIN_DAYS)
+
+
+def transfer_expiry_pending(transfer: Transfer, now: datetime | None = None) -> bool:
+    return is_expiry_pending(
+        is_expired=transfer.is_expired,
+        expires_at=transfer.expires_at,
+        now=now,
+    )
+
+
+def file_request_expiry_pending(req: FileRequest, now: datetime | None = None) -> bool:
+    return is_expiry_pending(
+        is_expired=req.is_expired,
+        expires_at=req.expires_at,
+        now=now,
+    )
+
+
 def format_duration_remaining(delta: timedelta) -> str:
     total_seconds = max(0, int(delta.total_seconds()))
     if total_seconds < 60:

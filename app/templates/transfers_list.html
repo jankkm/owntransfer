@@ -20,6 +20,7 @@
         transfer_is_expired(t, now),
         t.password_hash,
         transfer_deletion_pending(t, purge_grace_days, now),
+        transfer_expiry_pending(t, now),
         t.notify_on_download
       ) }}
     </div>

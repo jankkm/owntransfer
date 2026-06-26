@@ -76,6 +76,7 @@
               transfer_is_expired(t, now),
               t.password_hash,
               transfer_deletion_pending(t, purge_grace_days, now),
+              transfer_expiry_pending(t, now),
               t.notify_on_download
             ) }}
           </td>
@@ -142,7 +143,8 @@
               file_request_inactive_reason_code(r, now),
               file_request_is_expired(r, now),
               r.password_hash,
-              file_request_deletion_pending(r, purge_grace_days, now)
+              file_request_deletion_pending(r, purge_grace_days, now),
+              file_request_expiry_pending(r, now)
             ) }}
           </td>
           <td class="py-3 px-4">

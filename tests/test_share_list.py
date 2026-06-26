@@ -87,3 +87,25 @@ def test_request_search_and_created_sort():
     query = parse_share_list_query(q="find", sort="created_desc")
     result = apply_request_list_query(requests, query, now=_now(), purge_grace_days=7)
     assert [item.title for item in result] == ["Older"]
+
+
+def test_transfer_filter_expiry_pending():
+    transfers = [
+        _transfer(title="Soon", expires_offset=3),
+        _transfer(title="Later", expires_offset=30),
+        _transfer(title="Expired", expires_offset=-1),
+    ]
+    transfers[2].is_expired = True
+    query = parse_share_list_query(status="expiry_pending")
+    result = apply_transfer_list_query(transfers, query, now=_now(), purge_grace_days=7)
+    assert [item.title for item in result] == ["Soon"]
+
+
+def test_request_filter_expiry_pending():
+    requests = [
+        _request(title="Soon", expires_offset=2),
+        _request(title="Later", expires_offset=14),
+    ]
+    query = parse_share_list_query(status="expiry_pending")
+    result = apply_request_list_query(requests, query, now=_now(), purge_grace_days=7)
+    assert [item.title for item in result] == ["Soon"]
