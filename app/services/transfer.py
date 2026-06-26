@@ -391,13 +391,17 @@ async def list_user_transfers(db: AsyncSession, user_id: UUID) -> list[Transfer]
     return list(result.scalars().all())
 
 
-async def get_user_transfer(db: AsyncSession, transfer_id: UUID, user_id: UUID) -> Transfer:
+async def find_user_transfer(db: AsyncSession, transfer_id: UUID, user_id: UUID) -> Transfer | None:
     result = await db.execute(
         select(Transfer)
         .options(selectinload(Transfer.files), selectinload(Transfer.download_logs))
         .where(Transfer.id == transfer_id, Transfer.created_by == user_id)
     )
-    transfer = result.scalar_one_or_none()
+    return result.scalar_one_or_none()
+
+
+async def get_user_transfer(db: AsyncSession, transfer_id: UUID, user_id: UUID) -> Transfer:
+    transfer = await find_user_transfer(db, transfer_id, user_id)
     if not transfer:
         raise HTTPException(status_code=404, detail=_("Transfer not found"))
     return transfer

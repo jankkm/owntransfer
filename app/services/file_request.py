@@ -278,13 +278,17 @@ async def handle_public_upload(
     return upload
 
 
-async def get_user_request(db: AsyncSession, request_id: UUID, user_id: UUID) -> FileRequest:
+async def find_user_request(db: AsyncSession, request_id: UUID, user_id: UUID) -> FileRequest | None:
     result = await db.execute(
         select(FileRequest)
         .options(selectinload(FileRequest.uploads).selectinload(RequestUpload.files))
         .where(FileRequest.id == request_id, FileRequest.created_by == user_id)
     )
-    req = result.scalar_one_or_none()
+    return result.scalar_one_or_none()
+
+
+async def get_user_request(db: AsyncSession, request_id: UUID, user_id: UUID) -> FileRequest:
+    req = await find_user_request(db, request_id, user_id)
     if not req:
         raise HTTPException(status_code=404, detail=_("File request not found"))
     return req

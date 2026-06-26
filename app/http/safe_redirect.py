@@ -20,3 +20,20 @@ def safe_redirect_target(request: Request, *, fallback: str = "/") -> str:
     if ref.query:
         path = f"{path}?{ref.query}"
     return path
+
+
+def safe_next_path(request: Request, candidate: str | None, *, fallback: str = "/") -> str:
+    """Return a same-origin relative path for post-login redirects."""
+    if not candidate:
+        return fallback
+
+    parsed = urlparse(candidate)
+    if parsed.scheme or parsed.netloc:
+        return fallback
+
+    path = candidate if candidate.startswith("/") else f"/{candidate}"
+    if path.startswith("//"):
+        return fallback
+    if path.startswith("/auth/login"):
+        return fallback
+    return path

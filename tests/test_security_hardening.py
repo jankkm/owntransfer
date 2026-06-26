@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from app.http.csrf import CSRFMiddleware
-from app.http.safe_redirect import safe_redirect_target
+from app.http.safe_redirect import safe_next_path, safe_redirect_target
 from app.services.branding import normalize_hex_color
 from app.services.download_limits import try_reserve_download_slot
 from app.services.unlock_lockout import (
@@ -168,6 +168,125 @@ def test_safe_redirect_target_rejects_external_referer():
         }
     )
     assert safe_redirect_target(req) == "/"
+
+
+def test_safe_next_path_allows_relative_path():
+    from starlette.requests import Request
+
+    class _Request(Request):
+        @property
+        def base_url(self):
+            return "http://test/"
+
+    req = _Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+    assert safe_next_path(req, "/requests/abc/edit") == "/requests/abc/edit"
+    assert safe_next_path(req, "/requests/abc/edit?q=1") == "/requests/abc/edit?q=1"
+
+
+def test_safe_next_path_rejects_external_and_login_loop():
+    from starlette.requests import Request
+
+    class _Request(Request):
+        @property
+        def base_url(self):
+            return "http://test/"
+
+    req = _Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+    assert safe_next_path(req, "https://evil.example/phish") == "/"
+    assert safe_next_path(req, "//evil.example/phish") == "/"
+    assert safe_next_path(req, "/auth/login?next=/dashboard") == "/"
+
+
+@pytest.mark.asyncio
+async def test_unauthenticated_html_page_redirects_to_login_with_next(client):
+    response = await client.get("/transfers", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/auth/login?next=%2Ftransfers"
+
+
+@pytest.mark.asyncio
+async def test_unauthenticated_api_returns_json_401(client):
+    response = await client.get(
+        "/dashboard",
+        headers={"Accept": "application/json", "Sec-Fetch-Dest": "empty"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Not authenticated"}
+
+
+@pytest.mark.asyncio
+async def test_login_redirects_back_to_next_page(client):
+    import re
+
+    from conftest import csrf_token
+
+    await client.get("/auth/login?next=/transfers", follow_redirects=False)
+    token = await csrf_token(client)
+    response = await client.post(
+        "/auth/login/local",
+        data={"email": "admin@test.com", "password": "password123", "csrf_token": token},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/transfers"
+
+
+@pytest.mark.asyncio
+async def test_login_tab_switch_preserves_next(client):
+    from conftest import csrf_token
+
+    await client.get("/auth/login?next=%2Ftransfers&tab=oauth", follow_redirects=False)
+    await client.get("/auth/login?tab=local", follow_redirects=False)
+    token = await csrf_token(client, "/auth/login?tab=local")
+    response = await client.post(
+        "/auth/login/local",
+        data={"email": "admin@test.com", "password": "password123", "csrf_token": token},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/transfers"
+
+
+@pytest.mark.asyncio
+async def test_logged_in_user_on_missing_request_edit_goes_to_dashboard(client):
+    import re
+    import uuid
+
+    from conftest import csrf_token
+
+    token = await csrf_token(client)
+    await client.post(
+        "/auth/login/local",
+        data={"email": "admin@test.com", "password": "password123", "csrf_token": token},
+        follow_redirects=True,
+    )
+    response = await client.get(f"/requests/{uuid.uuid4()}/edit", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/dashboard"
+
+
+@pytest.mark.asyncio
+async def test_login_after_next_to_missing_request_goes_to_dashboard(client):
+    import re
+    import uuid
+
+    from conftest import csrf_token
+
+    missing_id = uuid.uuid4()
+    await client.get(f"/auth/login?next=/requests/{missing_id}/edit", follow_redirects=False)
+    token = await csrf_token(client)
+    response = await client.post(
+        "/auth/login/local",
+        data={"email": "admin@test.com", "password": "password123", "csrf_token": token},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == f"/requests/{missing_id}/edit"
+
+    follow = await client.get(response.headers["location"], follow_redirects=False)
+    assert follow.status_code == 303
+    assert follow.headers["location"] == "/dashboard"
 
 
 @pytest.mark.asyncio

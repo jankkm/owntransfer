@@ -2,11 +2,12 @@
 {% import "_macros.html" as f %}
 {% block title %}{{ _('Login') }} — {{ app_name }}{% endblock %}
 {% block content %}
+{% set next_qs = '&next=' ~ (login_next | urlencode) if login_next else '' %}
 <div class="max-w-md mx-auto bg-white rounded-xl shadow-sm border overflow-hidden">
   {% if oauth_providers and allow_local_login %}
   <div class="flex border-b text-sm">
-    <a href="/auth/login?tab=oauth" class="flex-1 text-center py-3 {% if tab == 'oauth' %}tab-active font-medium{% else %}text-slate-500{% endif %}">{{ _('OAuth') }}</a>
-    <a href="/auth/login?tab=local" class="flex-1 text-center py-3 {% if tab == 'local' %}tab-active font-medium{% else %}text-slate-500{% endif %}">{{ _('Email') }}</a>
+    <a href="/auth/login?tab=oauth{{ next_qs }}" class="flex-1 text-center py-3 {% if tab == 'oauth' %}tab-active font-medium{% else %}text-slate-500{% endif %}">{{ _('OAuth') }}</a>
+    <a href="/auth/login?tab=local{{ next_qs }}" class="flex-1 text-center py-3 {% if tab == 'local' %}tab-active font-medium{% else %}text-slate-500{% endif %}">{{ _('Email') }}</a>
   </div>
   {% endif %}
   <div class="p-8">
@@ -21,7 +22,7 @@
       </div>
       {% if allow_local_login %}
       <p class="mt-6 text-sm text-slate-500 text-center">
-        {{ _('Prefer email?') }} <a href="/auth/login?tab=local" class="text-primary underline">{{ _('Use local login') }}</a>
+        {{ _('Prefer email?') }} <a href="/auth/login?tab=local{{ next_qs }}" class="text-primary underline">{{ _('Use local login') }}</a>
       </p>
       {% endif %}
     {% else %}
@@ -34,7 +35,7 @@
         <button type="submit" class="btn-primary w-full text-white rounded-lg py-2">{{ _('Sign in') }}</button>
       </form>
       {% if oauth_providers %}
-      <p class="mt-4 text-sm text-center"><a href="/auth/login?tab=oauth" class="text-primary underline">{{ _('Back to OAuth sign-in') }}</a></p>
+      <p class="mt-4 text-sm text-center"><a href="/auth/login?tab=oauth{{ next_qs }}" class="text-primary underline">{{ _('Back to OAuth sign-in') }}</a></p>
       {% endif %}
     {% endif %}
   </div>

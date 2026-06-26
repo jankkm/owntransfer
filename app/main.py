@@ -10,6 +10,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
+from app.auth.exceptions import NotAuthenticated
+from app.auth.login_redirect import not_authenticated_response
 from app.config import settings
 from app.database import async_session, engine
 from app.http.csrf import CSRFMiddleware
@@ -54,6 +56,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title=settings.app_name, lifespan=lifespan)
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(NotAuthenticated, not_authenticated_response)
 
     # Added first => innermost: runs after SessionMiddleware has populated
     # scope["session"], which the CSRF token store relies on.

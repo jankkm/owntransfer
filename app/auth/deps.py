@@ -4,6 +4,8 @@ import uuid
 from typing import Optional
 
 from fastapi import Depends, HTTPException, Request
+
+from app.auth.exceptions import NotAuthenticated
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,16 +19,16 @@ async def require_user_id(request: Request) -> uuid.UUID:
     """Resolve the authenticated user without holding a DB session for the request."""
     token = request.cookies.get(SESSION_COOKIE)
     if not token:
-        raise HTTPException(status_code=401, detail=_("Not authenticated"))
+        raise NotAuthenticated()
     data = load_session_token(token)
     if not data:
-        raise HTTPException(status_code=401, detail=_("Not authenticated"))
+        raise NotAuthenticated()
     user_id = uuid.UUID(data["uid"])
     async with async_session() as db:
         result = await db.execute(select(User).where(User.id == user_id, User.is_active.is_(True)))
         user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=401, detail=_("Not authenticated"))
+        raise NotAuthenticated()
     return user.id
 
 
@@ -46,7 +48,7 @@ async def get_current_user_optional(
 
 async def get_current_user(user: Optional[User] = Depends(get_current_user_optional)) -> User:
     if not user:
-        raise HTTPException(status_code=401, detail=_("Not authenticated"))
+        raise NotAuthenticated()
     return user
 
 

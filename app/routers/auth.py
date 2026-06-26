@@ -9,6 +9,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user_optional
+from app.auth.login_redirect import (
+    DASHBOARD_URL,
+    clear_login_next,
+    get_effective_login_next,
+    get_login_target,
+    store_login_next,
+)
 from app.auth.passwords import verify_password
 from app.auth.users import oauth_display_name
 from app.auth.sessions import SESSION_COOKIE, SESSION_MAX_AGE, create_session_token
@@ -41,7 +48,9 @@ for provider in get_oauth_providers():
 
 def _login_response(request: Request, user: User) -> RedirectResponse:
     token = create_session_token(user.id, user.is_admin)
-    response = RedirectResponse("/dashboard", status_code=303)
+    target = get_login_target(request)
+    clear_login_next(request)
+    response = RedirectResponse(target, status_code=303)
     response.set_cookie(
         SESSION_COOKIE,
         token,
@@ -67,11 +76,14 @@ def _login_response(request: Request, user: User) -> RedirectResponse:
 async def login_page(
     request: Request,
     tab: str = "oauth",
+    next: str | None = None,
     db: AsyncSession = Depends(get_db),
     user: User | None = Depends(get_current_user_optional),
 ):
+    login_next = get_effective_login_next(request, next)
+    store_login_next(request, login_next)
     if user:
-        return RedirectResponse("/dashboard", status_code=303)
+        return RedirectResponse(DASHBOARD_URL, status_code=303)
     app_settings = await get_app_settings(db)
     providers = get_oauth_providers()
     if not providers and app_settings.allow_local_login:
@@ -84,6 +96,7 @@ async def login_page(
             "tab": tab,
             "oauth_providers": providers,
             "allow_local_login": app_settings.allow_local_login,
+            "login_next": login_next,
         }
     )
     return templates.TemplateResponse(request, "login.html", ctx)
@@ -124,7 +137,7 @@ async def login_totp_page(
     user: User | None = Depends(get_current_user_optional),
 ):
     if user:
-        return RedirectResponse("/dashboard", status_code=303)
+        return RedirectResponse(DASHBOARD_URL, status_code=303)
     if not request.session.get("pending_totp_user_id"):
         return RedirectResponse("/auth/login", status_code=303)
 

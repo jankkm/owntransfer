@@ -3,11 +3,12 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user
+from app.auth.login_redirect import dashboard_redirect
 from app.database import get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
@@ -17,6 +18,7 @@ from app.services.file_request import (
     delete_file_request,
     delete_request_upload_file,
     find_request_upload,
+    find_user_request,
     get_request_upload_file,
     get_user_request,
     iter_upload_file,
@@ -131,7 +133,9 @@ async def edit_request_page(
     user: User = Depends(get_current_user),
 ):
     app_settings = await get_app_settings(db)
-    file_request = await get_user_request(db, request_id, user.id)
+    file_request = await find_user_request(db, request_id, user.id)
+    if file_request is None:
+        return dashboard_redirect()
     ctx = branding_context(app_settings)
     ctx.update({
         "user": user,
@@ -180,10 +184,11 @@ async def edit_request_route(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    file_request = await get_user_request(db, request_id, user.id)
+    file_request = await find_user_request(db, request_id, user.id)
+    if file_request is None:
+        return dashboard_redirect()
     expiry = parse_expiry_date(expires_at)
     app_settings = await get_app_settings(db)
-
     await update_file_request(
         db,
         req=file_request,
@@ -209,7 +214,9 @@ async def delete_request_route(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    file_request = await get_user_request(db, request_id, user.id)
+    file_request = await find_user_request(db, request_id, user.id)
+    if file_request is None:
+        return dashboard_redirect()
     await delete_file_request(
         db,
         req=file_request,
@@ -226,7 +233,9 @@ async def regenerate_link_route(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    file_request = await get_user_request(db, request_id, user.id)
+    file_request = await find_user_request(db, request_id, user.id)
+    if file_request is None:
+        return dashboard_redirect()
     await regenerate_file_request_link(
         db,
         req=file_request,
@@ -242,7 +251,9 @@ async def download_request_zip(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    file_request = await get_user_request(db, request_id, user.id)
+    file_request = await find_user_request(db, request_id, user.id)
+    if file_request is None:
+        return dashboard_redirect()
     entries = file_request_zip_entries(file_request)
     filename = f"{file_request.title or 'file-request'}.zip".replace("/", "-").replace('"', "")
     return StreamingResponse(
@@ -259,7 +270,9 @@ async def download_request_upload_zip(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    file_request = await get_user_request(db, request_id, user.id)
+    file_request = await find_user_request(db, request_id, user.id)
+    if file_request is None:
+        return dashboard_redirect()
     upload = find_request_upload(file_request, upload_id)
     entries = request_upload_zip_entries(upload)
     date_part = upload.created_at.strftime("%Y-%m-%d")
@@ -279,7 +292,12 @@ async def download_request_file(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    upload_file = await get_request_upload_file(db, request_id, file_id, user.id)
+    try:
+        upload_file = await get_request_upload_file(db, request_id, file_id, user.id)
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            return dashboard_redirect()
+        raise
     media_type = upload_file.content_type or "application/octet-stream"
     filename = upload_file.original_name.replace('"', "")
     return StreamingResponse(

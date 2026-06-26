@@ -8,6 +8,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user, require_user_id
+from app.auth.exceptions import NotAuthenticated
+from app.auth.login_redirect import dashboard_redirect
 from app.database import async_session, get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
@@ -29,6 +31,7 @@ from app.services.transfer import (
     create_transfer,
     delete_transfer,
     delete_transfer_file,
+    find_user_transfer,
     get_user_transfer,
     list_user_transfers,
     regenerate_transfer_link,
@@ -187,7 +190,9 @@ async def edit_transfer_page(
     user: User = Depends(get_current_user),
 ):
     app_settings = await get_app_settings(db)
-    transfer = await get_user_transfer(db, transfer_id, user.id)
+    transfer = await find_user_transfer(db, transfer_id, user.id)
+    if transfer is None:
+        return dashboard_redirect()
     download_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
     ctx = branding_context(app_settings)
     ctx.update({
@@ -216,7 +221,7 @@ async def add_transfer_file_route(
         transfer = await get_user_transfer(db, transfer_id, user_id)
         user = await db.get(User, user_id)
         if user is None:
-            raise HTTPException(status_code=401, detail=_("Not authenticated"))
+            raise NotAuthenticated()
         transfer_file = await add_transfer_file(
             db,
             transfer=transfer,
@@ -269,7 +274,9 @@ async def edit_transfer_route(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    transfer = await get_user_transfer(db, transfer_id, user.id)
+    transfer = await find_user_transfer(db, transfer_id, user.id)
+    if transfer is None:
+        return dashboard_redirect()
     expiry = parse_expiry_date(expires_at)
     app_settings = await get_app_settings(db)
 
@@ -298,7 +305,9 @@ async def delete_transfer_route(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    transfer = await get_user_transfer(db, transfer_id, user.id)
+    transfer = await find_user_transfer(db, transfer_id, user.id)
+    if transfer is None:
+        return dashboard_redirect()
     await delete_transfer(
         db,
         transfer=transfer,
@@ -315,7 +324,9 @@ async def regenerate_link_route(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    transfer = await get_user_transfer(db, transfer_id, user.id)
+    transfer = await find_user_transfer(db, transfer_id, user.id)
+    if transfer is None:
+        return dashboard_redirect()
     await regenerate_transfer_link(
         db,
         transfer=transfer,
