@@ -70,10 +70,12 @@
 {% endif %}
 {%- endmacro %}
 
-{% macro share_status_badges(is_enabled, inactive_reason='', is_expired=false, has_password=false, deletion_pending=false, expiry_pending=false, notify_on_download=false) -%}
-{% set show_active = is_enabled and not is_expired and inactive_reason != 'download_limit' and inactive_reason != 'upload_limit' %}
+{% macro share_status_badges(is_enabled, inactive_reason='', is_expired=false, has_password=false, deletion_pending=false, expiry_pending=false, notify_on_download=false, is_preparing=false) -%}
+{% set show_active = is_enabled and not is_expired and not is_preparing and inactive_reason != 'download_limit' and inactive_reason != 'upload_limit' %}
 <div class="flex flex-wrap gap-1">
-  {% if show_active %}
+  {% if is_preparing %}
+  {{ status_badge(_('Preparing'), 'blue') }}
+  {% elif show_active %}
   {{ status_badge(_('Active'), 'green') }}
   {% elif not is_enabled %}
   {{ status_badge(_('Disabled'), 'slate') }}
@@ -81,9 +83,9 @@
   {% if is_expired %}
   {{ status_badge(_('Expired'), 'red') }}
   {% endif %}
-  {% if is_enabled and inactive_reason == 'download_limit' %}
+  {% if not is_preparing and is_enabled and inactive_reason == 'download_limit' %}
   {{ status_badge(_('Limit reached'), 'slate') }}
-  {% elif is_enabled and inactive_reason == 'upload_limit' %}
+  {% elif not is_preparing and is_enabled and inactive_reason == 'upload_limit' %}
   {{ status_badge(_('Limit reached'), 'slate') }}
   {% endif %}
   {% if expiry_pending %}
@@ -182,10 +184,14 @@
 {{ copy_url_field(url) }}
 {%- endmacro %}
 
-{% macro share_list_footer(share_url, edit_url, delete_form_action, delete_panel_id) -%}
+{% macro share_list_footer(share_url, edit_url, delete_form_action, delete_panel_id, is_preparing=false) -%}
 <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col lg:flex-row lg:items-start gap-3">
   <div class="flex-1 min-w-0">
+    {% if is_preparing %}
+    <p class="text-xs text-slate-400 italic">{{ _('Files are being prepared…') }}</p>
+    {% else %}
     {{ share_link_field(share_url) }}
+    {% endif %}
   </div>
   <div class="flex flex-wrap items-center gap-4 shrink-0 text-sm lg:pt-1">
     <a href="{{ edit_url }}" class="text-primary hover:underline font-medium">{{ _('Edit') }}</a>

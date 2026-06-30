@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-25 14:30+0200\n"
+"POT-Creation-Date: 2026-06-30 13:11+0200\n"
 "PO-Revision-Date: 2026-06-24 16:10+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -18,14 +18,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: app/auth/deps.py:20 app/auth/deps.py:23 app/auth/deps.py:29
-#: app/auth/deps.py:49 app/routers/transfers.py:219
-msgid "Not authenticated"
-msgstr "No autenticado"
-
-#: app/auth/deps.py:55
+#: app/auth/deps.py:57
 msgid "Admin access required"
 msgstr "Se requiere acceso de administrador"
+
+#: app/auth/exceptions.py:10
+msgid "Not authenticated"
+msgstr "No autenticado"
 
 #: app/routers/admin.py:93
 msgid "Branding saved."
@@ -75,16 +74,16 @@ msgstr "Transferencia actualizada."
 msgid "File request updated."
 msgstr "Solicitud de archivos actualizada."
 
-#: app/routers/admin.py:162 app/routers/transfers.py:112
+#: app/routers/admin.py:162 app/routers/transfers.py:116
 msgid "Transfer deleted."
 msgstr "Transferencia eliminada."
 
-#: app/routers/admin.py:164 app/routers/requests.py:69
+#: app/routers/admin.py:164 app/routers/requests.py:71
 msgid "File request deleted."
 msgstr "Solicitud de archivos eliminada."
 
 #: app/routers/admin.py:198 app/routers/admin.py:357
-#: app/routers/requests.py:141 app/routers/transfers.py:199
+#: app/routers/requests.py:145 app/routers/transfers.py:220
 msgid "Share link regenerated. The old link no longer works."
 msgstr "Enlace de uso compartido regenerado. El enlace anterior ya no funciona."
 
@@ -158,32 +157,32 @@ msgstr "No puede eliminar su propia cuenta"
 msgid "Cannot delete the last admin"
 msgstr "No se puede eliminar el último administrador"
 
-#: app/routers/auth.py:102
+#: app/routers/auth.py:115
 msgid "Local login disabled"
 msgstr "Inicio de sesión local desactivado"
 
-#: app/routers/auth.py:109
+#: app/routers/auth.py:122
 msgid "Invalid credentials"
 msgstr "Credenciales no válidas"
 
-#: app/routers/auth.py:160 app/routers/profile.py:123
+#: app/routers/auth.py:173 app/routers/profile.py:123
 #: app/routers/profile.py:152
 msgid "Invalid authentication code"
 msgstr "Código de autenticación no válido"
 
-#: app/routers/auth.py:171 app/routers/auth.py:180
+#: app/routers/auth.py:184 app/routers/auth.py:193
 msgid "Provider not configured"
 msgstr "Proveedor no configurado"
 
-#: app/routers/auth.py:201
+#: app/routers/auth.py:214
 msgid "OAuth provider did not return an email address"
 msgstr "El proveedor OAuth no devolvió una dirección de correo"
 
-#: app/routers/auth.py:207
+#: app/routers/auth.py:220
 msgid "Your email address is not verified with the identity provider"
 msgstr "Su dirección de correo no está verificada con el proveedor de identidad"
 
-#: app/routers/auth.py:230
+#: app/routers/auth.py:243
 msgid ""
 "An account with this email already exists. Sign in with your existing "
 "method, or ask an administrator to link your account."
@@ -191,13 +190,13 @@ msgstr ""
 "Ya existe una cuenta con este correo. Inicie sesión con su método "
 "existente o pida a un administrador que vincule su cuenta."
 
-#: app/routers/branding.py:46 app/templates/admin.html:72
-#: app/templates/base.html:148
+#: app/routers/branding.py:46 app/templates/admin.html:73
+#: app/templates/base.html:156
 msgid "Impressum"
 msgstr "Aviso legal"
 
-#: app/routers/branding.py:59 app/templates/admin.html:77
-#: app/templates/base.html:151
+#: app/routers/branding.py:59 app/templates/admin.html:78
+#: app/templates/base.html:159
 msgid "Privacy policy"
 msgstr "Política de privacidad"
 
@@ -233,19 +232,19 @@ msgstr "Configuración de 2FA no disponible"
 msgid "2FA is not enabled"
 msgstr "2FA no está activado"
 
-#: app/routers/public.py:81
+#: app/routers/public.py:82
 msgid "Too many failed password attempts. Try again later."
 msgstr ""
 
-#: app/routers/public.py:113
+#: app/routers/public.py:114
 msgid "Unlock this file request before uploading"
 msgstr "Desbloquee esta solicitud de archivos antes de subir"
 
-#: app/routers/public.py:120
+#: app/routers/public.py:121
 msgid "Open the transfer page in this browser before downloading."
 msgstr "Abra la página de transferencia en este navegador antes de descargar."
 
-#: app/routers/public.py:128
+#: app/routers/public.py:129
 #, python-format
 msgid ""
 "This transfer allows %(max)s download. Unlocking uses one download; you "
@@ -262,12 +261,12 @@ msgstr[1] ""
 "descarga; después podrá descargar todos los archivos en esta sesión del "
 "navegador."
 
-#: app/routers/public.py:139 app/services/share_status.py:18
-#: app/services/transfer.py:200
+#: app/routers/public.py:140 app/services/share_status.py:18
+#: app/services/transfer.py:276
 msgid "Download limit reached"
 msgstr "Límite de descargas alcanzado"
 
-#: app/routers/public.py:141
+#: app/routers/public.py:142
 msgid ""
 "All available downloads for this transfer have been used. Contact the "
 "person who shared these files if you still need them."
@@ -275,12 +274,12 @@ msgstr ""
 "Se han utilizado todas las descargas disponibles para esta transferencia."
 " Contacte a la persona que compartió estos archivos si aún los necesita."
 
-#: app/routers/public.py:146 app/services/file_request.py:126
+#: app/routers/public.py:147 app/services/file_request.py:126
 #: app/services/share_status.py:19
 msgid "Upload limit reached"
 msgstr "Límite de subidas alcanzado"
 
-#: app/routers/public.py:148
+#: app/routers/public.py:149
 msgid ""
 "All available uploads for this request have been used. Contact the person"
 " who requested these files if you still need to upload."
@@ -288,66 +287,66 @@ msgstr ""
 "Se han utilizado todas las subidas disponibles para esta solicitud. "
 "Contacte a la persona que solicitó estos archivos si aún necesita subir."
 
-#: app/routers/public.py:154 app/routers/public.py:160
-#: app/services/file_request.py:124 app/services/transfer.py:198
+#: app/routers/public.py:155 app/routers/public.py:161
+#: app/services/file_request.py:124 app/services/transfer.py:274
 msgid "This link has expired"
 msgstr "Este enlace ha caducado"
 
-#: app/routers/public.py:156
+#: app/routers/public.py:157
 msgid "This file request is no longer available because it has expired."
 msgstr "Esta solicitud de archivos ya no está disponible porque ha caducado."
 
-#: app/routers/public.py:162
+#: app/routers/public.py:163
 msgid "This transfer is no longer available because it has expired."
 msgstr "Esta transferencia ya no está disponible porque ha caducado."
 
-#: app/routers/public.py:168 app/routers/public.py:172
-#: app/services/file_request.py:122 app/services/transfer.py:196
+#: app/routers/public.py:169 app/routers/public.py:173
+#: app/services/file_request.py:122 app/services/transfer.py:272
 msgid "This link has been disabled"
 msgstr "Este enlace ha sido desactivado"
 
-#: app/routers/public.py:169
+#: app/routers/public.py:170
 msgid "This file request is no longer available."
 msgstr "Esta solicitud de archivos ya no está disponible."
 
-#: app/routers/public.py:173
+#: app/routers/public.py:174
 msgid "This transfer is no longer available."
 msgstr "Esta transferencia ya no está disponible."
 
-#: app/routers/public.py:176
+#: app/routers/public.py:177
 msgid "Unavailable"
 msgstr "No disponible"
 
-#: app/routers/public.py:177
+#: app/routers/public.py:178
 msgid "This link is no longer available."
 msgstr "Este enlace ya no está disponible."
 
-#: app/routers/public.py:381 app/routers/public.py:605
+#: app/routers/public.py:388 app/routers/public.py:614
 msgid "Invalid password"
 msgstr "Contraseña no válida"
 
-#: app/routers/public.py:427 app/routers/public.py:469
+#: app/routers/public.py:431 app/routers/public.py:475
 msgid "Password required"
 msgstr "Contraseña requerida"
 
-#: app/routers/public.py:641
+#: app/routers/public.py:650
 msgid "Upload failed"
 msgstr "Error al subir"
 
-#: app/routers/public.py:650
+#: app/routers/public.py:659
 msgid "Upload successful. Thank you!"
 msgstr "Subida correcta. ¡Gracias!"
 
-#: app/routers/requests.py:65
+#: app/routers/requests.py:67
 msgid "File request updated successfully."
 msgstr "Solicitud de archivos actualizada correctamente."
 
-#: app/routers/requests.py:67
+#: app/routers/requests.py:69
 msgid "File request created successfully."
 msgstr "Solicitud de archivos creada correctamente."
 
-#: app/routers/requests.py:107 app/routers/transfers.py:150
-#: app/services/file_request.py:467 app/services/transfer.py:460
+#: app/routers/requests.py:109 app/routers/transfers.py:155
+#: app/services/file_request.py:471 app/services/transfer.py:540
 msgid "Enter a password to enable protection"
 msgstr "Introduzca una contraseña para activar la protección"
 
@@ -355,32 +354,32 @@ msgstr "Introduzca una contraseña para activar la protección"
 msgid "Invalid setup token"
 msgstr "Token de configuración no válido"
 
-#: app/routers/transfers.py:108
+#: app/routers/transfers.py:112
 msgid "Transfer updated successfully."
 msgstr "Transferencia actualizada correctamente."
 
-#: app/routers/transfers.py:110
+#: app/routers/transfers.py:114
 msgid "Transfer created successfully."
 msgstr "Transferencia creada correctamente."
 
-#: app/routers/transfers.py:175
+#: app/routers/transfers.py:181
 msgid "Could not create transfer"
 msgstr "No se pudo crear la transferencia"
 
-#: app/services/branding.py:59
+#: app/services/branding.py:61
 msgid "No file selected"
 msgstr "Ningún archivo seleccionado"
 
-#: app/services/branding.py:64
+#: app/services/branding.py:66
 #, python-format
 msgid "Unsupported logo format. Allowed: %(extensions)s"
 msgstr "Formato de logotipo no compatible. Permitidos: %(extensions)s"
 
-#: app/services/branding.py:74
+#: app/services/branding.py:76
 msgid "Logo must be 2 MB or smaller"
 msgstr "El logotipo debe ser de 2 MB o menos"
 
-#: app/services/branding.py:76
+#: app/services/branding.py:78
 msgid "Uploaded logo file is empty"
 msgstr "El archivo de logotipo subido está vacío"
 
@@ -544,8 +543,8 @@ msgstr "{{ app_name }}: {{ resource_label }} caducado sin uso"
 msgid "{{ app_name }}: {{ resource_label }} will be deleted soon"
 msgstr "{{ app_name }}: {{ resource_label }} se eliminará pronto"
 
-#: app/services/file_request.py:100 app/services/file_request.py:289
-#: app/services/file_request.py:304
+#: app/services/file_request.py:100 app/services/file_request.py:293
+#: app/services/file_request.py:308
 msgid "File request not found"
 msgstr "Solicitud de archivos no encontrada"
 
@@ -554,8 +553,8 @@ msgid "Add at least one file to upload"
 msgstr "Añada al menos un archivo para subir"
 
 #: app/services/file_request.py:163 app/services/file_request.py:232
-#: app/services/staging.py:204 app/services/transfer.py:75
-#: app/services/transfer.py:98 app/services/transfer.py:304
+#: app/services/staging.py:204 app/services/transfer.py:66
+#: app/services/transfer.py:103 app/services/transfer.py:380
 #, python-format
 msgid "File type not allowed: %(filename)s"
 msgstr "Tipo de archivo no permitido: %(filename)s"
@@ -573,57 +572,58 @@ msgstr "Seleccione al menos un archivo para subir"
 msgid "File exceeds maximum size (%(max_mb)s MB): %(filename)s"
 msgstr "El archivo supera el tamaño máximo (%(max_mb)s MB): %(filename)s"
 
-#: app/services/file_request.py:320 app/services/file_request.py:342
-#: app/services/transfer.py:270
+#: app/services/file_request.py:324 app/services/file_request.py:346
+#: app/services/transfer.py:346
 msgid "File not found"
 msgstr "Archivo no encontrado"
 
-#: app/services/file_request.py:397 app/services/file_request.py:417
+#: app/services/file_request.py:401 app/services/file_request.py:421
 msgid "No files to download"
 msgstr "No hay archivos para descargar"
 
-#: app/services/file_request.py:405
+#: app/services/file_request.py:409
 msgid "Upload not found"
 msgstr "Subida no encontrada"
 
-#: app/services/file_request.py:453
+#: app/services/file_request.py:457
 #, python-format
 msgid "Max uploads cannot be less than current count (%(count)s)"
 msgstr ""
 "Las subidas máximas no pueden ser menores que el recuento actual "
 "(%(count)s)"
 
-#: app/services/share_lifecycle.py:88 app/services/share_lifecycle.py:101
+#: app/services/share_lifecycle.py:117 app/services/share_lifecycle.py:130
 msgid "less than a minute"
 msgstr "menos de un minuto"
 
-#: app/services/share_lifecycle.py:96
+#: app/services/share_lifecycle.py:125
 #, python-format
 msgid "%(count)s day"
 msgid_plural "%(count)s days"
 msgstr[0] "%(count)s día"
 msgstr[1] "%(count)s días"
 
-#: app/services/share_lifecycle.py:98
+#: app/services/share_lifecycle.py:127
 #, python-format
 msgid "%(count)s hour"
 msgid_plural "%(count)s hours"
 msgstr[0] "%(count)s hora"
 msgstr[1] "%(count)s horas"
 
-#: app/services/share_lifecycle.py:100
+#: app/services/share_lifecycle.py:129
 #, python-format
 msgid "%(count)s minute"
 msgid_plural "%(count)s minutes"
 msgstr[0] "%(count)s minuto"
 msgstr[1] "%(count)s minutos"
 
-#: app/services/share_lifecycle.py:124 app/templates/_macros.html:90
-#: app/templates/_macros.html:221
+#: app/services/share_lifecycle.py:153 app/templates/_macros.html:95
+#: app/templates/_macros.html:230
 msgid "Deletion pending"
 msgstr "Eliminación pendiente"
 
-#: app/services/share_lifecycle.py:136
+#: app/services/share_lifecycle.py:165 app/templates/_macros.html:92
+#: app/templates/_macros.html:231
 msgid "Expiration pending"
 msgstr "Caducidad pendiente"
 
@@ -631,13 +631,13 @@ msgstr "Caducidad pendiente"
 msgid "Link disabled"
 msgstr "Enlace desactivado"
 
-#: app/services/share_status.py:17 app/templates/_macros.html:82
-#: app/templates/_macros.html:219 app/templates/_share_active_controls.html:6
+#: app/services/share_status.py:17 app/templates/_macros.html:84
+#: app/templates/_macros.html:228 app/templates/_share_active_controls.html:6
 msgid "Expired"
 msgstr "Caducado"
 
 #: app/services/staging.py:149 app/services/staging.py:200
-#: app/services/transfer.py:300
+#: app/services/transfer.py:376
 msgid "Missing filename"
 msgstr "Falta el nombre del archivo"
 
@@ -662,29 +662,30 @@ msgstr "La subida total supera el tamaño máximo permitido"
 msgid "Staged file not found"
 msgstr "Archivo preparado no encontrado"
 
-#: app/services/transfer.py:51 app/services/transfer.py:442
+#: app/services/transfer.py:55 app/services/transfer.py:522
 msgid "Max downloads cannot be negative"
 msgstr "Las descargas máximas no pueden ser negativas"
 
-#: app/services/transfer.py:79 app/services/transfer.py:102
-#: app/services/transfer.py:315
-msgid "Total upload exceeds maximum file size"
-msgstr "La subida total supera el tamaño máximo de archivo"
-
-#: app/services/transfer.py:117 app/templates/_macros.html:275
+#: app/services/transfer.py:61 app/services/transfer.py:122
+#: app/templates/_macros.html:285
 msgid "Add at least one file"
 msgstr "Añada al menos un archivo"
 
-#: app/services/transfer.py:158 app/services/transfer.py:402
-#: app/services/transfer.py:418
+#: app/services/transfer.py:70 app/services/transfer.py:107
+#: app/services/transfer.py:391
+msgid "Total upload exceeds maximum file size"
+msgstr "La subida total supera el tamaño máximo de archivo"
+
+#: app/services/transfer.py:234 app/services/transfer.py:482
+#: app/services/transfer.py:498
 msgid "Transfer not found"
 msgstr "Transferencia no encontrada"
 
-#: app/services/transfer.py:351
+#: app/services/transfer.py:427
 msgid "Transfer must have at least one file"
 msgstr "La transferencia debe tener al menos un archivo"
 
-#: app/services/transfer.py:446
+#: app/services/transfer.py:526
 #, python-format
 msgid "Max downloads cannot be less than current count (%(count)s)"
 msgstr ""
@@ -703,179 +704,187 @@ msgstr "Usos compartidos y solicitudes"
 msgid "Email templates"
 msgstr "Plantillas de correo"
 
-#: app/templates/_macros.html:49 app/templates/_macros.html:77
-#: app/templates/_macros.html:217
+#: app/templates/_macros.html:49 app/templates/_macros.html:79
+#: app/templates/_macros.html:226
 msgid "Active"
 msgstr "Activo"
 
-#: app/templates/_macros.html:51 app/templates/_macros.html:79
-#: app/templates/_macros.html:220
+#: app/templates/_macros.html:51 app/templates/_macros.html:81
+#: app/templates/_macros.html:229
 msgid "Disabled"
 msgstr "Desactivado"
 
-#: app/templates/_macros.html:85 app/templates/_macros.html:87
+#: app/templates/_macros.html:77 app/templates/transfers_edit.html:17
+msgid "Preparing"
+msgstr "Preparando"
+
+#: app/templates/_macros.html:87 app/templates/_macros.html:89
 #: app/templates/_share_active_controls.html:9
 msgid "Limit reached"
 msgstr "Límite alcanzado"
 
-#: app/templates/_macros.html:93 app/templates/_macros.html:131
-#: app/templates/admin.html:88 app/templates/login.html:33
+#: app/templates/_macros.html:98 app/templates/_macros.html:136
+#: app/templates/admin.html:89 app/templates/login.html:34
 #: app/templates/public_download.html:20 app/templates/public_upload.html:23
 msgid "Password"
 msgstr "Contraseña"
 
-#: app/templates/_macros.html:96
+#: app/templates/_macros.html:101
 msgid "Notifications"
 msgstr "Notificaciones"
 
-#: app/templates/_macros.html:110
+#: app/templates/_macros.html:115
 msgid "remaining"
 msgstr "restante"
 
-#: app/templates/_macros.html:112
+#: app/templates/_macros.html:117
 msgid "permanently deleted on"
 msgstr "se eliminará permanentemente el"
 
-#: app/templates/_macros.html:114
+#: app/templates/_macros.html:119
 msgid "expires on"
 msgstr "caduca el"
 
-#: app/templates/_macros.html:118
+#: app/templates/_macros.html:123
 msgid "Extend the expiry date below to keep this share."
 msgstr ""
 "Amplíe la fecha de caducidad a continuación para conservar este uso "
 "compartido."
 
-#: app/templates/_macros.html:126
+#: app/templates/_macros.html:131
 msgid "Password protection"
 msgstr "Protección con contraseña"
 
-#: app/templates/_macros.html:129 app/templates/profile.html:30
+#: app/templates/_macros.html:134 app/templates/profile.html:30
 msgid "New password"
 msgstr "Nueva contraseña"
 
-#: app/templates/_macros.html:129 app/templates/admin.html:59
+#: app/templates/_macros.html:134 app/templates/admin.html:60
 msgid "Leave blank to keep the current password"
 msgstr "Deje en blanco para conservar la contraseña actual"
 
-#: app/templates/_macros.html:131
+#: app/templates/_macros.html:136
 msgid "Required when password protection is enabled"
 msgstr "Obligatorio cuando la protección con contraseña está activada"
 
-#: app/templates/_macros.html:162
+#: app/templates/_macros.html:167
 msgid "Copied!"
 msgstr "¡Copiado!"
 
-#: app/templates/_macros.html:163 app/templates/_macros.html:165
+#: app/templates/_macros.html:168 app/templates/_macros.html:170
 msgid "Copy link"
 msgstr "Copiar enlace"
 
-#: app/templates/_macros.html:188 app/templates/admin_shares.html:97
-#: app/templates/admin_shares.html:162 app/templates/dashboard.html:91
-#: app/templates/dashboard.html:144
+#: app/templates/_macros.html:191
+msgid "Files are being prepared…"
+msgstr "Los archivos se están preparando…"
+
+#: app/templates/_macros.html:197 app/templates/admin_shares.html:98
+#: app/templates/admin_shares.html:164 app/templates/dashboard.html:92
+#: app/templates/dashboard.html:146
 msgid "Edit"
 msgstr "Editar"
 
-#: app/templates/_macros.html:191 app/templates/admin.html:138
-#: app/templates/admin_shares.html:102 app/templates/admin_shares.html:167
+#: app/templates/_macros.html:200 app/templates/admin.html:139
+#: app/templates/admin_shares.html:103 app/templates/admin_shares.html:169
 msgid "Delete"
 msgstr "Eliminar"
 
-#: app/templates/_macros.html:194
+#: app/templates/_macros.html:203
 msgid "Delete this share?"
 msgstr "¿Eliminar este uso compartido?"
 
-#: app/templates/_macros.html:195 app/templates/admin_shares.html:106
-#: app/templates/transfers_edit.html:150 app/templates/transfers_edit.html:164
+#: app/templates/_macros.html:204 app/templates/admin_shares.html:107
+#: app/templates/transfers_edit.html:158 app/templates/transfers_edit.html:172
 msgid "All files will be permanently removed. This cannot be undone."
 msgstr ""
 "Todos los archivos se eliminarán permanentemente. Esta acción no se puede"
 " deshacer."
 
-#: app/templates/_macros.html:196 app/templates/admin_shares.html:107
-#: app/templates/admin_shares.html:172
+#: app/templates/_macros.html:205 app/templates/admin_shares.html:108
+#: app/templates/admin_shares.html:174
 msgid "Yes, delete"
 msgstr "Sí, eliminar"
 
-#: app/templates/_macros.html:208
+#: app/templates/_macros.html:217
 msgid "Search"
 msgstr "Buscar"
 
-#: app/templates/_macros.html:210
+#: app/templates/_macros.html:219
 msgid "Title or description…"
 msgstr "Título o descripción…"
 
-#: app/templates/_macros.html:214
+#: app/templates/_macros.html:223
 msgid "Filter"
 msgstr "Filtrar"
 
-#: app/templates/_macros.html:216
+#: app/templates/_macros.html:225
 msgid "All statuses"
 msgstr "Todos los estados"
 
-#: app/templates/_macros.html:218
+#: app/templates/_macros.html:227
 msgid "Inactive"
 msgstr "Inactivo"
 
-#: app/templates/_macros.html:225
+#: app/templates/_macros.html:235
 msgid "Sort"
 msgstr "Ordenar"
 
-#: app/templates/_macros.html:227
+#: app/templates/_macros.html:237
 msgid "Newest first"
 msgstr "Más recientes primero"
 
-#: app/templates/_macros.html:228
+#: app/templates/_macros.html:238
 msgid "Oldest first"
 msgstr "Más antiguos primero"
 
-#: app/templates/_macros.html:229
+#: app/templates/_macros.html:239
 msgid "Expires soonest"
 msgstr "Caduca antes"
 
-#: app/templates/_macros.html:230
+#: app/templates/_macros.html:240
 msgid "Expires latest"
 msgstr "Caduca más tarde"
 
-#: app/templates/_macros.html:231
+#: app/templates/_macros.html:241
 msgid "Title A–Z"
 msgstr "Título A–Z"
 
-#: app/templates/_macros.html:232
+#: app/templates/_macros.html:242
 msgid "Title Z–A"
 msgstr "Título Z–A"
 
-#: app/templates/_macros.html:236 app/templates/admin_shares.html:32
+#: app/templates/_macros.html:246 app/templates/admin_shares.html:32
 msgid "Apply"
 msgstr "Aplicar"
 
-#: app/templates/_macros.html:238 app/templates/admin_shares.html:34
+#: app/templates/_macros.html:248 app/templates/admin_shares.html:34
 msgid "Clear"
 msgstr "Limpiar"
 
-#: app/templates/_macros.html:246
+#: app/templates/_macros.html:256
 msgid "Confirm"
 msgstr "Confirmar"
 
-#: app/templates/_macros.html:247 app/templates/admin.html:120
+#: app/templates/_macros.html:257 app/templates/admin.html:121
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: app/templates/_macros.html:277 app/templates/admin_shares.html:60
+#: app/templates/_macros.html:287 app/templates/admin_shares.html:60
 #: app/templates/dashboard.html:61 app/templates/public_download.html:31
-#: app/templates/transfers_list.html:30
+#: app/templates/transfers_list.html:32
 msgid "Files"
 msgstr "Archivos"
 
-#: app/templates/_macros.html:280 app/templates/transfers_edit.html:99
+#: app/templates/_macros.html:290 app/templates/transfers_edit.html:107
 msgid "Drop files here or click to browse"
 msgstr "Suelte archivos aquí o haga clic para buscar"
 
-#: app/templates/_macros.html:281
+#: app/templates/_macros.html:291
 msgid "Files upload automatically. You can remove them before submitting."
 msgstr "Los archivos se suben automáticamente. Puede eliminarlos antes de enviar."
 
-#: app/templates/_macros.html:284
+#: app/templates/_macros.html:294
 msgid "No files added yet."
 msgstr "Aún no se han añadido archivos."
 
@@ -912,9 +921,9 @@ msgstr ""
 "públicamente hasta que aumente el límite."
 
 #: app/templates/admin.html:3 app/templates/admin.html:5
-#: app/templates/admin.html:90 app/templates/admin_email.html:3
+#: app/templates/admin.html:91 app/templates/admin_email.html:3
 #: app/templates/admin_email.html:5 app/templates/admin_shares.html:3
-#: app/templates/admin_shares.html:5 app/templates/base.html:126
+#: app/templates/admin_shares.html:5 app/templates/base.html:134
 msgid "Admin"
 msgstr "Administración"
 
@@ -954,23 +963,23 @@ msgstr "Eliminar logotipo personalizado y usar el predeterminado"
 msgid "Color scheme"
 msgstr "Esquema de color"
 
-#: app/templates/admin.html:25
+#: app/templates/admin.html:26
 msgid "Save branding"
 msgstr "Guardar marca"
 
-#: app/templates/admin.html:29
+#: app/templates/admin.html:30
 msgid "File uploads"
 msgstr "Subidas de archivos"
 
-#: app/templates/admin.html:30
+#: app/templates/admin.html:31
 msgid "Max file size (MB)"
 msgstr "Tamaño máx. de archivo (MB)"
 
-#: app/templates/admin.html:31
+#: app/templates/admin.html:32
 msgid "Parallel file uploads"
 msgstr "Subidas de archivos en paralelo"
 
-#: app/templates/admin.html:31
+#: app/templates/admin.html:32
 msgid ""
 "How many files the browser uploads at once when staging (1–50). Lower "
 "values are gentler on slow links and reverse proxies."
@@ -978,31 +987,31 @@ msgstr ""
 "Cuántos archivos sube el navegador a la vez al preparar (1–50). Valores "
 "más bajos son más suaves en conexiones lentas y proxies inversos."
 
-#: app/templates/admin.html:32
+#: app/templates/admin.html:33
 msgid "Blocked file extensions"
 msgstr "Extensiones de archivo bloqueadas"
 
-#: app/templates/admin.html:32
+#: app/templates/admin.html:33
 msgid "Comma-separated (e.g. .exe,.bat) or JSON array"
 msgstr "Separado por comas (p. ej. .exe,.bat) o matriz JSON"
 
-#: app/templates/admin.html:33
+#: app/templates/admin.html:34
 msgid "Save file uploads"
 msgstr "Guardar subidas de archivos"
 
-#: app/templates/admin.html:37
+#: app/templates/admin.html:38
 msgid "Shares"
 msgstr "Usos compartidos"
 
-#: app/templates/admin.html:38
+#: app/templates/admin.html:39
 msgid "Default expiry (days)"
 msgstr "Caducidad predeterminada (días)"
 
-#: app/templates/admin.html:39
+#: app/templates/admin.html:40
 msgid "Max share lifetime (days)"
 msgstr "Duración máx. del uso compartido (días)"
 
-#: app/templates/admin.html:39
+#: app/templates/admin.html:40
 msgid ""
 "How far in the future users can set expiry dates for transfers and file "
 "requests."
@@ -1010,19 +1019,19 @@ msgstr ""
 "Hasta cuándo en el futuro los usuarios pueden establecer fechas de "
 "caducidad para transferencias y solicitudes de archivos."
 
-#: app/templates/admin.html:40
+#: app/templates/admin.html:41
 msgid "Default max downloads"
 msgstr "Descargas máx. predeterminadas"
 
-#: app/templates/admin.html:40
+#: app/templates/admin.html:41
 msgid "0 = unlimited downloads."
 msgstr "0 = descargas ilimitadas."
 
-#: app/templates/admin.html:41
+#: app/templates/admin.html:42
 msgid "Delete after expiry (days)"
 msgstr "Eliminar tras caducidad (días)"
 
-#: app/templates/admin.html:41
+#: app/templates/admin.html:42
 msgid ""
 "Expired shares are permanently deleted this many days after expiry. 0 = "
 "disabled (no auto-delete)."
@@ -1030,33 +1039,33 @@ msgstr ""
 "Los usos compartidos caducados se eliminan permanentemente tantos días "
 "después de la caducidad. 0 = desactivado (sin eliminación automática)."
 
-#: app/templates/admin.html:42
+#: app/templates/admin.html:43
 msgid "Deletion reminder (days before purge)"
 msgstr "Recordatorio de eliminación (días antes del borrado)"
 
-#: app/templates/admin.html:42
+#: app/templates/admin.html:43
 msgid "Email owners this many days before auto-delete. 0 = disabled."
 msgstr ""
 "Enviar correo a los propietarios tantos días antes de la eliminación "
 "automática. 0 = desactivado."
 
-#: app/templates/admin.html:43
+#: app/templates/admin.html:44
 msgid "Save shares"
 msgstr "Guardar usos compartidos"
 
-#: app/templates/admin.html:47
+#: app/templates/admin.html:48
 msgid "Access"
 msgstr "Acceso"
 
-#: app/templates/admin.html:48
+#: app/templates/admin.html:49
 msgid "Allow local login"
 msgstr "Permitir inicio de sesión local"
 
-#: app/templates/admin.html:49
+#: app/templates/admin.html:50
 msgid "Allow users to email share links to recipients"
 msgstr "Permitir que los usuarios envíen enlaces de uso compartido por correo"
 
-#: app/templates/admin.html:50
+#: app/templates/admin.html:51
 msgid ""
 "Internal notifications (download alerts, upload received) are always sent"
 " when enabled per transfer."
@@ -1064,134 +1073,134 @@ msgstr ""
 "Las notificaciones internas (alertas de descarga, subida recibida) "
 "siempre se envían cuando están activadas por transferencia."
 
-#: app/templates/admin.html:51
+#: app/templates/admin.html:52
 msgid "Save access"
 msgstr "Guardar acceso"
 
-#: app/templates/admin.html:55
+#: app/templates/admin.html:56
 msgid "SMTP"
 msgstr "SMTP"
 
-#: app/templates/admin.html:56
+#: app/templates/admin.html:57
 msgid "SMTP host"
 msgstr "Servidor SMTP"
 
-#: app/templates/admin.html:57
+#: app/templates/admin.html:58
 msgid "SMTP port"
 msgstr "Puerto SMTP"
 
-#: app/templates/admin.html:58
+#: app/templates/admin.html:59
 msgid "SMTP username"
 msgstr "Usuario SMTP"
 
-#: app/templates/admin.html:59
+#: app/templates/admin.html:60
 msgid "SMTP password"
 msgstr "Contraseña SMTP"
 
-#: app/templates/admin.html:60
+#: app/templates/admin.html:61
 msgid "From address"
 msgstr "Dirección de remitente"
 
-#: app/templates/admin.html:62
+#: app/templates/admin.html:63
 msgid "Save SMTP"
 msgstr "Guardar SMTP"
 
-#: app/templates/admin.html:63
+#: app/templates/admin.html:64
 msgid "Send test email"
 msgstr "Enviar correo de prueba"
 
-#: app/templates/admin.html:65
+#: app/templates/admin.html:66
 #, python-format
 msgid "Sends a test message to %(email)s using the values above (without saving)."
 msgstr ""
 "Envía un mensaje de prueba a %(email)s con los valores anteriores (sin "
 "guardar)."
 
-#: app/templates/admin.html:70
+#: app/templates/admin.html:71
 msgid "Legal pages"
 msgstr "Páginas legales"
 
-#: app/templates/admin.html:73
+#: app/templates/admin.html:74
 msgid "Show Impressum link in footer"
 msgstr "Mostrar enlace de aviso legal en el pie de página"
 
-#: app/templates/admin.html:74
+#: app/templates/admin.html:75
 msgid "Impressum text (Markdown)"
 msgstr "Texto del aviso legal (Markdown)"
 
-#: app/templates/admin.html:74
+#: app/templates/admin.html:75
 msgid "Shown on /impressum when enabled."
 msgstr "Se muestra en /impressum cuando está activado."
 
-#: app/templates/admin.html:78
+#: app/templates/admin.html:79
 msgid "Show privacy policy link in footer"
 msgstr "Mostrar enlace de política de privacidad en el pie de página"
 
-#: app/templates/admin.html:79
+#: app/templates/admin.html:80
 msgid "Privacy policy text (Markdown)"
 msgstr "Texto de la política de privacidad (Markdown)"
 
-#: app/templates/admin.html:79
+#: app/templates/admin.html:80
 msgid "Shown on /privacy when enabled."
 msgstr "Se muestra en /privacy cuando está activado."
 
-#: app/templates/admin.html:81
+#: app/templates/admin.html:82
 msgid "Save legal pages"
 msgstr "Guardar páginas legales"
 
-#: app/templates/admin.html:84
+#: app/templates/admin.html:85
 msgid "Users"
 msgstr "Usuarios"
 
-#: app/templates/admin.html:87 app/templates/login.html:9
-#: app/templates/login.html:32
+#: app/templates/admin.html:88 app/templates/login.html:10
+#: app/templates/login.html:33
 msgid "Email"
 msgstr "Correo"
 
-#: app/templates/admin.html:92
+#: app/templates/admin.html:93
 msgid "Add user"
 msgstr "Añadir usuario"
 
-#: app/templates/admin.html:101
+#: app/templates/admin.html:102
 msgid "admin"
 msgstr "admin"
 
-#: app/templates/admin.html:104
+#: app/templates/admin.html:105
 #, python-format
 msgid "%(count)s transfers"
 msgstr "%(count)s transferencias"
 
-#: app/templates/admin.html:106
+#: app/templates/admin.html:107
 #, python-format
 msgid "%(count)s requests"
 msgstr "%(count)s solicitudes"
 
-#: app/templates/admin.html:112
+#: app/templates/admin.html:113
 msgid "Set password"
 msgstr "Establecer contraseña"
 
-#: app/templates/admin.html:114
+#: app/templates/admin.html:115
 #, python-format
 msgid "New password for %(email)s"
 msgstr "Nueva contraseña para %(email)s"
 
-#: app/templates/admin.html:118
+#: app/templates/admin.html:119
 msgid "Save"
 msgstr "Guardar"
 
-#: app/templates/admin.html:127
+#: app/templates/admin.html:128
 msgid "Promote"
 msgstr "Hacer administrador"
 
-#: app/templates/admin.html:132
+#: app/templates/admin.html:133
 msgid "Demote"
 msgstr "Quitar privilegios de administrador"
 
-#: app/templates/admin.html:141
+#: app/templates/admin.html:142
 msgid "Delete this user?"
 msgstr "¿Eliminar este usuario?"
 
-#: app/templates/admin.html:142
+#: app/templates/admin.html:143
 msgid ""
 "The account will be deactivated and can no longer sign in. Their "
 "transfers and file requests remain."
@@ -1199,31 +1208,31 @@ msgstr ""
 "La cuenta se desactivará y ya no podrá iniciar sesión. Sus transferencias"
 " y solicitudes de archivos permanecen."
 
-#: app/templates/admin.html:143
+#: app/templates/admin.html:144
 msgid "Yes, delete user"
 msgstr "Sí, eliminar usuario"
 
-#: app/templates/admin.html:151
+#: app/templates/admin.html:152
 msgid "No users yet."
 msgstr "Aún no hay usuarios."
 
-#: app/templates/admin.html:157
+#: app/templates/admin.html:158
 msgid "Recent audit log"
 msgstr "Registro de auditoría reciente"
 
-#: app/templates/admin.html:160
+#: app/templates/admin.html:161
 msgid "Time"
 msgstr "Hora"
 
-#: app/templates/admin.html:160
+#: app/templates/admin.html:161
 msgid "Action"
 msgstr "Acción"
 
-#: app/templates/admin.html:160
+#: app/templates/admin.html:161
 msgid "Resource"
 msgstr "Recurso"
 
-#: app/templates/admin.html:160 app/templates/requests_edit.html:96
+#: app/templates/admin.html:161 app/templates/requests_edit.html:96
 msgid "IP"
 msgstr "IP"
 
@@ -1243,7 +1252,7 @@ msgstr "Cuerpo (HTML)"
 msgid "Save email templates"
 msgstr "Guardar plantillas de correo"
 
-#: app/templates/admin_shares.html:11 app/templates/base.html:85
+#: app/templates/admin_shares.html:11 app/templates/base.html:93
 #: app/templates/dashboard.html:22
 msgid "Transfers"
 msgstr "Transferencias"
@@ -1254,7 +1263,7 @@ msgstr "Transferencias"
 msgid "%(count)s active"
 msgstr "%(count)s activos"
 
-#: app/templates/admin_shares.html:16 app/templates/base.html:86
+#: app/templates/admin_shares.html:16 app/templates/base.html:94
 #: app/templates/dashboard.html:28
 msgid "File requests"
 msgstr "Solicitudes de archivos"
@@ -1277,98 +1286,98 @@ msgstr "Transferencias (%(count)s)"
 msgid "File requests (%(count)s)"
 msgstr "Solicitudes de archivos (%(count)s)"
 
-#: app/templates/admin_shares.html:57 app/templates/admin_shares.html:125
-#: app/templates/dashboard.html:59 app/templates/dashboard.html:115
+#: app/templates/admin_shares.html:57 app/templates/admin_shares.html:126
+#: app/templates/dashboard.html:59 app/templates/dashboard.html:116
 #: app/templates/requests_edit.html:46 app/templates/requests_new.html:8
-#: app/templates/transfers_edit.html:46 app/templates/transfers_new.html:8
+#: app/templates/transfers_edit.html:54 app/templates/transfers_new.html:8
 msgid "Title"
 msgstr "Título"
 
-#: app/templates/admin_shares.html:58 app/templates/admin_shares.html:126
-#: app/templates/dashboard.html:60 app/templates/dashboard.html:116
+#: app/templates/admin_shares.html:58 app/templates/admin_shares.html:127
+#: app/templates/dashboard.html:60 app/templates/dashboard.html:117
 msgid "Status"
 msgstr "Estado"
 
-#: app/templates/admin_shares.html:59 app/templates/admin_shares.html:127
+#: app/templates/admin_shares.html:59 app/templates/admin_shares.html:128
 msgid "Owner"
 msgstr "Propietario"
 
 #: app/templates/admin_shares.html:61 app/templates/dashboard.html:62
-#: app/templates/transfers_list.html:31
+#: app/templates/transfers_list.html:33
 msgid "Downloads"
 msgstr "Descargas"
 
-#: app/templates/admin_shares.html:62 app/templates/admin_shares.html:129
-#: app/templates/dashboard.html:63 app/templates/dashboard.html:118
-#: app/templates/requests_list.html:30 app/templates/transfers_list.html:29
+#: app/templates/admin_shares.html:62 app/templates/admin_shares.html:130
+#: app/templates/dashboard.html:63 app/templates/dashboard.html:119
+#: app/templates/requests_list.html:31 app/templates/transfers_list.html:31
 msgid "Expires"
 msgstr "Caduca"
 
-#: app/templates/admin_shares.html:63 app/templates/admin_shares.html:130
-#: app/templates/dashboard.html:64 app/templates/dashboard.html:119
-#: app/templates/requests_list.html:29 app/templates/transfers_list.html:28
+#: app/templates/admin_shares.html:63 app/templates/admin_shares.html:131
+#: app/templates/dashboard.html:64 app/templates/dashboard.html:120
+#: app/templates/requests_list.html:30 app/templates/transfers_list.html:30
 msgid "Created"
 msgstr "Creado"
 
-#: app/templates/admin_shares.html:64 app/templates/admin_shares.html:131
-#: app/templates/dashboard.html:65 app/templates/dashboard.html:120
+#: app/templates/admin_shares.html:64 app/templates/admin_shares.html:132
+#: app/templates/dashboard.html:65 app/templates/dashboard.html:121
 msgid "Link"
 msgstr "Enlace"
 
-#: app/templates/admin_shares.html:65 app/templates/admin_shares.html:132
-#: app/templates/dashboard.html:66 app/templates/dashboard.html:121
+#: app/templates/admin_shares.html:65 app/templates/admin_shares.html:133
+#: app/templates/dashboard.html:66 app/templates/dashboard.html:122
 msgid "Actions"
 msgstr "Acciones"
 
-#: app/templates/admin_shares.html:105 app/templates/transfers_edit.html:149
-#: app/templates/transfers_edit.html:163
+#: app/templates/admin_shares.html:106 app/templates/transfers_edit.html:157
+#: app/templates/transfers_edit.html:171
 msgid "Delete this transfer?"
 msgstr "¿Eliminar esta transferencia?"
 
-#: app/templates/admin_shares.html:115
+#: app/templates/admin_shares.html:116
 msgid "No transfers found."
 msgstr "No se encontraron transferencias."
 
-#: app/templates/admin_shares.html:128 app/templates/dashboard.html:117
-#: app/templates/requests_list.html:31
+#: app/templates/admin_shares.html:129 app/templates/dashboard.html:118
+#: app/templates/requests_list.html:32
 msgid "Uploads"
 msgstr "Subidas"
 
-#: app/templates/admin_shares.html:170 app/templates/requests_edit.html:134
+#: app/templates/admin_shares.html:172 app/templates/requests_edit.html:134
 #: app/templates/requests_edit.html:148
 msgid "Delete this file request?"
 msgstr "¿Eliminar esta solicitud de archivos?"
 
-#: app/templates/admin_shares.html:171 app/templates/requests_edit.html:135
+#: app/templates/admin_shares.html:173 app/templates/requests_edit.html:135
 #: app/templates/requests_edit.html:149
 msgid "All uploads will be permanently removed. This cannot be undone."
 msgstr ""
 "Todas las subidas se eliminarán permanentemente. Esta acción no se puede "
 "deshacer."
 
-#: app/templates/admin_shares.html:180
+#: app/templates/admin_shares.html:182
 msgid "No file requests found."
 msgstr "No se encontraron solicitudes de archivos."
 
-#: app/templates/base.html:84 app/templates/dashboard.html:3
+#: app/templates/base.html:92 app/templates/dashboard.html:3
 #: app/templates/dashboard.html:5
 msgid "Dashboard"
 msgstr "Panel"
 
-#: app/templates/base.html:90
+#: app/templates/base.html:98
 msgid "Profile menu"
 msgstr "Menú de perfil"
 
-#: app/templates/base.html:125 app/templates/profile.html:3
+#: app/templates/base.html:133 app/templates/profile.html:3
 #: app/templates/profile.html:5
 msgid "Profile"
 msgstr "Perfil"
 
-#: app/templates/base.html:129
+#: app/templates/base.html:137
 msgid "Logout"
 msgstr "Cerrar sesión"
 
-#: app/templates/base.html:155
+#: app/templates/base.html:163
 msgid "Language"
 msgstr "Idioma"
 
@@ -1415,28 +1424,28 @@ msgstr "Todas las transferencias"
 msgid "All file requests"
 msgstr "Todas las solicitudes de archivos"
 
-#: app/templates/dashboard.html:97 app/templates/transfers_list.html:51
+#: app/templates/dashboard.html:98 app/templates/transfers_list.html:54
 msgid "No transfers yet."
 msgstr "Aún no hay transferencias."
 
-#: app/templates/dashboard.html:98 app/templates/transfers_list.html:52
+#: app/templates/dashboard.html:99 app/templates/transfers_list.html:55
 msgid "Create your first transfer"
 msgstr "Cree su primera transferencia"
 
-#: app/templates/dashboard.html:107
+#: app/templates/dashboard.html:108
 #, python-format
 msgid "View all %(count)s transfers"
 msgstr "Ver las %(count)s transferencias"
 
-#: app/templates/dashboard.html:150 app/templates/requests_list.html:96
+#: app/templates/dashboard.html:152 app/templates/requests_list.html:97
 msgid "No file requests yet."
 msgstr "Aún no hay solicitudes de archivos."
 
-#: app/templates/dashboard.html:151 app/templates/requests_list.html:97
+#: app/templates/dashboard.html:153 app/templates/requests_list.html:98
 msgid "Create your first file request"
 msgstr "Cree su primera solicitud de archivos"
 
-#: app/templates/dashboard.html:160
+#: app/templates/dashboard.html:162
 #, python-format
 msgid "View all %(count)s file requests"
 msgstr "Ver las %(count)s solicitudes de archivos"
@@ -1445,40 +1454,40 @@ msgstr "Ver las %(count)s solicitudes de archivos"
 msgid "Login"
 msgstr "Iniciar sesión"
 
-#: app/templates/login.html:8
+#: app/templates/login.html:9
 msgid "OAuth"
 msgstr "OAuth"
 
-#: app/templates/login.html:14
+#: app/templates/login.html:15
 msgid "Sign in with your company account"
 msgstr "Inicie sesión con su cuenta de empresa"
 
-#: app/templates/login.html:18
+#: app/templates/login.html:19
 #, python-format
 msgid "Sign in with %(provider)s"
 msgstr "Iniciar sesión con %(provider)s"
 
-#: app/templates/login.html:24
+#: app/templates/login.html:25
 msgid "Prefer email?"
 msgstr "¿Prefiere correo?"
 
-#: app/templates/login.html:24
+#: app/templates/login.html:25
 msgid "Use local login"
 msgstr "Usar inicio de sesión local"
 
-#: app/templates/login.html:28 app/templates/login.html:34
+#: app/templates/login.html:29 app/templates/login.html:35
 msgid "Sign in"
 msgstr "Iniciar sesión"
 
-#: app/templates/login.html:29
+#: app/templates/login.html:30
 msgid "Backup sign-in for local accounts."
 msgstr "Inicio de sesión de respaldo para cuentas locales."
 
-#: app/templates/login.html:29
+#: app/templates/login.html:30
 msgid "Enter your email and password."
 msgstr "Introduzca su correo y contraseña."
 
-#: app/templates/login.html:37
+#: app/templates/login.html:38
 msgid "Back to OAuth sign-in"
 msgstr "Volver al inicio de sesión con OAuth"
 
@@ -1596,7 +1605,7 @@ msgid "Set up two-factor authentication"
 msgstr "Configurar autenticación de dos factores"
 
 #: app/templates/public_download.html:3 app/templates/public_download.html:37
-#: app/templates/requests_edit.html:112 app/templates/requests_list.html:71
+#: app/templates/requests_edit.html:112 app/templates/requests_list.html:72
 msgid "Download"
 msgstr "Descargar"
 
@@ -1621,9 +1630,25 @@ msgstr ""
 " compartir como enlaces directos."
 
 #: app/templates/public_download.html:44 app/templates/requests_edit.html:79
-#: app/templates/requests_list.html:50
+#: app/templates/requests_list.html:51
 msgid "Download all (ZIP)"
 msgstr "Descargar todo (ZIP)"
+
+#: app/templates/public_preparing.html:2
+msgid "Transfer preparing"
+msgstr "Preparando transferencia"
+
+#: app/templates/public_preparing.html:6
+msgid ""
+"This transfer is being prepared. The download link will be ready in a "
+"moment."
+msgstr ""
+"Esta transferencia se está preparando. El enlace de descarga estará listo"
+" en un momento."
+
+#: app/templates/public_preparing.html:13
+msgid "This page will refresh automatically."
+msgstr "Esta página se actualizará automáticamente."
 
 #: app/templates/public_upload.html:3
 msgid "Upload"
@@ -1667,15 +1692,15 @@ msgid "Share link"
 msgstr "Enlace de uso compartido"
 
 #: app/templates/requests_edit.html:23 app/templates/requests_edit.html:25
-#: app/templates/transfers_edit.html:23 app/templates/transfers_edit.html:25
+#: app/templates/transfers_edit.html:31 app/templates/transfers_edit.html:33
 msgid "Regenerate link"
 msgstr "Regenerar enlace"
 
-#: app/templates/requests_edit.html:24 app/templates/transfers_edit.html:24
+#: app/templates/requests_edit.html:24 app/templates/transfers_edit.html:32
 msgid "Issue a new URL and invalidate the current one."
 msgstr "Emitir una nueva URL e invalidar la actual."
 
-#: app/templates/requests_edit.html:28 app/templates/transfers_edit.html:28
+#: app/templates/requests_edit.html:28 app/templates/transfers_edit.html:36
 msgid "Regenerate share link?"
 msgstr "¿Regenerar enlace de uso compartido?"
 
@@ -1687,7 +1712,7 @@ msgstr ""
 "El enlace actual dejará de funcionar inmediatamente. Quien tenga el "
 "enlace anterior ya no podrá subir archivos."
 
-#: app/templates/requests_edit.html:30 app/templates/transfers_edit.html:30
+#: app/templates/requests_edit.html:30 app/templates/transfers_edit.html:38
 msgid "Yes, regenerate link"
 msgstr "Sí, regenerar enlace"
 
@@ -1696,7 +1721,7 @@ msgid "Instructions for uploader"
 msgstr "Instrucciones para quien sube"
 
 #: app/templates/requests_edit.html:51 app/templates/requests_new.html:15
-#: app/templates/transfers_edit.html:51 app/templates/transfers_new.html:16
+#: app/templates/transfers_edit.html:59 app/templates/transfers_new.html:16
 msgid "Expiry date"
 msgstr "Fecha de caducidad"
 
@@ -1713,7 +1738,7 @@ msgstr "Subidas actuales: %(count)s"
 msgid "Max total size per upload (MB)"
 msgstr "Tamaño total máx. por subida (MB)"
 
-#: app/templates/requests_edit.html:63 app/templates/transfers_edit.html:63
+#: app/templates/requests_edit.html:63 app/templates/transfers_edit.html:71
 msgid "Save changes"
 msgstr "Guardar cambios"
 
@@ -1722,18 +1747,18 @@ msgstr "Guardar cambios"
 msgid "Received uploads (%(uploads)s)"
 msgstr "Subidas recibidas (%(uploads)s)"
 
-#: app/templates/requests_edit.html:73 app/templates/transfers_list.html:30
+#: app/templates/requests_edit.html:73 app/templates/transfers_list.html:32
 #, python-format
 msgid "%(count)s file"
 msgid_plural "%(count)s files"
 msgstr[0] "%(count)s archivo"
 msgstr[1] "%(count)s archivos"
 
-#: app/templates/requests_edit.html:80 app/templates/transfers_edit.html:73
+#: app/templates/requests_edit.html:80 app/templates/transfers_edit.html:81
 msgid "Edit files"
 msgstr "Editar archivos"
 
-#: app/templates/requests_edit.html:81 app/templates/transfers_edit.html:74
+#: app/templates/requests_edit.html:81 app/templates/transfers_edit.html:82
 msgid "Done"
 msgstr "Hecho"
 
@@ -1741,20 +1766,20 @@ msgstr "Hecho"
 msgid "File removals are saved immediately."
 msgstr "La eliminación de archivos se guarda inmediatamente."
 
-#: app/templates/requests_edit.html:87 app/templates/requests_list.html:87
+#: app/templates/requests_edit.html:87 app/templates/requests_list.html:88
 msgid "No uploads yet."
 msgstr "Aún no hay subidas."
 
-#: app/templates/requests_edit.html:99 app/templates/requests_list.html:65
+#: app/templates/requests_edit.html:99 app/templates/requests_list.html:66
 msgid "Download (ZIP)"
 msgstr "Descargar (ZIP)"
 
-#: app/templates/requests_edit.html:113 app/templates/transfers_edit.html:91
+#: app/templates/requests_edit.html:113 app/templates/transfers_edit.html:99
 msgid "Remove"
 msgstr "Eliminar"
 
 #: app/templates/requests_edit.html:129 app/templates/requests_edit.html:143
-#: app/templates/transfers_edit.html:144 app/templates/transfers_edit.html:158
+#: app/templates/transfers_edit.html:152 app/templates/transfers_edit.html:166
 msgid "Danger zone"
 msgstr "Zona de peligro"
 
@@ -1780,27 +1805,27 @@ msgstr "Mis solicitudes de archivos"
 msgid "New request"
 msgstr "Nueva solicitud"
 
-#: app/templates/requests_list.html:32
+#: app/templates/requests_list.html:33
 msgid "Files received"
 msgstr "Archivos recibidos"
 
-#: app/templates/requests_list.html:49
+#: app/templates/requests_list.html:50
 msgid "Recent uploads"
 msgstr "Subidas recientes"
 
-#: app/templates/requests_list.html:82 app/templates/requests_list.html:84
+#: app/templates/requests_list.html:83 app/templates/requests_list.html:85
 msgid "Show all uploads"
 msgstr "Mostrar todas las subidas"
 
-#: app/templates/requests_list.html:83
+#: app/templates/requests_list.html:84
 msgid "Show less"
 msgstr "Mostrar menos"
 
-#: app/templates/requests_list.html:93
+#: app/templates/requests_list.html:94
 msgid "No file requests match your search or filters."
 msgstr "Ninguna solicitud de archivos coincide con su búsqueda o filtros."
 
-#: app/templates/requests_list.html:94 app/templates/transfers_list.html:49
+#: app/templates/requests_list.html:95 app/templates/transfers_list.html:52
 msgid "Clear filters"
 msgstr "Limpiar filtros"
 
@@ -1899,7 +1924,13 @@ msgstr "Editar transferencia"
 msgid "to transfers"
 msgstr "a transferencias"
 
-#: app/templates/transfers_edit.html:29
+#: app/templates/transfers_edit.html:18
+msgid "Your files are still being prepared. The link will appear here once ready."
+msgstr ""
+"Sus archivos aún se están preparando. El enlace aparecerá aquí cuando "
+"estén listos."
+
+#: app/templates/transfers_edit.html:37
 msgid ""
 "The current link will stop working immediately. Anyone with the old link "
 "will no longer be able to access this transfer."
@@ -1907,69 +1938,69 @@ msgstr ""
 "El enlace actual dejará de funcionar inmediatamente. Quien tenga el "
 "enlace anterior ya no podrá acceder a esta transferencia."
 
-#: app/templates/transfers_edit.html:47
+#: app/templates/transfers_edit.html:55
 msgid "Message"
 msgstr "Mensaje"
 
-#: app/templates/transfers_edit.html:56 app/templates/transfers_new.html:21
+#: app/templates/transfers_edit.html:64 app/templates/transfers_new.html:21
 msgid "Max downloads"
 msgstr "Máx. descargas"
 
-#: app/templates/transfers_edit.html:56
+#: app/templates/transfers_edit.html:64
 #, python-format
 msgid "Current downloads: %(count)s. Use 0 for unlimited."
 msgstr "Descargas actuales: %(count)s. Use 0 para ilimitadas."
 
-#: app/templates/transfers_edit.html:61 app/templates/transfers_new.html:28
+#: app/templates/transfers_edit.html:69 app/templates/transfers_new.html:28
 msgid "Notify me when someone downloads"
 msgstr "Notificarme cuando alguien descargue"
 
-#: app/templates/transfers_edit.html:71
+#: app/templates/transfers_edit.html:79
 #, python-format
 msgid "Files (%(count)s)"
 msgstr "Archivos (%(count)s)"
 
-#: app/templates/transfers_edit.html:77
+#: app/templates/transfers_edit.html:85
 msgid "File changes are saved immediately."
 msgstr "Los cambios en archivos se guardan inmediatamente."
 
-#: app/templates/transfers_edit.html:100
+#: app/templates/transfers_edit.html:108
 msgid "New files are saved immediately."
 msgstr "Los archivos nuevos se guardan inmediatamente."
 
-#: app/templates/transfers_edit.html:108 app/templates/transfers_edit.html:134
+#: app/templates/transfers_edit.html:116 app/templates/transfers_edit.html:142
 msgid "Download log"
 msgstr "Registro de descargas"
 
-#: app/templates/transfers_edit.html:113
+#: app/templates/transfers_edit.html:121
 msgid "Date & time"
 msgstr "Fecha y hora"
 
-#: app/templates/transfers_edit.html:114
+#: app/templates/transfers_edit.html:122
 msgid "IP address"
 msgstr "Dirección IP"
 
-#: app/templates/transfers_edit.html:115
+#: app/templates/transfers_edit.html:123
 msgid "Type"
 msgstr "Tipo"
 
-#: app/templates/transfers_edit.html:116
+#: app/templates/transfers_edit.html:124
 msgid "File"
 msgstr "Archivo"
 
-#: app/templates/transfers_edit.html:135
+#: app/templates/transfers_edit.html:143
 msgid "No downloads recorded yet."
 msgstr "Aún no hay descargas registradas."
 
-#: app/templates/transfers_edit.html:145 app/templates/transfers_edit.html:159
+#: app/templates/transfers_edit.html:153 app/templates/transfers_edit.html:167
 msgid "Permanently delete this transfer and all uploaded files."
 msgstr "Eliminar permanentemente esta transferencia y todos los archivos subidos."
 
-#: app/templates/transfers_edit.html:146 app/templates/transfers_edit.html:160
+#: app/templates/transfers_edit.html:154 app/templates/transfers_edit.html:168
 msgid "Delete transfer"
 msgstr "Eliminar transferencia"
 
-#: app/templates/transfers_edit.html:151 app/templates/transfers_edit.html:165
+#: app/templates/transfers_edit.html:159 app/templates/transfers_edit.html:173
 msgid "Yes, delete transfer"
 msgstr "Sí, eliminar transferencia"
 
@@ -1977,7 +2008,7 @@ msgstr "Sí, eliminar transferencia"
 msgid "My transfers"
 msgstr "Mis transferencias"
 
-#: app/templates/transfers_list.html:48
+#: app/templates/transfers_list.html:51
 msgid "No transfers match your search or filters."
 msgstr "Ninguna transferencia coincide con su búsqueda o filtros."
 

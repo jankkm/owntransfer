@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 from datetime import datetime
 from pathlib import Path
@@ -14,16 +15,19 @@ from sqlalchemy.orm import selectinload
 from app.auth.download_grants import has_transfer_download_grant
 from app.auth.passwords import hash_password, verify_password
 from app.config import settings
+from app.database import async_session
 from app.i18n import _
 from app.models import AppSettings, Transfer, TransferDownloadLog, TransferFile, User
 from app.services.audit import log_audit
 from app.services.email import send_download_notify, send_share_email
 from app.services.datetime_display import ensure_expiry_within_limit, ensure_utc, format_datetime_with_tz, utc_now
 from app.services.download_limits import transfer_download_limit_reached
-from app.services.settings import generate_public_token, is_extension_blocked, parse_blocklist
+from app.services.settings import generate_public_token, get_app_settings, is_extension_blocked, parse_blocklist
 from app.services.share_lifecycle import is_past_expiry, reset_expiry_notifications
-from app.services.staging import StagedFile, _save_upload
+from app.services.staging import StagedFile, _save_upload, discard_staged_paths
 from app.services.storage import get_storage
+
+logger = logging.getLogger(__name__)
 
 
 def _utcnow() -> datetime:
@@ -50,6 +54,21 @@ async def create_transfer(
     if max_downloads < 0:
         raise HTTPException(status_code=400, detail=_("Max downloads cannot be negative"))
     blocklist = parse_blocklist(app_settings.file_type_blocklist)
+
+    # Validate staged files upfront (fast, no I/O) so errors can still restore staging
+    if staged_files is not None:
+        if not staged_files:
+            raise HTTPException(status_code=400, detail=_("Add at least one file"))
+        total_size = 0
+        for staged in staged_files:
+            if is_extension_blocked(staged.original_name, blocklist):
+                raise HTTPException(
+                    status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": staged.original_name}
+                )
+            total_size += staged.size_bytes
+            if total_size > app_settings.max_file_size_bytes:
+                raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
+
     transfer = Transfer(
         public_token=generate_public_token(),
         created_by=user.id,
@@ -60,37 +79,23 @@ async def create_transfer(
         max_downloads=max_downloads,
         notify_on_download=notify_on_download,
         recipient_emails=",".join(recipient_emails) if recipient_emails else None,
+        is_preparing=bool(staged_files),
     )
     db.add(transfer)
     await db.flush()
 
+    if staged_files:
+        # File copying happens in finalize_transfer_files (background task)
+        await db.commit()
+        await db.refresh(transfer)
+        return transfer
+
+    # Direct upload path (non-staged): process synchronously
     storage = get_storage()
     total_size = 0
     saved_count = 0
 
-    if staged_files:
-        for staged in staged_files:
-            if is_extension_blocked(staged.original_name, blocklist):
-                raise HTTPException(
-                    status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": staged.original_name}
-                )
-            total_size += staged.size_bytes
-            if total_size > app_settings.max_file_size_bytes:
-                raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
-            rel_path = f"transfers/{transfer.id}/{uuid4()}/{_safe_filename(staged.original_name)}"
-            content = storage.absolute_path(staged.storage_path).read_bytes()
-            await storage.save_file(rel_path, content)
-            db.add(
-                TransferFile(
-                    transfer_id=transfer.id,
-                    original_name=staged.original_name,
-                    storage_path=rel_path,
-                    size_bytes=staged.size_bytes,
-                    content_type=staged.content_type,
-                )
-            )
-            saved_count += 1
-    elif files:
+    if files:
         for upload in files:
             if not upload.filename:
                 continue
@@ -141,6 +146,77 @@ async def create_transfer(
         metadata={"title": title},
     )
     return transfer
+
+
+async def finalize_transfer_files(
+    transfer_id: UUID,
+    staged_files: list[StagedFile],
+    *,
+    user_id: UUID,
+    title: str,
+    message: str | None,
+    password: str | None,
+    recipient_emails: list[str],
+    ip_address: str | None,
+) -> None:
+    """Background task: copy staged files into the transfer folder and mark it ready."""
+    try:
+        async with async_session() as db:
+            transfer = await db.get(Transfer, transfer_id)
+            if transfer is None:
+                return
+            app_settings = await get_app_settings(db)
+            storage = get_storage()
+            for staged in staged_files:
+                rel_path = f"transfers/{transfer.id}/{uuid4()}/{_safe_filename(staged.original_name)}"
+                content = storage.absolute_path(staged.storage_path).read_bytes()
+                await storage.save_file(rel_path, content)
+                db.add(TransferFile(
+                    transfer_id=transfer.id,
+                    original_name=staged.original_name,
+                    storage_path=rel_path,
+                    size_bytes=staged.size_bytes,
+                    content_type=staged.content_type,
+                ))
+            transfer.is_preparing = False
+            await db.commit()
+            await db.refresh(transfer)
+
+        await discard_staged_paths(staged_files)
+
+        async with async_session() as db:
+            app_settings = await get_app_settings(db)
+            if recipient_emails and app_settings.allow_user_share_emails:
+                link = f"{settings.base_url.rstrip('/')}/d/{transfer.public_token}"
+                await send_share_email(
+                    app_settings,
+                    recipients=recipient_emails,
+                    title=title,
+                    message=message,
+                    link=link,
+                    password=password,
+                    expires_at=format_datetime_with_tz(transfer.expires_at),
+                )
+            await log_audit(
+                db,
+                action="transfer.created",
+                resource_type="transfer",
+                resource_id=str(transfer_id),
+                actor_id=user_id,
+                ip_address=ip_address,
+                metadata={"title": title},
+            )
+            await db.commit()
+    except Exception:
+        logger.exception("Failed to finalize transfer %s; deleting it", transfer_id)
+        try:
+            async with async_session() as db:
+                transfer = await db.get(Transfer, transfer_id)
+                if transfer is not None:
+                    await db.delete(transfer)
+                    await db.commit()
+        except Exception:
+            logger.exception("Also failed to delete broken transfer %s", transfer_id)
 
 
 async def lookup_transfer_by_token(db: AsyncSession, token: str) -> Transfer | None:

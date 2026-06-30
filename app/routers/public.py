@@ -349,6 +349,10 @@ async def download_page(token: str, request: Request, db: AsyncSession = Depends
     if isinstance(resolved, RedirectResponse):
         return resolved
     transfer = resolved
+    if transfer.is_preparing:
+        ctx = branding_context(app_settings)
+        ctx["transfer"] = transfer
+        return templates.TemplateResponse(request, "public_preparing.html", ctx, status_code=503)
     return _render_download_page(request, transfer, app_settings)
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,6 +31,7 @@ from app.services.transfer import (
     create_transfer,
     delete_transfer,
     delete_transfer_file,
+    finalize_transfer_files,
     find_user_transfer,
     get_user_transfer,
     list_user_transfers,
@@ -131,6 +132,7 @@ async def new_transfer(
 @router.post("/new")
 async def create_transfer_route(
     request: Request,
+    background_tasks: BackgroundTasks,
     title: str = Form(...),
     message: str = Form(""),
     password: str = Form(""),
@@ -155,13 +157,14 @@ async def create_transfer_route(
         return templates.TemplateResponse(request, "transfers_new.html", ctx, status_code=400)
     scope = _transfer_staging_scope(user.id)
     staged_files = await take_staged_files(scope)
+    clean_password = password.strip() if use_password else None
     try:
         transfer = await create_transfer(
             db,
             user=user,
             title=title,
             message=message or None,
-            password=password.strip() if use_password else None,
+            password=clean_password,
             expires_at=parse_expiry_date(expires_at),
             max_downloads=max_downloads,
             notify_on_download=bool(notify_on_download),
@@ -178,7 +181,20 @@ async def create_transfer_route(
             "error": exc.detail if isinstance(exc.detail, str) else _("Could not create transfer"),
         })
         return templates.TemplateResponse(request, "transfers_new.html", ctx, status_code=exc.status_code)
-    await discard_staged_paths(staged_files)
+    if transfer.is_preparing:
+        background_tasks.add_task(
+            finalize_transfer_files,
+            transfer.id,
+            staged_files,
+            user_id=user.id,
+            title=title,
+            message=message or None,
+            password=clean_password,
+            recipient_emails=emails,
+            ip_address=get_client_ip(request),
+        )
+    else:
+        await discard_staged_paths(staged_files)
     return RedirectResponse(f"/transfers?created={transfer.public_token}", status_code=303)
 
 

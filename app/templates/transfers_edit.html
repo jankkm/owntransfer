@@ -12,7 +12,15 @@
 <div class="bg-white border rounded-xl p-6 space-y-4 mb-4">
   <div>
     {{ f.field_label(_("Share link"), "share_link") }}
+    {% if transfer.is_preparing %}
+    <div class="flex items-center gap-2">
+      {{ f.status_badge(_('Preparing'), 'blue') }}
+      <span class="text-xs text-slate-500">{{ _('Your files are still being prepared. The link will appear here once ready.') }}</span>
+    </div>
+    <script>setTimeout(() => location.reload(), 3000)</script>
+    {% else %}
     {{ f.copy_url_field(base_url ~ "/d/" ~ transfer.public_token, input_id="share_link") }}
+    {% endif %}
   </div>
   <form method="post" action="{{ regenerate_action or ('/transfers/' ~ transfer.id ~ '/regenerate-link') }}" class="rounded-lg border border-slate-200 bg-slate-50 p-4">
     {{ csrf_input() }}

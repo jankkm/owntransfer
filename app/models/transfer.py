@@ -28,6 +28,7 @@ class Transfer(Base, TimestampMixin):
     recipient_emails: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_expired: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_disabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_preparing: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     expired_unused_notified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     purge_warned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 

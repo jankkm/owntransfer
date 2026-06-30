@@ -21,7 +21,8 @@
         t.password_hash,
         transfer_deletion_pending(t, purge_grace_days, now),
         transfer_expiry_pending(t, now),
-        t.notify_on_download
+        t.notify_on_download,
+        is_preparing=t.is_preparing
       ) }}
     </div>
 
@@ -40,7 +41,8 @@
       base_url ~ "/d/" ~ t.public_token,
       "/transfers/" ~ t.id ~ "/edit",
       "/transfers/" ~ t.id ~ "/delete",
-      "delete-panel-" ~ loop.index
+      "delete-panel-" ~ loop.index,
+      is_preparing=t.is_preparing
     ) }}
   </article>
   {% else %}
@@ -55,4 +57,7 @@
   </div>
   {% endfor %}
 </div>
+{% if transfers | selectattr('is_preparing') | list %}
+<script>setTimeout(() => location.reload(), 3000)</script>
+{% endif %}
 {% endblock %}
