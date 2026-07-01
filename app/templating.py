@@ -110,6 +110,7 @@ def branding_context(app_settings: AppSettings) -> dict:
         "max_expiry_date": max_expiry_date(app_settings.max_share_expiry_days),
         "today_date": today_date(),
         "max_downloads_default": app_settings.max_downloads_default,
+        "max_uploads_default": app_settings.max_uploads_default,
         "purge_grace_days": app_settings.purge_grace_days,
         "allow_user_share_emails": app_settings.allow_user_share_emails,
         "impressum_enabled": app_settings.impressum_enabled

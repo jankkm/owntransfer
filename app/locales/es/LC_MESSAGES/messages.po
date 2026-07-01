@@ -1028,6 +1028,14 @@ msgid "0 = unlimited downloads."
 msgstr "0 = descargas ilimitadas."
 
 #: app/templates/admin.html:42
+msgid "Default max uploads"
+msgstr "Cargas máx. predeterminadas"
+
+#: app/templates/admin.html:42
+msgid "0 = unlimited uploads."
+msgstr "0 = cargas ilimitadas."
+
+#: app/templates/admin.html:43
 msgid "Delete after expiry (days)"
 msgstr "Eliminar tras caducidad (días)"
 

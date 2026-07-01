@@ -18,7 +18,7 @@
     </div>
     <div>
       {{ f.field_label(_("Max uploads"), "max_uploads") }}
-      <input type="number" id="max_uploads" name="max_uploads" value="10" min="1"
+      <input type="number" id="max_uploads" name="max_uploads" value="{{ max_uploads_default }}" min="0"
              class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
     </div>
   </div>

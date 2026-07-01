@@ -111,7 +111,7 @@ def request_access_issue(req: FileRequest) -> str | None:
         return ACCESS_DISABLED
     if is_past_expiry(is_expired=req.is_expired, expires_at=req.expires_at):
         return ACCESS_EXPIRED
-    if req.upload_count >= req.max_uploads:
+    if req.max_uploads != 0 and req.upload_count >= req.max_uploads:
         return ACCESS_UPLOAD_LIMIT
     return None
 

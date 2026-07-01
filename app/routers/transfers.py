@@ -138,7 +138,7 @@ async def create_transfer_route(
     password: str = Form(""),
     use_password: str = Form(""),
     expires_at: str = Form(...),
-    max_downloads: int = Form(10),
+    max_downloads: int = Form(...),
     notify_on_download: str = Form(""),
     recipient_emails: str = Form(""),
     db: AsyncSession = Depends(get_db),

@@ -92,7 +92,7 @@ async def create_request_route(
     password: str = Form(""),
     use_password: str = Form(""),
     expires_at: str = Form(...),
-    max_uploads: int = Form(10),
+    max_uploads: int = Form(...),
     max_total_mb: int = Form(2048),
     recipient_emails: str = Form(""),
     db: AsyncSession = Depends(get_db),

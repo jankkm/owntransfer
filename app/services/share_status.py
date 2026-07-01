@@ -84,7 +84,7 @@ def file_request_is_accessible(req: FileRequest, now: datetime) -> bool:
         return False
     if file_request_is_expired(req, now):
         return False
-    if req.upload_count >= req.max_uploads:
+    if req.max_uploads != 0 and req.upload_count >= req.max_uploads:
         return False
     return True
 
@@ -98,7 +98,7 @@ def file_request_inactive_reason_code(req: FileRequest, now: datetime) -> str | 
         return REASON_DISABLED
     if file_request_is_expired(req, now):
         return REASON_EXPIRED
-    if req.upload_count >= req.max_uploads:
+    if req.max_uploads != 0 and req.upload_count >= req.max_uploads:
         return REASON_UPLOAD_LIMIT
     return None
 

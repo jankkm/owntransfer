@@ -17,6 +17,12 @@ def _apply_migrations(sync_conn) -> None:
         )
         sync_conn.commit()
 
+    if "max_uploads_default" not in columns:
+        sync_conn.execute(
+            text("ALTER TABLE app_settings ADD COLUMN max_uploads_default INTEGER NOT NULL DEFAULT 10")
+        )
+        sync_conn.commit()
+
     if "transfers" in insp.get_table_names():
         transfer_cols = {col["name"] for col in insp.get_columns("transfers")}
         if "is_preparing" not in transfer_cols:

@@ -20,6 +20,7 @@ class AppSettings(Base):
     default_expiry_days: Mapped[int] = mapped_column(Integer, nullable=False, default=7)
     max_share_expiry_days: Mapped[int] = mapped_column(Integer, nullable=False, default=365)
     max_downloads_default: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
+    max_uploads_default: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
     smtp_host: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     smtp_port: Mapped[int] = mapped_column(Integer, nullable=False, default=587)
     smtp_user: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)

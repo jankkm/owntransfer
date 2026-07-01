@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     default_expiry_days: int = Field(default=7, alias="DEFAULT_EXPIRY_DAYS")
     max_share_expiry_days: int = Field(default=365, alias="MAX_SHARE_EXPIRY_DAYS")
     max_downloads_default: int = Field(default=10, alias="MAX_DOWNLOADS_DEFAULT")
+    max_uploads_default: int = Field(default=10, alias="MAX_UPLOADS_DEFAULT")
     allow_local_login: bool = Field(default=True, alias="ALLOW_LOCAL_LOGIN")
     allow_user_share_emails: bool = Field(default=True, alias="ALLOW_USER_SHARE_EMAILS")
     purge_grace_days: int = Field(default=7, alias="PURGE_GRACE_DAYS")

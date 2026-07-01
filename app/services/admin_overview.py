@@ -84,7 +84,7 @@ async def get_shares_summary(db: AsyncSession) -> dict[str, int]:
             FileRequest.is_disabled.is_(False),
             FileRequest.is_expired.is_(False),
             FileRequest.expires_at >= now,
-            FileRequest.upload_count < FileRequest.max_uploads,
+            (FileRequest.max_uploads == 0) | (FileRequest.upload_count < FileRequest.max_uploads),
         )
     ) or 0
     return {

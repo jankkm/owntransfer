@@ -510,6 +510,7 @@ async def save_share_settings(
     default_expiry_days: int = Form(...),
     max_share_expiry_days: int = Form(...),
     max_downloads_default: int = Form(...),
+    max_uploads_default: int = Form(...),
     purge_grace_days: int = Form(...),
     purge_notify_days: int = Form(...),
     db: AsyncSession = Depends(get_db),
@@ -519,6 +520,7 @@ async def save_share_settings(
     app_settings.default_expiry_days = default_expiry_days
     app_settings.max_share_expiry_days = max(1, max_share_expiry_days)
     app_settings.max_downloads_default = max_downloads_default
+    app_settings.max_uploads_default = max_uploads_default
     app_settings.purge_grace_days = max(0, purge_grace_days)
     app_settings.purge_notify_days = max(0, purge_notify_days)
     await db.commit()

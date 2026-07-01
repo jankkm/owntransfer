@@ -38,6 +38,7 @@ async def prepare_db():
                 default_expiry_days=7,
                 max_share_expiry_days=365,
                 max_downloads_default=5,
+                max_uploads_default=3,
                 purge_grace_days=7,
                 setup_completed=True,
             )

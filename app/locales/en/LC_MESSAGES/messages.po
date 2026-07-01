@@ -969,6 +969,14 @@ msgid "0 = unlimited downloads."
 msgstr ""
 
 #: app/templates/admin.html:42
+msgid "Default max uploads"
+msgstr ""
+
+#: app/templates/admin.html:42
+msgid "0 = unlimited uploads."
+msgstr ""
+
+#: app/templates/admin.html:43
 msgid "Delete after expiry (days)"
 msgstr ""
 
