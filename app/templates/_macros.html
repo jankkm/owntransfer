@@ -185,29 +185,29 @@
 {%- endmacro %}
 
 {% macro share_list_footer(share_url, edit_url, delete_form_action, delete_panel_id, is_preparing=false) -%}
-<div class="mt-4 pt-4 border-t border-slate-100 flex flex-col lg:flex-row lg:items-start gap-3">
-  <div class="flex-1 min-w-0">
-    {% if is_preparing %}
-    <p class="text-xs text-slate-400 italic">{{ _('Files are being prepared…') }}</p>
-    {% else %}
-    {{ share_link_field(share_url) }}
-    {% endif %}
-  </div>
-  <div class="flex flex-wrap items-center gap-4 shrink-0 text-sm lg:pt-1">
-    <a href="{{ edit_url }}" class="text-primary hover:underline font-medium">{{ _('Edit') }}</a>
-    <form method="post" action="{{ delete_form_action }}" class="inline">
-      {{ csrf_input() }}
+<form method="post" action="{{ delete_form_action }}" class="mt-4 pt-4 border-t border-slate-100">
+  {{ csrf_input() }}
+  <div class="flex flex-col lg:flex-row lg:items-start gap-3">
+    <div class="flex-1 min-w-0">
+      {% if is_preparing %}
+      <p class="text-xs text-slate-400 italic">{{ _('Files are being prepared…') }}</p>
+      {% else %}
+      {{ share_link_field(share_url) }}
+      {% endif %}
+    </div>
+    <div class="flex flex-wrap items-center gap-4 shrink-0 text-sm lg:pt-1">
+      <a href="{{ edit_url }}" class="text-primary hover:underline font-medium">{{ _('Edit') }}</a>
       {{ confirm_trigger(delete_panel_id, _("Delete"), "text-red-600 hover:underline font-medium") }}
-      {{ confirm_panel(
-        delete_panel_id,
-        _("Delete this share?"),
-        _("All files will be permanently removed. This cannot be undone."),
-        _("Yes, delete"),
-        variant="red"
-      ) }}
-    </form>
+    </div>
   </div>
-</div>
+  {{ confirm_panel(
+    delete_panel_id,
+    _("Delete this share?"),
+    _("All files will be permanently removed. This cannot be undone."),
+    _("Yes, delete"),
+    variant="red"
+  ) }}
+</form>
 {%- endmacro %}
 
 {% macro share_list_controls(action_url, list_query) -%}
@@ -255,11 +255,13 @@
 {% macro confirm_panel(panel_id, title, message, confirm_text='', cancel_text='', variant='amber') -%}
 {% if not confirm_text %}{% set confirm_text = _('Confirm') %}{% endif %}
 {% if not cancel_text %}{% set cancel_text = _('Cancel') %}{% endif %}
-<div id="{{ panel_id }}" class="hidden mt-3 rounded-lg border p-4 text-sm
+<div id="{{ panel_id }}" class="hidden mt-3 rounded-lg border p-3 text-sm flex flex-wrap items-center gap-3
   {% if variant == 'red' %}border-red-200 bg-red-50{% else %}border-amber-200 bg-amber-50{% endif %}">
-  <p class="font-medium mb-1 {% if variant == 'red' %}text-red-900{% else %}text-amber-900{% endif %}">{{ title }}</p>
-  <p class="mb-3 {% if variant == 'red' %}text-red-800{% else %}text-amber-800{% endif %}">{{ message }}</p>
-  <div class="flex gap-2">
+  <div class="flex-1 min-w-[12rem]">
+    <p class="font-medium {% if variant == 'red' %}text-red-900{% else %}text-amber-900{% endif %}">{{ title }}</p>
+    <p class="{% if variant == 'red' %}text-red-800{% else %}text-amber-800{% endif %}">{{ message }}</p>
+  </div>
+  <div class="flex gap-2 shrink-0">
     <button type="submit" data-confirm-for="{{ panel_id }}"
             class="rounded-lg px-3 py-1.5 text-white text-sm {% if variant == 'red' %}bg-red-600 hover:bg-red-700{% else %}bg-amber-700 hover:bg-amber-800{% endif %}">
       {{ confirm_text }}

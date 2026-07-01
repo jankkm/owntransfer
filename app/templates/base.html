@@ -89,10 +89,25 @@
       </a>
       {% if user %}
       <nav class="flex items-center gap-1 sm:gap-5 text-sm min-w-0">
-        <a href="/dashboard" class="nav-link px-1 py-1{% if request.url.path == '/dashboard' %} tab-active{% endif %}">{{ _('Dashboard') }}</a>
+        <a href="/dashboard" class="nav-link hidden md:inline px-1 py-1{% if request.url.path == '/dashboard' %} tab-active{% endif %}">{{ _('Dashboard') }}</a>
         <a href="/transfers" class="nav-link hidden md:inline px-1 py-1{% if request.url.path.startswith('/transfers') %} tab-active{% endif %}">{{ _('Transfers') }}</a>
         <a href="/requests" class="nav-link hidden md:inline px-1 py-1{% if request.url.path.startswith('/requests') %} tab-active{% endif %}">{{ _('File requests') }}</a>
-        <div class="relative shrink-0 ml-1 sm:ml-2" data-profile-menu>
+        <button type="button" data-burger-toggle
+                class="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                aria-label="{{ _('Menu') }}" aria-expanded="false" aria-controls="mobile-menu">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               class="w-5 h-5" aria-hidden="true" data-burger-icon>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               class="hidden w-5 h-5" aria-hidden="true" data-burger-close-icon>
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        <div class="relative shrink-0 ml-1 sm:ml-2 hidden md:block" data-profile-menu>
           <button type="button" data-profile-menu-toggle
                   class="profile-menu-btn flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-1 pr-2.5 sm:pr-3 py-1 max-w-[11rem] sm:max-w-[15rem]"
                   aria-label="{{ _('Profile menu') }}" aria-expanded="false" aria-haspopup="true">
@@ -142,6 +157,36 @@
       </nav>
       {% endif %}
     </div>
+    {% if user %}
+    <div id="mobile-menu" data-burger-menu class="hidden md:hidden border-t border-slate-100">
+      <div class="max-w-5xl mx-auto px-4 py-2 flex flex-col">
+        <div class="flex items-center gap-3 px-3 py-2 min-w-0">
+          <span class="profile-avatar flex items-center justify-center w-9 h-9 rounded-full text-xs font-semibold shrink-0">
+            {{ (user.display_name or user.email)|user_initials }}
+          </span>
+          <div class="min-w-0">
+            {% if user.display_name %}
+            <p class="text-sm font-semibold text-slate-900 truncate">{{ user.display_name }}</p>
+            <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
+            {% else %}
+            <p class="text-sm font-semibold text-slate-900 truncate">{{ user.email }}</p>
+            {% endif %}
+          </div>
+        </div>
+        <a href="/auth/profile" class="block px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-lg">{{ _('Profile') }}</a>
+        {% if user.is_admin %}<a href="/admin" class="block px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-lg">{{ _('Admin') }}</a>{% endif %}
+        <form method="post" action="/auth/logout">
+          {{ csrf_input() }}
+          <button type="submit" class="block w-full text-left px-3 py-2.5 text-sm text-slate-500 hover:bg-slate-50 rounded-lg">{{ _('Logout') }}</button>
+        </form>
+        <div class="mt-2 pt-2 border-t border-slate-100">
+          <a href="/dashboard" class="px-3 py-2.5 text-sm font-medium rounded-lg block{% if request.url.path == '/dashboard' %} text-primary bg-slate-50{% else %} text-slate-700 hover:bg-slate-50{% endif %}">{{ _('Dashboard') }}</a>
+          <a href="/transfers" class="px-3 py-2.5 text-sm font-medium rounded-lg block{% if request.url.path.startswith('/transfers') %} text-primary bg-slate-50{% else %} text-slate-700 hover:bg-slate-50{% endif %}">{{ _('Transfers') }}</a>
+          <a href="/requests" class="px-3 py-2.5 text-sm font-medium rounded-lg block{% if request.url.path.startswith('/requests') %} text-primary bg-slate-50{% else %} text-slate-700 hover:bg-slate-50{% endif %}">{{ _('File requests') }}</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </header>
   <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full">
     {% if error %}<div class="mb-4 p-3 rounded bg-red-50 text-red-700 border border-red-200" data-page-error>{{ error }}</div>{% endif %}
@@ -182,6 +227,29 @@
         if (panel) panel.classList.add('hidden');
       });
     });
+
+    const burgerToggle = document.querySelector('[data-burger-toggle]');
+    const burgerMenu = document.querySelector('[data-burger-menu]');
+    if (burgerToggle && burgerMenu) {
+      const burgerIcon = burgerToggle.querySelector('[data-burger-icon]');
+      const burgerCloseIcon = burgerToggle.querySelector('[data-burger-close-icon]');
+      burgerToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = !burgerMenu.classList.contains('hidden');
+        burgerMenu.classList.toggle('hidden', open);
+        burgerToggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+        burgerIcon.classList.toggle('hidden', !open);
+        burgerCloseIcon.classList.toggle('hidden', open);
+      });
+      document.addEventListener('click', (e) => {
+        if (!burgerMenu.contains(e.target) && !burgerToggle.contains(e.target)) {
+          burgerMenu.classList.add('hidden');
+          burgerToggle.setAttribute('aria-expanded', 'false');
+          burgerIcon.classList.remove('hidden');
+          burgerCloseIcon.classList.add('hidden');
+        }
+      });
+    }
 
     document.querySelectorAll('[data-profile-menu]').forEach((root) => {
       const toggle = root.querySelector('[data-profile-menu-toggle]');
