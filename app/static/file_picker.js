@@ -32,8 +32,8 @@
     return { enqueue };
   }
 
-  function t(key) {
-    return window.__(key);
+  function t(key, vars) {
+    return window.__(key, vars);
   }
 
   function csrfToken() {
@@ -75,6 +75,32 @@
     return Number.isFinite(value) && value >= 1 ? value : fallback;
   }
 
+  function readBlocklist(root) {
+    const raw = root.dataset.fileTypeBlocklist;
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.map((ext) => String(ext).toLowerCase()) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function fileExtension(filename) {
+    const base = String(filename || "").split(/[/\\]/).pop() || "";
+    const dot = base.lastIndexOf(".");
+    return dot >= 0 ? base.slice(dot).toLowerCase() : "";
+  }
+
+  function isExtensionBlocked(filename, blocklist) {
+    if (!blocklist.length) return false;
+    return blocklist.includes(fileExtension(filename));
+  }
+
+  function blockedFileMessage(filename) {
+    return t("File type not allowed: %(filename)s", { filename });
+  }
+
   function initFilePicker(root) {
     const uploadUrl = root.dataset.uploadUrl;
     const deleteUrlTemplate = root.dataset.deleteUrlTemplate;
@@ -88,6 +114,7 @@
     const requireFiles = root.dataset.requireFiles === "true";
     const requiredMessage = root.dataset.requiredMessage || t("Add at least one file");
     const concurrency = readConcurrency(root, DEFAULT_CONCURRENCY);
+    const blocklist = readBlocklist(root);
     const uploadQueue = createUploadQueue(concurrency);
     const files = new Map();
 
@@ -178,18 +205,30 @@
       }
 
       const retryBtn = row.querySelector("[data-fp-retry]");
-      retryBtn.classList.toggle("hidden", entry.status !== "error");
+      retryBtn.classList.toggle("hidden", entry.status !== "error" || entry.blocked);
 
       const removeBtn = row.querySelector("[data-fp-remove]");
-      removeBtn.disabled = entry.status === "uploading";
+      removeBtn.disabled = false;
+      removeBtn.textContent = isBusy(entry) ? t("Cancel") : t("Remove");
     }
 
     function queueUpload(clientId) {
       const entry = files.get(clientId);
       if (!entry || !entry.file) return;
+      if (isExtensionBlocked(entry.name, blocklist)) {
+        entry.status = "error";
+        entry.blocked = true;
+        entry.error = blockedFileMessage(entry.name);
+        entry.progress = 0;
+        entry.cancelQueue = null;
+        renderEntry(clientId, entry);
+        notifyChange();
+        return;
+      }
       entry.status = "queued";
       entry.progress = 0;
       entry.error = null;
+      entry.blocked = false;
       entry.aborted = false;
       entry.cancelQueue = uploadQueue.enqueue(() => startUpload(clientId));
       renderEntry(clientId, entry);
@@ -197,20 +236,27 @@
     }
 
     function uploadEntry(clientId, file) {
+      const blocked = isExtensionBlocked(file.name, blocklist);
       const entry = {
         file,
         name: file.name,
         size: file.size,
-        status: "queued",
+        status: blocked ? "error" : "queued",
         progress: 0,
         serverId: null,
-        error: null,
+        error: blocked ? blockedFileMessage(file.name) : null,
+        blocked,
         xhr: null,
         aborted: false,
         cancelQueue: null,
       };
       files.set(clientId, entry);
       updateEmptyState();
+      if (blocked) {
+        renderEntry(clientId, entry);
+        notifyChange();
+        return;
+      }
       queueUpload(clientId);
     }
 
@@ -268,6 +314,11 @@
           resolve();
         });
 
+        xhr.addEventListener("abort", () => {
+          entry.xhr = null;
+          resolve();
+        });
+
         xhr.open("POST", uploadUrl);
         xhr.withCredentials = true;
         xhr.setRequestHeader("X-CSRF-Token", csrfToken());
@@ -277,7 +328,7 @@
 
     function retryEntry(clientId) {
       const entry = files.get(clientId);
-      if (!entry || entry.status !== "error") return;
+      if (!entry || entry.status !== "error" || entry.blocked) return;
       if (entry.cancelQueue) entry.cancelQueue();
       queueUpload(clientId);
     }

@@ -19,6 +19,7 @@ from app.services.datetime_display import (
     max_expiry_date,
     today_date,
 )
+from app.services.settings import parse_blocklist
 from app.i18n import (
     SUPPORTED_LOCALES,
     get_locale,
@@ -121,4 +122,5 @@ def branding_context(app_settings: AppSettings) -> dict:
         "locale": get_locale(),
         "js_messages": js_messages(),
         "upload_concurrency": app_settings.upload_concurrency,
+        "file_type_blocklist": parse_blocklist(app_settings.file_type_blocklist),
     }

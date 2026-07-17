@@ -81,6 +81,32 @@
     return Number.isFinite(value) && value >= 1 ? value : fallback;
   }
 
+  function readBlocklist(root) {
+    const raw = root.dataset.fileTypeBlocklist;
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.map((ext) => String(ext).toLowerCase()) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function fileExtension(filename) {
+    const base = String(filename || "").split(/[/\\]/).pop() || "";
+    const dot = base.lastIndexOf(".");
+    return dot >= 0 ? base.slice(dot).toLowerCase() : "";
+  }
+
+  function isExtensionBlocked(filename, blocklist) {
+    if (!blocklist.length) return false;
+    return blocklist.includes(fileExtension(filename));
+  }
+
+  function blockedFileMessage(filename) {
+    return t("File type not allowed: %(filename)s", { filename });
+  }
+
   function initTransferFiles(root) {
     const uploadUrl = root.dataset.uploadUrl;
     const deleteUrlTemplate = root.dataset.deleteUrlTemplate;
@@ -95,6 +121,7 @@
     const pendingUploads = new Set();
     const uploadStates = new Map();
     const concurrency = readConcurrency(root, 5);
+    const blocklist = readBlocklist(root);
     const uploadQueue = createUploadQueue(concurrency);
 
     function setError(message) {
@@ -123,7 +150,7 @@
     }
 
     function createFileRow(fileId, name, sizeBytes, options = {}) {
-      const { uploading = false, progress = 0, error = "" } = options;
+      const { uploading = false, queued = false, progress = 0, error = "", blocked = false } = options;
       const row = document.createElement("li");
       row.dataset.fileId = fileId;
       row.className = "border border-slate-200 rounded-lg p-3 bg-white";
@@ -181,11 +208,11 @@
       wrap.appendChild(actions);
       row.appendChild(wrap);
 
-      updateRowState(row, { uploading, progress, error, sizeBytes });
+      updateRowState(row, { uploading, queued, progress, error, blocked, sizeBytes });
       return row;
     }
 
-    function updateRowState(row, { uploading, queued, progress, error, sizeBytes }) {
+    function updateRowState(row, { uploading, queued, progress, error, blocked, sizeBytes }) {
       const metaEl = row.querySelector("[data-file-meta]");
       const progressWrap = row.querySelector("[data-file-progress]");
       const progressBar = progressWrap ? progressWrap.firstElementChild : null;
@@ -197,13 +224,15 @@
         metaEl.textContent = `${formatSize(sizeBytes || 0)} · ${t("Uploading…")}`;
         progressWrap.classList.remove("hidden");
         if (progressBar) progressBar.style.width = `${progress}%`;
-        removeBtn.disabled = true;
+        removeBtn.disabled = false;
+        removeBtn.textContent = t("Cancel");
         retryBtn.classList.add("hidden");
       } else if (queued) {
         metaEl.textContent = `${formatSize(sizeBytes || 0)} · ${t("Waiting…")}`;
         progressWrap.classList.remove("hidden");
         if (progressBar) progressBar.style.width = "0%";
         removeBtn.disabled = false;
+        removeBtn.textContent = t("Cancel");
         retryBtn.classList.add("hidden");
       } else if (error) {
         metaEl.textContent = `${formatSize(sizeBytes || 0)} · ${t("Upload failed")}`;
@@ -211,12 +240,14 @@
         errorElRow.textContent = error;
         errorElRow.classList.remove("hidden");
         removeBtn.disabled = false;
-        retryBtn.classList.remove("hidden");
+        removeBtn.textContent = t("Remove");
+        retryBtn.classList.toggle("hidden", Boolean(blocked));
       } else {
         metaEl.textContent = formatSize(sizeBytes || 0);
         progressWrap.classList.add("hidden");
         errorElRow.classList.add("hidden");
         removeBtn.disabled = false;
+        removeBtn.textContent = t("Remove");
         retryBtn.classList.add("hidden");
       }
     }
@@ -333,7 +364,18 @@
 
     function retryUpload(clientId) {
       const upload = uploadStates.get(clientId);
-      if (!upload) return;
+      if (!upload || upload.blocked) return;
+      if (isExtensionBlocked(upload.file.name, blocklist)) {
+        upload.blocked = true;
+        updateRowState(upload.row, {
+          error: blockedFileMessage(upload.file.name),
+          blocked: true,
+          sizeBytes: upload.file.size,
+        });
+        pendingUploads.delete(clientId);
+        updateDoneState();
+        return;
+      }
       if (upload.state.cancelQueue) upload.state.cancelQueue();
       pendingUploads.add(clientId);
       upload.row.dataset.pendingClientId = clientId;
@@ -347,16 +389,28 @@
 
     function uploadFile(file) {
       const clientId = crypto.randomUUID();
-      const row = createFileRow(clientId, file.name, file.size, { queued: true });
+      const blocked = isExtensionBlocked(file.name, blocklist);
+      const row = createFileRow(clientId, file.name, file.size, {
+        queued: !blocked,
+        error: blocked ? blockedFileMessage(file.name) : "",
+        blocked,
+      });
       row.dataset.pendingClientId = clientId;
       list.appendChild(row);
       setEditMode(true);
-      pendingUploads.add(clientId);
-      updateDoneState();
       setError("");
 
       const state = { xhr: null, aborted: false, cancelQueue: null };
-      uploadStates.set(clientId, { row, state, file });
+      uploadStates.set(clientId, { row, state, file, blocked });
+
+      if (blocked) {
+        updateTitle();
+        updateDoneState();
+        return;
+      }
+
+      pendingUploads.add(clientId);
+      updateDoneState();
       state.cancelQueue = uploadQueue.enqueue(() => startUpload(clientId, file, row, state));
     }
 
@@ -381,6 +435,7 @@
         });
 
         xhr.addEventListener("load", () => {
+          state.xhr = null;
           pendingUploads.delete(clientId);
           updateDoneState();
           row.dataset.uploading = "false";
@@ -403,12 +458,18 @@
         });
 
         xhr.addEventListener("error", () => {
+          state.xhr = null;
           pendingUploads.delete(clientId);
           updateDoneState();
           row.dataset.uploading = "false";
           if (!state.aborted) {
             updateRowState(row, { error: t("Network error"), sizeBytes: file.size });
           }
+          resolve();
+        });
+
+        xhr.addEventListener("abort", () => {
+          state.xhr = null;
           resolve();
         });
 

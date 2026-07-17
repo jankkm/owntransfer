@@ -35,6 +35,7 @@ JS_MESSAGE_KEYS = (
     "Retry",
     "Remove",
     "Network error",
+    "File type not allowed: %(filename)s",
     "Sending…",
     "Could not remove file",
     "Could not show confirmation dialog.",
