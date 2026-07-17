@@ -153,6 +153,12 @@ def locale_display_name(locale: str) -> str:
         return locale
 
 
+def translate_for_locale(message: str, locale: str) -> str:
+    """Translate a message into a specific locale without changing the active locale."""
+    resolved = normalize_locale(locale) or "en"
+    return _load_translation(resolved).gettext(message)
+
+
 def js_messages() -> dict[str, str]:
     msgs = {key: gettext(key) for key in JS_MESSAGE_KEYS}
     for singular, plural in JS_NGETTEXT_PAIRS:

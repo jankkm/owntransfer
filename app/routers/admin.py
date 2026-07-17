@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.deps import get_current_admin
 from app.auth.passwords import hash_password, is_password_long_enough
 from app.database import get_db
-from app.i18n import _
+from app.i18n import _, normalize_locale, SUPPORTED_LOCALES
 from app.http.client_ip import get_client_ip
 from app.models import AuditLog, User
 from app.services.admin_overview import (
@@ -30,6 +30,8 @@ from app.services.email_templates import (
     TEMPLATE_FIELD_MAP,
     TEMPLATE_KEYS,
     TEMPLATE_VARIABLES,
+    get_builtin_defaults,
+    get_builtin_subjects,
     subjects_for_admin,
     templates_for_admin,
 )
@@ -566,6 +568,7 @@ async def admin_email_templates(
         "templates": templates_for_admin(app_settings),
         "subjects": subjects_for_admin(app_settings),
         "template_sections": template_sections,
+        "email_defaults_url": "/admin/email/defaults",
     })
     if request.query_params.get("saved"):
         ctx["success"] = _("Email templates saved.")
@@ -589,6 +592,19 @@ async def save_email_templates(
         setattr(app_settings, subj_field, str(subj_value).strip() or None)
     await db.commit()
     return RedirectResponse("/admin/email?saved=1", status_code=303)
+
+
+@router.get("/email/defaults", response_class=JSONResponse)
+async def email_template_defaults(
+    locale: str = "en",
+    user: User = Depends(get_current_admin),
+):
+    resolved = normalize_locale(locale)
+    if not resolved or resolved not in SUPPORTED_LOCALES:
+        resolved = "en"
+    defaults = get_builtin_defaults(resolved)
+    subjects = get_builtin_subjects(resolved)
+    return {key: {"subject": subjects[key], "body": defaults[key]} for key in TEMPLATE_KEYS}
 
 
 @router.post("/smtp")

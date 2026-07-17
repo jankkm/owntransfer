@@ -5,7 +5,7 @@ import html
 from jinja2.sandbox import SandboxedEnvironment
 
 from app.config import settings
-from app.i18n import N_, _, activate, email_locale
+from app.i18n import N_, _, activate, email_locale, normalize_locale, translate_for_locale
 from app.models import AppSettings
 
 # Admin-editable templates are untrusted-ish: a compromised or careless admin
@@ -122,6 +122,23 @@ def get_subject_source(app_settings: AppSettings, key: str) -> str:
     return _(DEFAULT_SUBJECTS[key])
 
 
+def _admin_display_locale(locale: str | None) -> str:
+    """Resolve the locale to use when displaying defaults in the admin UI."""
+    return normalize_locale(locale) or normalize_locale(settings.default_locale) or "en"
+
+
+def get_builtin_defaults(locale: str) -> dict[str, str]:
+    """Return all built-in template bodies translated into the given locale."""
+    resolved = _admin_display_locale(locale)
+    return {key: translate_for_locale(DEFAULTS[key], resolved) for key in TEMPLATE_KEYS}
+
+
+def get_builtin_subjects(locale: str) -> dict[str, str]:
+    """Return all built-in template subjects translated into the given locale."""
+    resolved = _admin_display_locale(locale)
+    return {key: translate_for_locale(DEFAULT_SUBJECTS[key], resolved) for key in TEMPLATE_KEYS}
+
+
 def render_email_template(app_settings: AppSettings, key: str, **context) -> str:
     source = get_template_source(app_settings, key)
     return _sandbox.from_string(source).render(**_render_context(app_settings, **context))
@@ -132,9 +149,35 @@ def render_email_subject(app_settings: AppSettings, key: str, **context) -> str:
     return _sandbox.from_string(source).render(**_render_context(app_settings, **context)).strip()
 
 
-def templates_for_admin(app_settings: AppSettings) -> dict[str, str]:
-    return {key: get_template_source(app_settings, key) for key in TEMPLATE_KEYS}
+def templates_for_admin(app_settings: AppSettings, locale: str | None = None) -> dict[str, str]:
+    """Return template bodies for the admin UI.
+
+    For templates that haven't been customised yet the built-in default is
+    returned translated into *locale* (falls back to the site default locale
+    so the displayed text is always consistent regardless of the admin's UI
+    language).
+    """
+    resolved = _admin_display_locale(locale)
+    result: dict[str, str] = {}
+    for key in TEMPLATE_KEYS:
+        field = TEMPLATE_FIELD_MAP[key]
+        custom = getattr(app_settings, field, None)
+        if custom and custom.strip():
+            result[key] = _normalize_template_source(custom)
+        else:
+            result[key] = translate_for_locale(DEFAULTS[key], resolved)
+    return result
 
 
-def subjects_for_admin(app_settings: AppSettings) -> dict[str, str]:
-    return {key: get_subject_source(app_settings, key) for key in TEMPLATE_KEYS}
+def subjects_for_admin(app_settings: AppSettings, locale: str | None = None) -> dict[str, str]:
+    """Return template subjects for the admin UI (same locale logic as templates_for_admin)."""
+    resolved = _admin_display_locale(locale)
+    result: dict[str, str] = {}
+    for key in TEMPLATE_KEYS:
+        field = SUBJECT_FIELD_MAP[key]
+        custom = getattr(app_settings, field, None)
+        if custom and custom.strip():
+            result[key] = _normalize_template_source(custom)
+        else:
+            result[key] = translate_for_locale(DEFAULT_SUBJECTS[key], resolved)
+    return result

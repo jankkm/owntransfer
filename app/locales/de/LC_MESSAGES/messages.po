@@ -2043,6 +2043,9 @@ msgstr "0 für unbegrenzte Downloads verwenden."
 msgid "Create transfer"
 msgstr "Übertragung erstellen"
 
+msgid "Fill with built-in:"
+msgstr "Mit Standard befüllen:"
+
 #~ msgid "Wait for uploads to finish"
 #~ msgstr "Warten Sie, bis die Uploads abgeschlossen sind"
 

@@ -2046,3 +2046,6 @@ msgstr "Use 0 para descargas ilimitadas."
 msgid "Create transfer"
 msgstr "Crear transferencia"
 
+msgid "Fill with built-in:"
+msgstr "Rellenar con predeterminado:"
+

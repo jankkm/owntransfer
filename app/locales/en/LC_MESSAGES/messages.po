@@ -1941,6 +1941,9 @@ msgstr ""
 msgid "Create transfer"
 msgstr ""
 
+msgid "Fill with built-in:"
+msgstr ""
+
 #~ msgid "OAuth provider did not return email"
 #~ msgstr ""
 
