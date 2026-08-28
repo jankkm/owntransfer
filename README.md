@@ -56,10 +56,10 @@ _Screenshots coming soon._
 | **Limits** | Max file size, default expiry, max share lifetime, default download limit, purge grace period, file extension blocklist, local login, user-sent share emails |
 | **SMTP** | Outbound mail for share links and notifications |
 | **Email templates** | Editable Jinja2 subjects and HTML bodies for all notification types |
-| **Shares** | Overview of all transfers and requests across users; edit or delete any share |
+| **Shares** | Overview of all transfers and requests across users; edit or delete any share; reassign ownership to another active user |
 | **Users** | Create users, promote/demote admins, reset passwords, delete accounts |
 | **Impressum** | Optional legal notice page (Markdown) |
-| **Audit log** | Recent admin and system actions |
+| **Audit log** | Recent admin and system actions (including owner changes on transfers and file requests) |
 
 ### Email notifications
 
@@ -238,7 +238,7 @@ Run the same container image with a persistent volume claim for `/data`, configu
 - Rate limiting on public download and upload routes
 - Session cookies are HTTP-only
 - File extension blocklist configurable in admin
-- Audit log for administrative actions
+- Audit log for administrative actions (including `transfer.owner_changed` and `file_request.owner_changed` when an admin reassigns a share)
 
 ### Fail2ban
 

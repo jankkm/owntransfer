@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,6 +66,22 @@ def _shares_url(*, tab: str = "transfers", user: str = "", **extra: str) -> str:
         if value:
             parts.append(f"{key}={value}")
     return "/admin/shares?" + "&".join(parts)
+
+
+async def _list_active_users(db: AsyncSession) -> list[User]:
+    return list(
+        (await db.execute(select(User).where(User.is_active.is_(True)).order_by(User.email))).scalars().all()
+    )
+
+
+def _parse_new_owner_id(value: str) -> uuid.UUID | None:
+    value = value.strip()
+    if not value:
+        return None
+    try:
+        return uuid.UUID(value)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=_("Invalid owner")) from exc
 
 
 @router.get("", response_class=HTMLResponse)
@@ -182,6 +198,7 @@ async def admin_edit_transfer_page(
     app_settings = await get_app_settings(db)
     transfer = await get_transfer_for_admin(db, transfer_id)
     download_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
+    owner_users = await _list_active_users(db)
     ctx = branding_context(app_settings)
     ctx.update({
         "user": admin_user,
@@ -189,6 +206,7 @@ async def admin_edit_transfer_page(
         "download_logs": download_logs,
         "has_password": bool(transfer.password_hash),
         "admin_edit": True,
+        "owner_users": owner_users,
         "back_url": _shares_url(tab=tab, user=user),
         "form_action": f"/admin/shares/transfers/{transfer_id}/edit",
         "regenerate_action": f"/admin/shares/transfers/{transfer_id}/regenerate-link",
@@ -219,6 +237,7 @@ async def admin_edit_transfer_route(
     enabled: str = Form(""),
     tab: str = Form("transfers"),
     user: str = Form(""),
+    created_by: str = Form(""),
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin),
 ):
@@ -240,6 +259,7 @@ async def admin_edit_transfer_route(
         ip_address=get_client_ip(request),
         enabled=bool(enabled) if has_enabled_field else None,
         app_settings=app_settings,
+        new_owner_id=_parse_new_owner_id(created_by),
     )
     return RedirectResponse(_shares_url(tab=tab, user=user, saved="transfer"), status_code=303)
 
@@ -342,12 +362,14 @@ async def admin_edit_request_page(
 ):
     app_settings = await get_app_settings(db)
     file_request = await get_file_request_for_admin(db, request_id)
+    owner_users = await _list_active_users(db)
     ctx = branding_context(app_settings)
     ctx.update({
         "user": admin_user,
         "file_request": file_request,
         "has_password": bool(file_request.password_hash),
         "admin_edit": True,
+        "owner_users": owner_users,
         "back_url": _shares_url(tab=tab, user=user),
         "form_action": f"/admin/shares/requests/{request_id}/edit",
         "regenerate_action": f"/admin/shares/requests/{request_id}/regenerate-link",
@@ -378,6 +400,7 @@ async def admin_edit_request_route(
     enabled: str = Form(""),
     tab: str = Form("requests"),
     user: str = Form(""),
+    created_by: str = Form(""),
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin),
 ):
@@ -399,6 +422,7 @@ async def admin_edit_request_route(
         ip_address=get_client_ip(request),
         enabled=bool(enabled) if has_enabled_field else None,
         app_settings=app_settings,
+        new_owner_id=_parse_new_owner_id(created_by),
     )
     return RedirectResponse(_shares_url(tab=tab, user=user, saved="request"), status_code=303)
 

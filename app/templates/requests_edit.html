@@ -43,6 +43,16 @@
   {% set inactive_reason_code = file_request_inactive_reason_code(file_request, now) %}
   {% set inactive_reason_label = file_request_inactive_reason(file_request, now) %}
   {% include "_share_active_controls.html" %}
+  {% if admin_edit %}
+  <div>
+    {{ f.field_label(_("Owner"), "created_by") }}
+    <select id="created_by" name="created_by" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white" required>
+      {% for u in owner_users %}
+      <option value="{{ u.id }}" {% if file_request.created_by == u.id %}selected{% endif %}>{{ u.email }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
   {{ f.text_input("title", _("Title"), file_request.title, required=true) }}
   {{ f.textarea_input("instructions", _("Instructions for uploader"), file_request.instructions or '') }}
 

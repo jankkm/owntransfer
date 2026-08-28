@@ -51,6 +51,16 @@
   {% set inactive_reason_code = transfer_inactive_reason_code(transfer, now) %}
   {% set inactive_reason_label = transfer_inactive_reason(transfer, now) %}
   {% include "_share_active_controls.html" %}
+  {% if admin_edit %}
+  <div>
+    {{ f.field_label(_("Owner"), "created_by") }}
+    <select id="created_by" name="created_by" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white" required>
+      {% for u in owner_users %}
+      <option value="{{ u.id }}" {% if transfer.created_by == u.id %}selected{% endif %}>{{ u.email }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
   {{ f.text_input("title", _("Title"), transfer.title, required=true) }}
   {{ f.textarea_input("message", _("Message"), transfer.message or '') }}
 

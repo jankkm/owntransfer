@@ -514,6 +514,7 @@ async def update_transfer(
     ip_address: str | None,
     enabled: bool | None = None,
     app_settings: AppSettings | None = None,
+    new_owner_id: UUID | None = None,
 ) -> Transfer:
     now = _utcnow()
     if app_settings:
@@ -547,8 +548,24 @@ async def update_transfer(
     if enabled is not None:
         transfer.is_disabled = not enabled
 
+    previous_owner_id = transfer.created_by
+    owner_changed = False
+    if new_owner_id is not None and new_owner_id != transfer.created_by:
+        result = await db.execute(
+            select(User).where(User.id == new_owner_id, User.is_active.is_(True))
+        )
+        if result.scalar_one_or_none() is None:
+            raise HTTPException(status_code=400, detail=_("Invalid owner"))
+        transfer.created_by = new_owner_id
+        owner_changed = True
+
     await db.commit()
     await db.refresh(transfer)
+
+    metadata: dict[str, str] = {"title": title}
+    if owner_changed:
+        metadata["previous_owner_id"] = str(previous_owner_id)
+        metadata["new_owner_id"] = str(new_owner_id)
 
     await log_audit(
         db,
@@ -557,8 +574,21 @@ async def update_transfer(
         resource_id=str(transfer.id),
         actor_id=user.id,
         ip_address=ip_address,
-        metadata={"title": title},
+        metadata=metadata,
     )
+    if owner_changed:
+        await log_audit(
+            db,
+            action="transfer.owner_changed",
+            resource_type="transfer",
+            resource_id=str(transfer.id),
+            actor_id=user.id,
+            ip_address=ip_address,
+            metadata={
+                "previous_owner_id": str(previous_owner_id),
+                "new_owner_id": str(new_owner_id),
+            },
+        )
     return transfer
 
 

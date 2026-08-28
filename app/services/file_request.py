@@ -447,6 +447,7 @@ async def update_file_request(
     ip_address: str | None,
     enabled: bool | None = None,
     app_settings: AppSettings | None = None,
+    new_owner_id: UUID | None = None,
 ) -> FileRequest:
     now = _utcnow()
     if app_settings:
@@ -478,8 +479,24 @@ async def update_file_request(
     if enabled is not None:
         req.is_disabled = not enabled
 
+    previous_owner_id = req.created_by
+    owner_changed = False
+    if new_owner_id is not None and new_owner_id != req.created_by:
+        result = await db.execute(
+            select(User).where(User.id == new_owner_id, User.is_active.is_(True))
+        )
+        if result.scalar_one_or_none() is None:
+            raise HTTPException(status_code=400, detail=_("Invalid owner"))
+        req.created_by = new_owner_id
+        owner_changed = True
+
     await db.commit()
     await db.refresh(req)
+
+    metadata: dict[str, str] = {"title": title}
+    if owner_changed:
+        metadata["previous_owner_id"] = str(previous_owner_id)
+        metadata["new_owner_id"] = str(new_owner_id)
 
     await log_audit(
         db,
@@ -488,8 +505,21 @@ async def update_file_request(
         resource_id=str(req.id),
         actor_id=user.id,
         ip_address=ip_address,
-        metadata={"title": title},
+        metadata=metadata,
     )
+    if owner_changed:
+        await log_audit(
+            db,
+            action="file_request.owner_changed",
+            resource_type="file_request",
+            resource_id=str(req.id),
+            actor_id=user.id,
+            ip_address=ip_address,
+            metadata={
+                "previous_owner_id": str(previous_owner_id),
+                "new_owner_id": str(new_owner_id),
+            },
+        )
     return req
 
 
