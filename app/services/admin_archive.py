@@ -65,7 +65,7 @@ def snapshot_uploads_display(snapshot: dict) -> list[SimpleNamespace]:
                 ip_address=item.get("ip_address"),
                 uploader_name=item.get("uploader_name"),
                 uploader_email=item.get("uploader_email"),
-                files=[SimpleNamespace() for _ in files],
+                files=[SimpleNamespace(**f) for f in files],
             )
         )
     return rows

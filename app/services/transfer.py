@@ -450,11 +450,12 @@ async def delete_transfer_file(
     file_name = transfer_file.original_name
     size_bytes = transfer_file.size_bytes
     content_type = transfer_file.content_type
+    storage_path = transfer_file.storage_path
     storage = get_storage()
-    await storage.delete_file(transfer_file.storage_path)
     await db.delete(transfer_file)
     await db.commit()
     transfer.files = [f for f in transfer.files if f.id != file_id]
+    await storage.delete_file(storage_path)
 
     await log_audit(
         db,
@@ -654,10 +655,11 @@ async def delete_transfer(
         deleted_by=user,
         ip_address=ip_address,
     )
-    storage = get_storage()
-    await storage.delete_directory(f"transfers/{transfer.id}")
+    transfer_id = transfer.id
     await db.delete(transfer)
     await db.commit()
+    storage = get_storage()
+    await storage.delete_directory(f"transfers/{transfer_id}")
 
 
 async def regenerate_transfer_link(

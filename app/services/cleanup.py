@@ -15,6 +15,7 @@ from app.services.email import send_expired_unused, send_purge_reminder
 from app.services.settings import get_app_settings
 from app.services.share_lifecycle import purge_cutoff, purge_notify_at
 from app.services.admin_archive import purge_archived_shares
+from app.services.staging import purge_stale_staging
 from app.services.storage import get_storage
 
 
@@ -209,6 +210,7 @@ async def purge_expired(db: AsyncSession) -> int:
     cutoff = _utcnow_naive() - grace
     storage = get_storage()
     purged = 0
+    storage_paths: list[str] = []
 
     result = await db.execute(
         select(Transfer)
@@ -222,8 +224,8 @@ async def purge_expired(db: AsyncSession) -> int:
             entity=transfer,
             reason="auto_purged",
         )
-        await storage.delete_directory(f"transfers/{transfer.id}")
         await db.delete(transfer)
+        storage_paths.append(f"transfers/{transfer.id}")
         purged += 1
 
     result = await db.execute(
@@ -238,11 +240,13 @@ async def purge_expired(db: AsyncSession) -> int:
             entity=req,
             reason="auto_purged",
         )
-        await storage.delete_directory(f"requests/{req.id}")
         await db.delete(req)
+        storage_paths.append(f"requests/{req.id}")
         purged += 1
 
     await db.commit()
+    for path in storage_paths:
+        await storage.delete_directory(path)
     return purged
 
 

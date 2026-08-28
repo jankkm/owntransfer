@@ -432,8 +432,8 @@ async def delete_request_upload_file(
     file_name = file_match.original_name
     size_bytes = file_match.size_bytes
     content_type = file_match.content_type
+    storage_path = file_match.storage_path
     storage = get_storage()
-    await storage.delete_file(file_match.storage_path)
     await db.delete(file_match)
     upload_match.files = [f for f in upload_match.files if f.id != file_id]
 
@@ -443,6 +443,7 @@ async def delete_request_upload_file(
         req.uploads = [upload for upload in req.uploads if upload.id != upload_match.id]
 
     await db.commit()
+    await storage.delete_file(storage_path)
 
     await log_audit(
         db,
@@ -654,10 +655,11 @@ async def delete_file_request(
         deleted_by=user,
         ip_address=ip_address,
     )
-    storage = get_storage()
-    await storage.delete_directory(f"requests/{req.id}")
+    request_id = req.id
     await db.delete(req)
     await db.commit()
+    storage = get_storage()
+    await storage.delete_directory(f"requests/{request_id}")
 
 
 async def regenerate_file_request_link(

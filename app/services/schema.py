@@ -10,30 +10,33 @@ def _apply_migrations(sync_conn) -> None:
     insp = inspect(sync_conn)
     if "app_settings" not in insp.get_table_names():
         return
-    columns = {col["name"] for col in insp.get_columns("app_settings")}
+
+    def app_settings_columns() -> set[str]:
+        return {col["name"] for col in insp.get_columns("app_settings")}
+
+    columns = app_settings_columns()
     if "upload_concurrency" not in columns:
         sync_conn.execute(
             text("ALTER TABLE app_settings ADD COLUMN upload_concurrency INTEGER NOT NULL DEFAULT 5")
         )
-        sync_conn.commit()
+        columns = app_settings_columns()
 
     if "max_uploads_default" not in columns:
         sync_conn.execute(
             text("ALTER TABLE app_settings ADD COLUMN max_uploads_default INTEGER NOT NULL DEFAULT 10")
         )
-        sync_conn.commit()
+        columns = app_settings_columns()
 
     if "share_password_length" not in columns:
         sync_conn.execute(
             text("ALTER TABLE app_settings ADD COLUMN share_password_length INTEGER NOT NULL DEFAULT 16")
         )
-        sync_conn.commit()
+        columns = app_settings_columns()
 
     if "archive_retention_days" not in columns:
         sync_conn.execute(
             text("ALTER TABLE app_settings ADD COLUMN archive_retention_days INTEGER NOT NULL DEFAULT 90")
         )
-        sync_conn.commit()
 
     if "transfers" in insp.get_table_names():
         transfer_cols = {col["name"] for col in insp.get_columns("transfers")}
@@ -41,7 +44,6 @@ def _apply_migrations(sync_conn) -> None:
             sync_conn.execute(
                 text("ALTER TABLE transfers ADD COLUMN is_preparing BOOLEAN NOT NULL DEFAULT FALSE")
             )
-            sync_conn.commit()
 
     if "request_uploads" in insp.get_table_names():
         upload_cols = {col["name"] for col in insp.get_columns("request_uploads")}
@@ -49,13 +51,11 @@ def _apply_migrations(sync_conn) -> None:
             sync_conn.execute(
                 text("ALTER TABLE request_uploads ADD COLUMN is_preparing BOOLEAN NOT NULL DEFAULT FALSE")
             )
-            sync_conn.commit()
 
     if "users" in insp.get_table_names():
         user_columns = {col["name"] for col in insp.get_columns("users")}
         if "locale" not in user_columns:
             sync_conn.execute(text("ALTER TABLE users ADD COLUMN locale VARCHAR(8)"))
-            sync_conn.commit()
 
 
 async def ensure_schema(conn: AsyncConnection) -> None:
