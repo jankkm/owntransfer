@@ -36,8 +36,10 @@ def parse_snapshot(archived: ArchivedShare) -> dict:
     return json.loads(archived.snapshot_json)
 
 
-def archived_timeline(archived: ArchivedShare, owner_emails: dict[str, str] | None = None) -> list:
+async def archived_timeline(db: AsyncSession, archived: ArchivedShare) -> list:
     snapshot = parse_snapshot(archived)
+    owner_ids = collect_owner_ids_from_snapshot(snapshot)
+    owner_emails = await resolve_owner_emails_by_id(db, owner_ids)
     return build_timeline_from_snapshot(snapshot, archived.resource_type, owner_emails=owner_emails)
 
 

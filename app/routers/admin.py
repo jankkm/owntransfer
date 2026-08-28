@@ -408,9 +408,7 @@ async def admin_archive_detail(
         raise HTTPException(status_code=404, detail=_("Archive record not found"))
 
     snapshot = parse_snapshot(archived)
-    owner_ids = collect_owner_ids_from_snapshot(snapshot)
-    owner_emails = await resolve_owner_emails_by_id(db, owner_ids)
-    timeline = archived_timeline(archived, owner_emails=owner_emails)
+    timeline = await archived_timeline(db, archived)
     ctx = branding_context(app_settings)
     ctx.update({
         "user": admin_user,

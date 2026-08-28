@@ -94,6 +94,11 @@ async def test_delete_transfer_creates_archive(client: AsyncClient):
         assert "transfer.deleted" in audit_actions
         gone = await db.get(Transfer, transfer.id)
         assert gone is None
+        archive_id = archived.id
+
+    detail = await client.get(f"/admin/shares/archive/{archive_id}?tab=archive")
+    assert detail.status_code == 200
+    assert "Archive me" in detail.text
 
 
 @pytest.mark.asyncio
