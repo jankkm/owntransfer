@@ -22,7 +22,9 @@ from app.services.share_list import apply_transfer_list_query, parse_share_list_
 from app.services.staging import (
     StagingLimits,
     add_staged_file,
+    clear_staged_files,
     discard_staged_paths,
+    get_staged_files,
     remove_staged_file,
     restore_staged_files,
     take_staged_files,
@@ -46,6 +48,35 @@ router = APIRouter(prefix="/transfers", tags=["transfers"])
 
 def _transfer_staging_scope(user_id: uuid.UUID) -> str:
     return f"transfer_{user_id}"
+
+
+@router.get("/staging")
+@limiter.limit("30/minute")
+async def list_staged_transfer_files(
+    request: Request,
+    user_id: uuid.UUID = Depends(require_user_id),
+):
+    staged = get_staged_files(_transfer_staging_scope(user_id))
+    return JSONResponse(
+        [
+            {
+                "id": f.id,
+                "name": f.original_name,
+                "size_bytes": f.size_bytes,
+            }
+            for f in staged
+        ]
+    )
+
+
+@router.delete("/staging")
+@limiter.limit("30/minute")
+async def clear_staged_transfer_files(
+    request: Request,
+    user_id: uuid.UUID = Depends(require_user_id),
+):
+    await clear_staged_files(_transfer_staging_scope(user_id))
+    return JSONResponse({"ok": True})
 
 
 @router.post("/staging")

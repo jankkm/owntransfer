@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-28 14:24+0200\n"
+"POT-Creation-Date: 2026-08-28 15:15+0200\n"
 "PO-Revision-Date: 2026-06-23 12:09+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -26,8 +26,13 @@ msgstr "Administratorzugriff erforderlich"
 msgid "Not authenticated"
 msgstr "Nicht authentifiziert"
 
-#: app/routers/admin.py:84 app/services/file_request.py:489
-#: app/services/transfer.py:558
+#: app/auth/passwords.py:23
+#, python-format
+msgid "Password must be at least %(n)s characters"
+msgstr "Passwort muss mindestens %(n)s Zeichen lang sein"
+
+#: app/routers/admin.py:84 app/services/file_request.py:576
+#: app/services/transfer.py:557
 msgid "Invalid owner"
 msgstr "Ungültiger Besitzer"
 
@@ -79,86 +84,91 @@ msgstr "Übertragung aktualisiert."
 msgid "File request updated."
 msgstr "Dateianfrage aktualisiert."
 
-#: app/routers/admin.py:180 app/routers/transfers.py:116
+#: app/routers/admin.py:180 app/routers/transfers.py:148
 msgid "Transfer deleted."
 msgstr "Übertragung gelöscht."
 
-#: app/routers/admin.py:182 app/routers/requests.py:71
+#: app/routers/admin.py:182 app/routers/requests.py:72
 msgid "File request deleted."
 msgstr "Dateianfrage gelöscht."
 
-#: app/routers/admin.py:218 app/routers/admin.py:381
-#: app/routers/requests.py:145 app/routers/transfers.py:220
+#: app/routers/admin.py:218 app/routers/admin.py:406
+#: app/routers/requests.py:162 app/routers/transfers.py:259
 msgid "Share link regenerated. The old link no longer works."
 msgstr "Freigabelink neu generiert. Der alte Link funktioniert nicht mehr."
 
-#: app/routers/admin.py:504
+#: app/routers/admin.py:493 app/routers/requests.py:245
+#, fuzzy
+msgid "Could not update file request"
+msgstr "Dateianfrage erstellen"
+
+#: app/routers/admin.py:573
 msgid "Color scheme must be a hex color like #2563eb"
 msgstr ""
 
-#: app/routers/admin.py:580
+#: app/routers/admin.py:651
 msgid "Share link (outbound transfer)"
 msgstr "Freigabelink (ausgehende Übertragung)"
 
-#: app/routers/admin.py:581
+#: app/routers/admin.py:652
 msgid "File request link"
 msgstr "Dateianfrage-Link"
 
-#: app/routers/admin.py:582
+#: app/routers/admin.py:653
 msgid "Upload received notification"
 msgstr "Benachrichtigung bei erhaltenem Upload"
 
-#: app/routers/admin.py:583
+#: app/routers/admin.py:654
 msgid "Download notification"
 msgstr "Download-Benachrichtigung"
 
-#: app/routers/admin.py:584
+#: app/routers/admin.py:655
 msgid "Expired without activity"
 msgstr "Abgelaufen ohne Aktivität"
 
-#: app/routers/admin.py:585
+#: app/routers/admin.py:656
 msgid "Deletion reminder before purge"
 msgstr "Löscherinnerung vor endgültiger Löschung"
 
-#: app/routers/admin.py:598
+#: app/routers/admin.py:669
 msgid "Email templates saved."
 msgstr "E-Mail-Vorlagen gespeichert."
 
-#: app/routers/admin.py:686
+#: app/routers/admin.py:757
 #, python-format
 msgid "Test email sent to %(email)s."
 msgstr "Test-E-Mail an %(email)s gesendet."
 
-#: app/routers/admin.py:720
+#: app/routers/admin.py:791
 msgid "Email and password are required"
 msgstr "E-Mail und Passwort sind erforderlich"
 
-#: app/routers/admin.py:723 app/routers/admin.py:821 app/routers/profile.py:76
+#: app/routers/admin.py:794 app/routers/admin.py:892 app/routers/profile.py:76
 #: app/routers/setup.py:63
 msgid "Password must be at least 8 characters"
 msgstr "Passwort muss mindestens 8 Zeichen lang sein"
 
-#: app/routers/admin.py:729 app/routers/setup.py:72
+#: app/routers/admin.py:800 app/routers/setup.py:72
 msgid "User already exists"
 msgstr "Benutzer existiert bereits"
 
-#: app/routers/admin.py:783
+#: app/routers/admin.py:854
 msgid "You cannot demote your own account"
 msgstr "Sie können Ihr eigenes Konto nicht degradieren"
 
-#: app/routers/admin.py:793
+#: app/routers/admin.py:864
 msgid "Cannot demote the last admin"
 msgstr "Der letzte Admin kann nicht degradiert werden"
 
-#: app/routers/admin.py:818
+#: app/routers/admin.py:889
 msgid "Password is required"
 msgstr "Passwort ist erforderlich"
 
-#: app/routers/admin.py:852
+#: app/routers/admin.py:923
 msgid "You cannot delete your own account"
 msgstr "Sie können Ihr eigenes Konto nicht löschen"
 
-#: app/routers/admin.py:863
+#: app/routers/admin.py:934
 msgid "Cannot delete the last admin"
 msgstr "Der letzte Admin kann nicht gelöscht werden"
 
@@ -196,12 +206,12 @@ msgstr ""
 "bestehenden Methode an oder bitten Sie einen Administrator, Ihr Konto zu "
 "verknüpfen."
 
-#: app/routers/branding.py:46 app/templates/admin.html:74
+#: app/routers/branding.py:46 app/templates/admin.html:75
 #: app/templates/base.html:201
 msgid "Impressum"
 msgstr "Impressum"
 
-#: app/routers/branding.py:59 app/templates/admin.html:79
+#: app/routers/branding.py:59 app/templates/admin.html:80
 #: app/templates/base.html:204
 msgid "Privacy policy"
 msgstr "Datenschutz"
@@ -238,21 +248,21 @@ msgstr "2FA-Einrichtung nicht verfügbar"
 msgid "2FA is not enabled"
 msgstr "2FA ist nicht aktiviert"
 
-#: app/routers/public.py:82
+#: app/routers/public.py:84
 msgid "Too many failed password attempts. Try again later."
 msgstr ""
 
-#: app/routers/public.py:114
+#: app/routers/public.py:116
 msgid "Unlock this file request before uploading"
 msgstr "Diese Dateianfrage vor dem Upload entsperren"
 
-#: app/routers/public.py:121
+#: app/routers/public.py:123
 msgid "Open the transfer page in this browser before downloading."
 msgstr ""
 "Öffnen Sie die Übertragungsseite in diesem Browser, bevor Sie "
 "herunterladen."
 
-#: app/routers/public.py:129
+#: app/routers/public.py:131
 #, python-format
 msgid ""
 "This transfer allows %(max)s download. Unlocking uses one download; you "
@@ -269,12 +279,12 @@ msgstr[1] ""
 "einen Download; anschließend können Sie alle Dateien in dieser Browser-"
 "Sitzung herunterladen."
 
-#: app/routers/public.py:140 app/services/share_status.py:18
-#: app/services/transfer.py:276
+#: app/routers/public.py:142 app/services/share_status.py:18
+#: app/services/transfer.py:275
 msgid "Download limit reached"
 msgstr "Download-Limit erreicht"
 
-#: app/routers/public.py:142
+#: app/routers/public.py:144
 msgid ""
 "All available downloads for this transfer have been used. Contact the "
 "person who shared these files if you still need them."
@@ -283,12 +293,12 @@ msgstr ""
 "Wenden Sie sich an die Person, die Ihnen die Dateien geteilt hat, falls "
 "Sie sie noch benötigen."
 
-#: app/routers/public.py:147 app/services/file_request.py:126
+#: app/routers/public.py:149 app/services/file_request.py:144
 #: app/services/share_status.py:19
 msgid "Upload limit reached"
 msgstr "Upload-Limit erreicht"
 
-#: app/routers/public.py:149
+#: app/routers/public.py:151
 msgid ""
 "All available uploads for this request have been used. Contact the person"
 " who requested these files if you still need to upload."
@@ -297,82 +307,89 @@ msgstr ""
 "Wenden Sie sich an die Person, die die Dateien angefordert hat, falls Sie"
 " noch etwas hochladen müssen."
 
-#: app/routers/public.py:155 app/routers/public.py:161
-#: app/services/file_request.py:124 app/services/transfer.py:274
+#: app/routers/public.py:157 app/routers/public.py:163
+#: app/services/file_request.py:142 app/services/transfer.py:273
 msgid "This link has expired"
 msgstr "Dieser Link ist abgelaufen"
 
-#: app/routers/public.py:157
+#: app/routers/public.py:159
 msgid "This file request is no longer available because it has expired."
 msgstr "Diese Dateianfrage ist nicht mehr verfügbar, weil sie abgelaufen ist."
 
-#: app/routers/public.py:163
+#: app/routers/public.py:165
 msgid "This transfer is no longer available because it has expired."
 msgstr "Diese Übertragung ist nicht mehr verfügbar, weil sie abgelaufen ist."
 
-#: app/routers/public.py:169 app/routers/public.py:173
-#: app/services/file_request.py:122 app/services/transfer.py:272
+#: app/routers/public.py:171 app/routers/public.py:175
+#: app/services/file_request.py:140 app/services/transfer.py:271
 msgid "This link has been disabled"
 msgstr "Dieser Link wurde deaktiviert"
 
-#: app/routers/public.py:170
+#: app/routers/public.py:172
 msgid "This file request is no longer available."
 msgstr "Diese Dateianfrage ist nicht mehr verfügbar."
 
-#: app/routers/public.py:174
+#: app/routers/public.py:176
 msgid "This transfer is no longer available."
 msgstr "Diese Übertragung ist nicht mehr verfügbar."
 
-#: app/routers/public.py:177
+#: app/routers/public.py:179
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
 
-#: app/routers/public.py:178
+#: app/routers/public.py:180
 msgid "This link is no longer available."
 msgstr "Dieser Link ist nicht mehr verfügbar."
 
-#: app/routers/public.py:388 app/routers/public.py:614
+#: app/routers/public.py:391 app/routers/public.py:618
 msgid "Invalid password"
 msgstr "Ungültiges Passwort"
 
-#: app/routers/public.py:431 app/routers/public.py:475
+#: app/routers/public.py:434 app/routers/public.py:478
 msgid "Password required"
 msgstr "Passwort erforderlich"
 
-#: app/routers/public.py:650
+#: app/routers/public.py:653 app/static/file_picker.js:57
+#: app/static/file_picker.js:174 app/static/transfer_files.js:32
 msgid "Upload failed"
 msgstr "Upload fehlgeschlagen"
 
-#: app/routers/public.py:659
+#: app/routers/public.py:674
 msgid "Upload successful. Thank you!"
 msgstr "Upload erfolgreich. Vielen Dank!"
 
-#: app/routers/requests.py:67
+#: app/routers/requests.py:68
 msgid "File request updated successfully."
 msgstr "Dateianfrage erfolgreich aktualisiert."
 
-#: app/routers/requests.py:69
+#: app/routers/requests.py:70
 msgid "File request created successfully."
 msgstr "Dateianfrage erfolgreich erstellt."
 
-#: app/routers/requests.py:109 app/routers/transfers.py:155
-#: app/services/file_request.py:472 app/services/transfer.py:541
+#: app/routers/requests.py:110 app/routers/transfers.py:187
+#: app/services/file_request.py:559 app/services/transfer.py:540
+#: app/static/password_toggle.js:80
 msgid "Enter a password to enable protection"
 msgstr "Passwort eingeben, um Schutz zu aktivieren"
+
+#: app/routers/requests.py:139
+#, fuzzy
+msgid "Could not create file request"
+msgstr "Dateianfrage erstellen"
 
 #: app/routers/setup.py:55
 msgid "Invalid setup token"
 msgstr "Ungültiges Setup-Token"
 
-#: app/routers/transfers.py:112
+#: app/routers/transfers.py:144
 msgid "Transfer updated successfully."
 msgstr "Übertragung erfolgreich aktualisiert."
 
-#: app/routers/transfers.py:114
+#: app/routers/transfers.py:146
 msgid "Transfer created successfully."
 msgstr "Übertragung erfolgreich erstellt."
 
-#: app/routers/transfers.py:181
+#: app/routers/transfers.py:220
 msgid "Could not create transfer"
 msgstr "Übertragung konnte nicht erstellt werden"
 
@@ -393,11 +410,11 @@ msgstr "Logo darf maximal 2 MB groß sein"
 msgid "Uploaded logo file is empty"
 msgstr "Hochgeladene Logo-Datei ist leer"
 
-#: app/services/cleanup.py:31
+#: app/services/cleanup.py:32
 msgid "transfer"
 msgstr "Übertragung"
 
-#: app/services/cleanup.py:32
+#: app/services/cleanup.py:33
 msgid "file request"
 msgstr "Dateianfrage"
 
@@ -555,49 +572,60 @@ msgstr "{{ app_name }}: {{ resource_label }} abgelaufen ohne Nutzung"
 msgid "{{ app_name }}: {{ resource_label }} will be deleted soon"
 msgstr "{{ app_name }}: {{ resource_label }} wird bald gelöscht"
 
-#: app/services/file_request.py:100 app/services/file_request.py:293
-#: app/services/file_request.py:308
+#: app/services/file_request.py:47
+#, python-format
+msgid "Max total size cannot exceed the system limit (%(max_mb)s MB)"
+msgstr ""
+
+#: app/services/file_request.py:118 app/services/file_request.py:373
+#: app/services/file_request.py:388
 msgid "File request not found"
 msgstr "Dateianfrage nicht gefunden"
 
-#: app/services/file_request.py:147 app/templates/public_upload.html:31
+#: app/services/file_request.py:160 app/templates/public_upload.html:31
 msgid "Add at least one file to upload"
 msgstr "Mindestens eine Datei zum Hochladen auswählen"
 
-#: app/services/file_request.py:163 app/services/file_request.py:232
-#: app/services/staging.py:204 app/services/transfer.py:66
-#: app/services/transfer.py:103 app/services/transfer.py:380
+#: app/services/file_request.py:168 app/services/file_request.py:312
+#: app/services/staging.py:205 app/services/transfer.py:66
+#: app/services/transfer.py:103 app/services/transfer.py:379
+#: app/static/file_picker.js:101 app/static/transfer_files.js:107
 #, python-format
 msgid "File type not allowed: %(filename)s"
 msgstr "Dateityp nicht erlaubt: %(filename)s"
 
-#: app/services/file_request.py:166 app/services/file_request.py:242
+#: app/services/file_request.py:172 app/services/file_request.py:322
 msgid "Upload exceeds maximum allowed size for this request"
 msgstr "Upload überschreitet die maximal erlaubte Größe für diese Anfrage"
 
-#: app/services/file_request.py:217 app/services/file_request.py:257
+#: app/services/file_request.py:297 app/services/file_request.py:337
 msgid "Select at least one file to upload"
 msgstr "Mindestens eine Datei zum Hochladen auswählen"
 
-#: app/services/file_request.py:237
+#: app/services/file_request.py:317
 #, python-format
 msgid "File exceeds maximum size (%(max_mb)s MB): %(filename)s"
 msgstr "Datei überschreitet die maximale Größe (%(max_mb)s MB): %(filename)s"
 
-#: app/services/file_request.py:324 app/services/file_request.py:346
-#: app/services/transfer.py:346
+#: app/services/file_request.py:406 app/services/file_request.py:428
+#: app/services/transfer.py:345
 msgid "File not found"
 msgstr "Datei nicht gefunden"
 
-#: app/services/file_request.py:401 app/services/file_request.py:421
+#: app/services/file_request.py:485 app/services/file_request.py:507
 msgid "No files to download"
 msgstr "Keine Dateien zum Herunterladen"
 
-#: app/services/file_request.py:409
+#: app/services/file_request.py:493
 msgid "Upload not found"
 msgstr "Upload nicht gefunden"
 
-#: app/services/file_request.py:458
+#: app/services/file_request.py:498
+#, fuzzy
+msgid "Upload is still being prepared"
+msgstr "Dateien werden vorbereitet…"
+
+#: app/services/file_request.py:545
 #, python-format
 msgid "Max uploads cannot be less than current count (%(count)s)"
 msgstr "Max. Uploads darf nicht kleiner als die aktuelle Anzahl (%(count)s) sein"
@@ -628,12 +656,12 @@ msgstr[0] "%(count)s Minute"
 msgstr[1] "%(count)s Minuten"
 
 #: app/services/share_lifecycle.py:153 app/templates/_macros.html:95
-#: app/templates/_macros.html:230
+#: app/templates/_macros.html:273
 msgid "Deletion pending"
 msgstr "Löschung ausstehend"
 
 #: app/services/share_lifecycle.py:165 app/templates/_macros.html:92
-#: app/templates/_macros.html:231
+#: app/templates/_macros.html:274
 msgid "Expiration pending"
 msgstr "Läuft ab"
 
@@ -642,63 +670,176 @@ msgid "Link disabled"
 msgstr "Link deaktiviert"
 
 #: app/services/share_status.py:17 app/templates/_macros.html:84
-#: app/templates/_macros.html:228 app/templates/_share_active_controls.html:6
+#: app/templates/_macros.html:271 app/templates/_share_active_controls.html:6
 msgid "Expired"
 msgstr "Abgelaufen"
 
-#: app/services/staging.py:149 app/services/staging.py:200
-#: app/services/transfer.py:376
+#: app/services/staging.py:150 app/services/staging.py:201
+#: app/services/transfer.py:375
 msgid "Missing filename"
 msgstr "Dateiname fehlt"
 
-#: app/services/staging.py:162
+#: app/services/staging.py:163
 #, python-format
 msgid "File exceeds maximum size (%(max_mb)s MB)"
 msgstr "Datei überschreitet die maximale Größe (%(max_mb)s MB)"
 
-#: app/services/staging.py:173
+#: app/services/staging.py:174
 msgid "Could not save uploaded file"
 msgstr "Hochgeladene Datei konnte nicht gespeichert werden"
 
-#: app/services/staging.py:178
+#: app/services/staging.py:179
 msgid "Empty file"
 msgstr "Leere Datei"
 
-#: app/services/staging.py:217
+#: app/services/staging.py:218
 msgid "Total upload exceeds maximum allowed size"
 msgstr "Gesamt-Upload überschreitet die maximal erlaubte Größe"
 
-#: app/services/staging.py:240
+#: app/services/staging.py:241
 msgid "Staged file not found"
 msgstr "Gestagte Datei nicht gefunden"
 
-#: app/services/transfer.py:55 app/services/transfer.py:523
+#: app/services/transfer.py:55 app/services/transfer.py:522
 msgid "Max downloads cannot be negative"
 msgstr "Max. Downloads darf nicht negativ sein"
 
 #: app/services/transfer.py:61 app/services/transfer.py:122
-#: app/templates/_macros.html:288
+#: app/static/file_picker.js:119 app/templates/_macros.html:333
 msgid "Add at least one file"
 msgstr "Mindestens eine Datei hinzufügen"
 
 #: app/services/transfer.py:70 app/services/transfer.py:107
-#: app/services/transfer.py:391
+#: app/services/transfer.py:390
 msgid "Total upload exceeds maximum file size"
 msgstr "Gesamt-Upload überschreitet die maximale Dateigröße"
 
-#: app/services/transfer.py:234 app/services/transfer.py:482
-#: app/services/transfer.py:498
+#: app/services/transfer.py:233 app/services/transfer.py:481
+#: app/services/transfer.py:497
 msgid "Transfer not found"
 msgstr "Übertragung nicht gefunden"
 
-#: app/services/transfer.py:427
+#: app/services/transfer.py:426
 msgid "Transfer must have at least one file"
 msgstr "Übertragung muss mindestens eine Datei enthalten"
 
-#: app/services/transfer.py:527
+#: app/services/transfer.py:526
 #, python-format
 msgid "Max downloads cannot be less than current count (%(count)s)"
 msgstr "Max. Downloads darf nicht kleiner als die aktuelle Anzahl (%(count)s) sein"
+
+#: app/static/copy_to_clipboard.js:25 app/templates/_macros.html:145
+#: app/templates/_macros.html:210
+msgid "Copied!"
+msgstr "Kopiert!"
+
+#: app/static/file_picker.js:52 app/static/transfer_files.js:27
+msgid "Upload timed out — try Retry"
+msgstr "Upload-Timeout — Erneut versuchen"
+
+#: app/static/file_picker.js:55 app/static/file_picker.js:328
+#: app/static/transfer_files.js:30 app/static/transfer_files.js:466
+msgid "Network error"
+msgstr "Netzwerkfehler"
+
+#: app/static/file_picker.js:171
+msgid "Waiting…"
+msgstr "Warten…"
+
+#: app/static/file_picker.js:172
+msgid "Uploading…"
+msgstr "Wird hochgeladen…"
+
+#: app/static/file_picker.js:173
+msgid "Ready"
+msgstr "Bereit"
+
+#: app/static/file_picker.js:229 app/static/transfer_files.js:228
+#: app/static/transfer_files.js:235 app/templates/_macros.html:300
+#: app/templates/admin.html:123
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: app/static/file_picker.js:229 app/static/transfer_files.js:203
+#: app/static/transfer_files.js:243 app/static/transfer_files.js:250
+#: app/templates/requests_edit.html:129 app/templates/transfers_edit.html:110
+msgid "Remove"
+msgstr "Entfernen"
+
+#: app/static/file_picker.js:491
+msgid "Wait for uploads to finish"
+msgstr "Warten Sie, bis die Uploads abgeschlossen sind"
+
+#: app/static/file_picker.js:497
+msgid "Remove blocked or failed files before submitting"
+msgstr "Entfernen Sie blockierte oder fehlgeschlagene Dateien vor dem Absenden"
+
+#: app/static/password_toggle.js:17
+msgid "Hide password"
+msgstr "Passwort verbergen"
+
+#: app/static/password_toggle.js:17 app/templates/_macros.html:158
+msgid "Show password"
+msgstr "Passwort anzeigen"
+
+#: app/static/request_files.js:85 app/static/transfer_files.js:281
+msgid "this file"
+msgstr "diese Datei"
+
+#: app/static/request_files.js:95 app/static/transfer_files.js:323
+msgid "Could not show confirmation dialog."
+msgstr "Bestätigungsdialog konnte nicht angezeigt werden."
+
+#: app/static/request_files.js:100 app/static/transfer_files.js:316
+msgid "Remove file?"
+msgstr "Datei entfernen?"
+
+#: app/static/request_files.js:101
+#, python-format
+msgid "\"%(name)s\" will be permanently removed. This cannot be undone."
+msgstr ""
+"\"%(name)s\" wird dauerhaft entfernt. Dies kann nicht rückgängig gemacht "
+"werden."
+
+#: app/static/request_files.js:116 app/static/request_files.js:131
+#: app/static/transfer_files.js:354 app/static/transfer_files.js:361
+msgid "Could not remove file"
+msgstr "Datei konnte nicht entfernt werden"
+
+#: app/static/transfer_files.js:144 app/templates/transfers_edit.html:90
+#, python-format
+msgid "Files (%(count)s)"
+msgstr "Dateien (%(count)s)"
+
+#: app/static/transfer_files.js:197
+msgid "Retry"
+msgstr "Erneut versuchen"
+
+#: app/static/transfer_files.js:316
+msgid "Remove file from transfer?"
+msgstr "Datei aus Übertragung entfernen?"
+
+#: app/static/transfer_files.js:318
+#, python-format
+msgid ""
+"\"%(name)s\" will be permanently removed from this transfer. This cannot "
+"be undone."
+msgstr ""
+"\"%(name)s\" wird dauerhaft aus dieser Übertragung entfernt. Dies kann "
+"nicht rückgängig gemacht werden."
+
+#: app/static/transfer_files.js:319
+#, python-format
+msgid "Remove \"%(name)s\" from the list?"
+msgstr "\"%(name)s\" aus der Liste entfernen?"
+
+#: app/static/transfer_files.js:332
+msgid "Transfer must have at least one file."
+msgstr "Übertragung muss mindestens eine Datei enthalten."
+
+#: app/static/unsaved_changes.js:44
+msgid "You have unsaved changes. Leave this page?"
+msgstr "Sie haben ungespeicherte Änderungen. Seite verlassen?"
 
 #: app/templates/_admin_nav.html:4
 msgid "Settings"
@@ -713,16 +854,17 @@ msgid "Email templates"
 msgstr "E-Mail-Vorlagen"
 
 #: app/templates/_macros.html:49 app/templates/_macros.html:79
-#: app/templates/_macros.html:226
+#: app/templates/_macros.html:269
 msgid "Active"
 msgstr "Aktiv"
 
 #: app/templates/_macros.html:51 app/templates/_macros.html:81
-#: app/templates/_macros.html:229
+#: app/templates/_macros.html:272
 msgid "Disabled"
 msgstr "Deaktiviert"
 
-#: app/templates/_macros.html:77 app/templates/transfers_edit.html:17
+#: app/templates/_macros.html:77 app/templates/requests_edit.html:107
+#: app/templates/transfers_edit.html:17
 msgid "Preparing"
 msgstr "Wird vorbereitet"
 
@@ -731,8 +873,8 @@ msgstr "Wird vorbereitet"
 msgid "Limit reached"
 msgstr "Limit erreicht"
 
-#: app/templates/_macros.html:98 app/templates/_macros.html:136
-#: app/templates/admin.html:90 app/templates/login.html:34
+#: app/templates/_macros.html:98 app/templates/_macros.html:137
+#: app/templates/admin.html:91 app/templates/login.html:34
 #: app/templates/public_download.html:20 app/templates/public_upload.html:23
 msgid "Password"
 msgstr "Passwort"
@@ -761,164 +903,151 @@ msgstr "Verlängern Sie unten das Ablaufdatum, um diese Freigabe zu behalten."
 msgid "Password protection"
 msgstr "Passwortschutz"
 
-#: app/templates/_macros.html:134 app/templates/profile.html:30
+#: app/templates/_macros.html:135 app/templates/profile.html:30
 msgid "New password"
 msgstr "Neues Passwort"
 
-#: app/templates/_macros.html:134 app/templates/admin.html:61
-msgid "Leave blank to keep the current password"
-msgstr "Leer lassen, um das aktuelle Passwort zu behalten"
+#: app/templates/_macros.html:146 app/templates/_macros.html:148
+msgid "Copy password"
+msgstr "Passwort kopieren"
 
-#: app/templates/_macros.html:136
-msgid "Required when password protection is enabled"
-msgstr "Erforderlich, wenn Passwortschutz aktiviert ist"
-
-#: app/templates/_macros.html:145
-msgid "Show password"
-msgstr "Passwort anzeigen"
-
-#: app/templates/_macros.html:145
-msgid "Hide password"
-msgstr "Passwort verbergen"
-
-#: app/templates/_macros.html:157
+#: app/templates/_macros.html:172
 msgid "Generate"
 msgstr "Generieren"
 
-#: app/templates/_macros.html:162 app/templates/_macros.html:164
+#: app/templates/_macros.html:176 app/templates/admin.html:62
+msgid "Leave blank to keep the current password"
+msgstr "Leer lassen, um das aktuelle Passwort zu behalten"
+
+#: app/templates/_macros.html:176 app/templates/_macros.html:178
 #, python-format
 msgid "Recommended: %(n)s characters (set by admin)."
 msgstr "Empfohlen: %(n)s Zeichen (vom Admin festgelegt)."
 
-#: app/auth/passwords.py
-#, python-format
-msgid "Password must be at least %(n)s characters"
-msgstr "Passwort muss mindestens %(n)s Zeichen lang sein"
+#: app/templates/_macros.html:178
+msgid "Required when password protection is enabled"
+msgstr "Erforderlich, wenn Passwortschutz aktiviert ist"
 
-#: app/templates/_macros.html:167
-msgid "Copied!"
-msgstr "Kopiert!"
-
-#: app/templates/_macros.html:168 app/templates/_macros.html:170
+#: app/templates/_macros.html:211 app/templates/_macros.html:213
 msgid "Copy link"
 msgstr "Link kopieren"
 
-#: app/templates/_macros.html:145
-msgid "Copy password"
-msgstr "Passwort kopieren"
-
-#: app/templates/_macros.html:193
+#: app/templates/_macros.html:236
 msgid "Files are being prepared…"
 msgstr "Dateien werden vorbereitet…"
 
-#: app/templates/_macros.html:199 app/templates/admin_shares.html:98
+#: app/templates/_macros.html:242 app/templates/admin_shares.html:98
 #: app/templates/admin_shares.html:164 app/templates/dashboard.html:92
 #: app/templates/dashboard.html:146
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: app/templates/_macros.html:200 app/templates/admin.html:140
+#: app/templates/_macros.html:243 app/templates/admin.html:141
 #: app/templates/admin_shares.html:103 app/templates/admin_shares.html:169
 msgid "Delete"
 msgstr "Löschen"
 
-#: app/templates/_macros.html:205
+#: app/templates/_macros.html:248
 msgid "Delete this share?"
 msgstr "Diese Freigabe löschen?"
 
-#: app/templates/_macros.html:206 app/templates/admin_shares.html:107
+#: app/templates/_macros.html:249 app/templates/admin_shares.html:107
 #: app/templates/transfers_edit.html:169 app/templates/transfers_edit.html:183
 msgid "All files will be permanently removed. This cannot be undone."
 msgstr ""
 "Alle Dateien werden dauerhaft gelöscht. Dies kann nicht rückgängig "
 "gemacht werden."
 
-#: app/templates/_macros.html:207 app/templates/admin_shares.html:108
+#: app/templates/_macros.html:250 app/templates/admin_shares.html:108
 #: app/templates/admin_shares.html:174
 msgid "Yes, delete"
 msgstr "Ja, löschen"
 
-#: app/templates/_macros.html:217
+#: app/templates/_macros.html:260
 msgid "Search"
 msgstr "Suchen"
 
-#: app/templates/_macros.html:219
+#: app/templates/_macros.html:262
 msgid "Title or description…"
 msgstr "Titel oder Beschreibung…"
 
-#: app/templates/_macros.html:223
+#: app/templates/_macros.html:266
 msgid "Filter"
 msgstr "Filter"
 
-#: app/templates/_macros.html:225
+#: app/templates/_macros.html:268
 msgid "All statuses"
 msgstr "Alle Status"
 
-#: app/templates/_macros.html:227
+#: app/templates/_macros.html:270
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: app/templates/_macros.html:235
+#: app/templates/_macros.html:278
 msgid "Sort"
 msgstr "Sortieren"
 
-#: app/templates/_macros.html:237
+#: app/templates/_macros.html:280
 msgid "Newest first"
 msgstr "Neueste zuerst"
 
-#: app/templates/_macros.html:238
+#: app/templates/_macros.html:281
 msgid "Oldest first"
 msgstr "Älteste zuerst"
 
-#: app/templates/_macros.html:239
+#: app/templates/_macros.html:282
 msgid "Expires soonest"
 msgstr "Frühestes Ablaufdatum"
 
-#: app/templates/_macros.html:240
+#: app/templates/_macros.html:283
 msgid "Expires latest"
 msgstr "Spätestes Ablaufdatum"
 
-#: app/templates/_macros.html:241
+#: app/templates/_macros.html:284
 msgid "Title A–Z"
 msgstr "Titel A–Z"
 
-#: app/templates/_macros.html:242
+#: app/templates/_macros.html:285
 msgid "Title Z–A"
 msgstr "Titel Z–A"
 
-#: app/templates/_macros.html:246 app/templates/admin_shares.html:32
+#: app/templates/_macros.html:289 app/templates/admin_shares.html:32
 msgid "Apply"
 msgstr "Anwenden"
 
-#: app/templates/_macros.html:248 app/templates/admin_shares.html:34
+#: app/templates/_macros.html:291 app/templates/admin_shares.html:34
 msgid "Clear"
 msgstr "Zurücksetzen"
 
-#: app/templates/_macros.html:256
+#: app/templates/_macros.html:299
 msgid "Confirm"
 msgstr "Bestätigen"
 
-#: app/templates/_macros.html:257 app/templates/admin.html:122
-msgid "Cancel"
-msgstr "Abbrechen"
-
-#: app/templates/_macros.html:290 app/templates/admin_shares.html:60
+#: app/templates/_macros.html:335 app/templates/admin_shares.html:60
 #: app/templates/dashboard.html:61 app/templates/public_download.html:31
 #: app/templates/transfers_list.html:32
 msgid "Files"
 msgstr "Dateien"
 
-#: app/templates/_macros.html:293 app/templates/transfers_edit.html:118
+#: app/templates/_macros.html:338 app/templates/transfers_edit.html:118
 msgid "Drop files here or click to browse"
 msgstr "Dateien hier ablegen oder zum Durchsuchen klicken"
 
-#: app/templates/_macros.html:294
+#: app/templates/_macros.html:339
 msgid "Files upload automatically. You can remove them before submitting."
 msgstr ""
 "Dateien werden automatisch hochgeladen. Sie können sie vor dem Absenden "
 "entfernen."
 
-#: app/templates/_macros.html:297
+#: app/templates/_macros.html:343
+msgid "Files from a previous session are shown below."
+msgstr "Dateien aus einer früheren Sitzung werden unten angezeigt."
+
+#: app/templates/_macros.html:344
+msgid "Clear all"
+msgstr "Alle entfernen"
+
+#: app/templates/_macros.html:346
 msgid "No files added yet."
 msgstr "Noch keine Dateien hinzugefügt."
 
@@ -957,7 +1086,7 @@ msgstr ""
 "erreichbar, bis Sie das Limit erhöhen."
 
 #: app/templates/admin.html:3 app/templates/admin.html:5
-#: app/templates/admin.html:92 app/templates/admin_email.html:3
+#: app/templates/admin.html:93 app/templates/admin_email.html:3
 #: app/templates/admin_email.html:5 app/templates/admin_shares.html:3
 #: app/templates/admin_shares.html:5 app/templates/base.html:149
 #: app/templates/base.html:177
@@ -1088,7 +1217,7 @@ msgstr ""
 msgid "Delete after expiry (days)"
 msgstr "Löschen nach Ablauf (Tage)"
 
-#: app/templates/admin.html:43
+#: app/templates/admin.html:44
 msgid ""
 "Expired shares are permanently deleted this many days after expiry. 0 = "
 "disabled (no auto-delete)."
@@ -1096,33 +1225,33 @@ msgstr ""
 "Abgelaufene Freigaben werden so viele Tage nach Ablauf dauerhaft "
 "gelöscht. 0 = deaktiviert (kein Auto-Löschen)."
 
-#: app/templates/admin.html:44
+#: app/templates/admin.html:45
 msgid "Deletion reminder (days before purge)"
 msgstr "Löscherinnerung (Tage vor endgültiger Löschung)"
 
-#: app/templates/admin.html:44
+#: app/templates/admin.html:45
 msgid "Email owners this many days before auto-delete. 0 = disabled."
 msgstr ""
 "E-Mail an Besitzer so viele Tage vor automatischer Löschung. 0 = "
 "deaktiviert."
 
-#: app/templates/admin.html:45
+#: app/templates/admin.html:46
 msgid "Save shares"
 msgstr "Freigaben speichern"
 
-#: app/templates/admin.html:49
+#: app/templates/admin.html:50
 msgid "Access"
 msgstr "Zugriff"
 
-#: app/templates/admin.html:50
+#: app/templates/admin.html:51
 msgid "Allow local login"
 msgstr "Lokale Anmeldung erlauben"
 
-#: app/templates/admin.html:51
+#: app/templates/admin.html:52
 msgid "Allow users to email share links to recipients"
 msgstr "Benutzern erlauben, Freigabelinks per E-Mail zu versenden"
 
-#: app/templates/admin.html:52
+#: app/templates/admin.html:53
 msgid ""
 "Internal notifications (download alerts, upload received) are always sent"
 " when enabled per transfer."
@@ -1130,134 +1259,134 @@ msgstr ""
 "Interne Benachrichtigungen (Download-Hinweise, Upload erhalten) werden "
 "immer gesendet, wenn sie pro Übertragung aktiviert sind."
 
-#: app/templates/admin.html:53
+#: app/templates/admin.html:54
 msgid "Save access"
 msgstr "Zugriff speichern"
 
-#: app/templates/admin.html:57
+#: app/templates/admin.html:58
 msgid "SMTP"
 msgstr "SMTP"
 
-#: app/templates/admin.html:58
+#: app/templates/admin.html:59
 msgid "SMTP host"
 msgstr "SMTP-Host"
 
-#: app/templates/admin.html:59
+#: app/templates/admin.html:60
 msgid "SMTP port"
 msgstr "SMTP-Port"
 
-#: app/templates/admin.html:60
+#: app/templates/admin.html:61
 msgid "SMTP username"
 msgstr "SMTP-Benutzername"
 
-#: app/templates/admin.html:61
+#: app/templates/admin.html:62
 msgid "SMTP password"
 msgstr "SMTP-Passwort"
 
-#: app/templates/admin.html:62
+#: app/templates/admin.html:63
 msgid "From address"
 msgstr "Absenderadresse"
 
-#: app/templates/admin.html:64
+#: app/templates/admin.html:65
 msgid "Save SMTP"
 msgstr "SMTP speichern"
 
-#: app/templates/admin.html:65
+#: app/templates/admin.html:66
 msgid "Send test email"
 msgstr "Test-E-Mail senden"
 
-#: app/templates/admin.html:67
+#: app/templates/admin.html:68
 #, python-format
 msgid "Sends a test message to %(email)s using the values above (without saving)."
 msgstr ""
 "Sendet eine Testnachricht an %(email)s mit den obigen Werten (ohne zu "
 "speichern)."
 
-#: app/templates/admin.html:72
+#: app/templates/admin.html:73
 msgid "Legal pages"
 msgstr "Rechtliche Seiten"
 
-#: app/templates/admin.html:75
+#: app/templates/admin.html:76
 msgid "Show Impressum link in footer"
 msgstr "Impressum-Link in der Fußzeile anzeigen"
 
-#: app/templates/admin.html:76
+#: app/templates/admin.html:77
 msgid "Impressum text (Markdown)"
 msgstr "Impressum-Text (Markdown)"
 
-#: app/templates/admin.html:76
+#: app/templates/admin.html:77
 msgid "Shown on /impressum when enabled."
 msgstr "Wird unter /impressum angezeigt, wenn aktiviert."
 
-#: app/templates/admin.html:80
+#: app/templates/admin.html:81
 msgid "Show privacy policy link in footer"
 msgstr "Datenschutz-Link in der Fußzeile anzeigen"
 
-#: app/templates/admin.html:81
+#: app/templates/admin.html:82
 msgid "Privacy policy text (Markdown)"
 msgstr "Datenschutz-Text (Markdown)"
 
-#: app/templates/admin.html:81
+#: app/templates/admin.html:82
 msgid "Shown on /privacy when enabled."
 msgstr "Wird unter /privacy angezeigt, wenn aktiviert."
 
-#: app/templates/admin.html:83
+#: app/templates/admin.html:84
 msgid "Save legal pages"
 msgstr "Rechtliche Seiten speichern"
 
-#: app/templates/admin.html:86
+#: app/templates/admin.html:87
 msgid "Users"
 msgstr "Benutzer"
 
-#: app/templates/admin.html:89 app/templates/login.html:10
+#: app/templates/admin.html:90 app/templates/login.html:10
 #: app/templates/login.html:33
 msgid "Email"
 msgstr "E-Mail"
 
-#: app/templates/admin.html:94
+#: app/templates/admin.html:95
 msgid "Add user"
 msgstr "Benutzer hinzufügen"
 
-#: app/templates/admin.html:103
+#: app/templates/admin.html:104
 msgid "admin"
 msgstr "Admin"
 
-#: app/templates/admin.html:106
+#: app/templates/admin.html:107
 #, python-format
 msgid "%(count)s transfers"
 msgstr "%(count)s Übertragungen"
 
-#: app/templates/admin.html:108
+#: app/templates/admin.html:109
 #, python-format
 msgid "%(count)s requests"
 msgstr "%(count)s Anfragen"
 
-#: app/templates/admin.html:114
+#: app/templates/admin.html:115
 msgid "Set password"
 msgstr "Passwort setzen"
 
-#: app/templates/admin.html:116
+#: app/templates/admin.html:117
 #, python-format
 msgid "New password for %(email)s"
 msgstr "Neues Passwort für %(email)s"
 
-#: app/templates/admin.html:120
+#: app/templates/admin.html:121
 msgid "Save"
 msgstr "Speichern"
 
-#: app/templates/admin.html:129
+#: app/templates/admin.html:130
 msgid "Promote"
 msgstr "Zum Admin machen"
 
-#: app/templates/admin.html:134
+#: app/templates/admin.html:135
 msgid "Demote"
 msgstr "Admin-Rechte entziehen"
 
-#: app/templates/admin.html:143
+#: app/templates/admin.html:144
 msgid "Delete this user?"
 msgstr "Diesen Benutzer löschen?"
 
-#: app/templates/admin.html:144
+#: app/templates/admin.html:145
 msgid ""
 "The account will be deactivated and can no longer sign in. Their "
 "transfers and file requests remain."
@@ -1265,31 +1394,31 @@ msgstr ""
 "Das Konto wird deaktiviert und kann sich nicht mehr anmelden. "
 "Übertragungen und Dateianfragen bleiben erhalten."
 
-#: app/templates/admin.html:145
+#: app/templates/admin.html:146
 msgid "Yes, delete user"
 msgstr "Ja, Benutzer löschen"
 
-#: app/templates/admin.html:153
+#: app/templates/admin.html:154
 msgid "No users yet."
 msgstr "Noch keine Benutzer."
 
-#: app/templates/admin.html:159
+#: app/templates/admin.html:160
 msgid "Recent audit log"
 msgstr "Aktuelles Audit-Protokoll"
 
-#: app/templates/admin.html:162
+#: app/templates/admin.html:163
 msgid "Time"
 msgstr "Zeit"
 
-#: app/templates/admin.html:162
+#: app/templates/admin.html:163
 msgid "Action"
 msgstr "Aktion"
 
-#: app/templates/admin.html:162
+#: app/templates/admin.html:163
 msgid "Resource"
 msgstr "Ressource"
 
-#: app/templates/admin.html:162 app/templates/requests_edit.html:106
+#: app/templates/admin.html:163 app/templates/requests_edit.html:106
 msgid "IP"
 msgstr "IP"
 
@@ -1405,13 +1534,13 @@ msgstr "Keine Übertragungen gefunden."
 msgid "Uploads"
 msgstr "Uploads"
 
-#: app/templates/admin_shares.html:172 app/templates/requests_edit.html:144
-#: app/templates/requests_edit.html:158
+#: app/templates/admin_shares.html:172 app/templates/requests_edit.html:155
+#: app/templates/requests_edit.html:169
 msgid "Delete this file request?"
 msgstr "Diese Dateianfrage löschen?"
 
-#: app/templates/admin_shares.html:173 app/templates/requests_edit.html:145
-#: app/templates/requests_edit.html:159
+#: app/templates/admin_shares.html:173 app/templates/requests_edit.html:156
+#: app/templates/requests_edit.html:170
 msgid "All uploads will be permanently removed. This cannot be undone."
 msgstr ""
 "Alle Uploads werden dauerhaft gelöscht. Dies kann nicht rückgängig "
@@ -1671,7 +1800,7 @@ msgid "Set up two-factor authentication"
 msgstr "Zwei-Faktor-Authentifizierung einrichten"
 
 #: app/templates/public_download.html:3 app/templates/public_download.html:37
-#: app/templates/requests_edit.html:122 app/templates/requests_list.html:72
+#: app/templates/requests_edit.html:128 app/templates/requests_list.html:72
 msgid "Download"
 msgstr "Herunterladen"
 
@@ -1804,6 +1933,11 @@ msgstr "Aktuelle Uploads: %(count)s"
 msgid "Max total size per upload (MB)"
 msgstr "Max. Gesamtgröße pro Upload (MB)"
 
+#: app/templates/requests_edit.html:69 app/templates/requests_new.html:25
+#, python-format
+msgid "Cannot exceed the system limit of %(max)s MB."
+msgstr ""
+
 #: app/templates/requests_edit.html:73 app/templates/transfers_edit.html:81
 msgid "Save changes"
 msgstr "Änderungen speichern"
@@ -1836,28 +1970,29 @@ msgstr "Das Entfernen von Dateien wird sofort gespeichert."
 msgid "No uploads yet."
 msgstr "Noch keine Uploads."
 
-#: app/templates/requests_edit.html:109 app/templates/requests_list.html:66
+#: app/templates/requests_edit.html:111 app/templates/requests_list.html:66
 msgid "Download (ZIP)"
 msgstr "Herunterladen (ZIP)"
 
-#: app/templates/requests_edit.html:123 app/templates/transfers_edit.html:110
-msgid "Remove"
-msgstr "Entfernen"
+#: app/templates/requests_edit.html:115
+#, fuzzy
+msgid "Files are still being prepared for this upload."
+msgstr "Dateien werden vorbereitet…"
 
-#: app/templates/requests_edit.html:139 app/templates/requests_edit.html:153
+#: app/templates/requests_edit.html:150 app/templates/requests_edit.html:164
 #: app/templates/transfers_edit.html:163 app/templates/transfers_edit.html:177
 msgid "Danger zone"
 msgstr "Gefahrenzone"
 
-#: app/templates/requests_edit.html:140 app/templates/requests_edit.html:154
+#: app/templates/requests_edit.html:151 app/templates/requests_edit.html:165
 msgid "Permanently delete this file request and all uploaded files."
 msgstr "Diese Dateianfrage und alle hochgeladenen Dateien dauerhaft löschen."
 
-#: app/templates/requests_edit.html:141 app/templates/requests_edit.html:155
+#: app/templates/requests_edit.html:152 app/templates/requests_edit.html:166
 msgid "Delete file request"
 msgstr "Dateianfrage löschen"
 
-#: app/templates/requests_edit.html:146 app/templates/requests_edit.html:160
+#: app/templates/requests_edit.html:157 app/templates/requests_edit.html:171
 msgid "Yes, delete file request"
 msgstr "Ja, Dateianfrage löschen"
 
@@ -2014,11 +2149,6 @@ msgstr "Aktuelle Downloads: %(count)s. 0 für unbegrenzt."
 #: app/templates/transfers_edit.html:79 app/templates/transfers_new.html:28
 msgid "Notify me when someone downloads"
 msgstr "Benachrichtigen, wenn jemand herunterlädt"
-
-#: app/templates/transfers_edit.html:90
-#, python-format
-msgid "Files (%(count)s)"
-msgstr "Dateien (%(count)s)"
 
 #: app/templates/transfers_edit.html:96
 msgid "File changes are saved immediately."

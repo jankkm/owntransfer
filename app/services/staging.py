@@ -4,6 +4,7 @@ import asyncio
 import fcntl
 import json
 import re
+import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -280,3 +281,74 @@ async def discard_staged_paths(files: list[StagedFile]) -> None:
 
     for scope in scopes:
         await storage.delete_directory(f"staging/{scope}")
+
+
+def _purge_stale_staging_sync(max_age_hours: int = 24) -> int:
+    storage = get_storage()
+    staging_root = storage.absolute_path("staging")
+    if not staging_root.exists():
+        return 0
+
+    cutoff = time.time() - (max_age_hours * 3600)
+    removed = 0
+    referenced_paths: set[Path] = set()
+
+    for manifest_path in staging_root.glob("*/manifest.json"):
+        scope = manifest_path.parent.name
+        staged = _read_manifest(scope)
+        kept: list[StagedFile] = []
+        for staged_file in staged:
+            file_path = storage.absolute_path(staged_file.storage_path)
+            if not file_path.exists() or file_path.stat().st_mtime < cutoff:
+                if file_path.exists():
+                    file_path.unlink(missing_ok=True)
+                try:
+                    file_path.parent.rmdir()
+                except OSError:
+                    pass
+                removed += 1
+                continue
+            kept.append(staged_file)
+            referenced_paths.add(file_path.resolve())
+
+        _write_manifest(scope, kept)
+        if not kept:
+            scope_dir = staging_root / scope
+            for path in sorted(scope_dir.rglob("*"), reverse=True):
+                if path.is_file():
+                    path.unlink(missing_ok=True)
+                    removed += 1
+            for path in sorted(scope_dir.rglob("*"), reverse=True):
+                if path.is_dir():
+                    try:
+                        path.rmdir()
+                    except OSError:
+                        pass
+            try:
+                scope_dir.rmdir()
+            except OSError:
+                pass
+
+    for path in staging_root.rglob("*"):
+        if not path.is_file():
+            continue
+        if path.name in {MANIFEST_FILENAME, ".manifest.lock"}:
+            continue
+        if path.resolve() in referenced_paths:
+            continue
+        if path.stat().st_mtime < cutoff:
+            path.unlink(missing_ok=True)
+            removed += 1
+
+    for path in sorted(staging_root.rglob("*"), reverse=True):
+        if path.is_dir():
+            try:
+                path.rmdir()
+            except OSError:
+                pass
+
+    return removed
+
+
+async def purge_stale_staging(max_age_hours: int = 24) -> int:
+    return await asyncio.to_thread(_purge_stale_staging_sync, max_age_hours)

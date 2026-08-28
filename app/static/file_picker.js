@@ -104,11 +104,15 @@
   function initFilePicker(root) {
     const uploadUrl = root.dataset.uploadUrl;
     const deleteUrlTemplate = root.dataset.deleteUrlTemplate;
+    const clearAllUrl = root.dataset.clearAllUrl || "";
+    const restoreStaged = root.dataset.restoreStaged === "true";
     const input = root.querySelector("[data-file-input]");
     const list = root.querySelector("[data-file-list]");
     const dropzone = root.querySelector("[data-dropzone]");
     const emptyState = root.querySelector("[data-empty-state]");
     const errorEl = root.querySelector("[data-file-error]");
+    const restoreHint = root.querySelector("[data-restore-hint]");
+    const clearAllBtn = root.querySelector("[data-clear-all]");
     const form = root.closest("form");
     const submitBtn = form ? form.querySelector("[data-submit-btn]") : null;
     const requireFiles = root.dataset.requireFiles === "true";
@@ -117,6 +121,7 @@
     const blocklist = readBlocklist(root);
     const uploadQueue = createUploadQueue(concurrency);
     const files = new Map();
+    let restoredFromServer = false;
 
     function setError(message) {
       if (!errorEl) return;
@@ -134,6 +139,16 @@
       emptyState.classList.toggle("hidden", files.size > 0);
     }
 
+    function updateClearAllState() {
+      if (!clearAllBtn) return;
+      clearAllBtn.classList.toggle("hidden", files.size === 0);
+    }
+
+    function updateRestoreHint() {
+      if (!restoreHint) return;
+      restoreHint.classList.toggle("hidden", !restoredFromServer || files.size === 0);
+    }
+
     function isBusy(entry) {
       return entry.status === "uploading" || entry.status === "queued";
     }
@@ -146,6 +161,8 @@
     function notifyChange() {
       const hasReady = [...files.values()].some((entry) => entry.status === "done");
       if (hasReady) setError("");
+      updateClearAllState();
+      updateRestoreHint();
       root.dispatchEvent(new CustomEvent("filepicker:change", { bubbles: true }));
       updateSubmitState();
     }
@@ -356,6 +373,71 @@
       notifyChange();
     }
 
+    async function clearAllEntries() {
+      if (!files.size) return;
+      if (clearAllUrl) {
+        await fetch(clearAllUrl, {
+          method: "DELETE",
+          credentials: "same-origin",
+          headers: { "X-CSRF-Token": csrfToken() },
+        });
+      } else {
+        await Promise.all([...files.keys()].map((clientId) => removeEntry(clientId)));
+        return;
+      }
+      for (const clientId of [...files.keys()]) {
+        const row = list.querySelector(`[data-client-id="${clientId}"]`);
+        if (row) row.remove();
+      }
+      files.clear();
+      restoredFromServer = false;
+      updateEmptyState();
+      notifyChange();
+    }
+
+    function addRestoredEntry(item) {
+      const blocked = isExtensionBlocked(item.name, blocklist);
+      const entry = {
+        file: null,
+        name: item.name,
+        size: item.size_bytes,
+        status: blocked ? "error" : "done",
+        progress: blocked ? 0 : 100,
+        serverId: item.id,
+        error: blocked ? blockedFileMessage(item.name) : null,
+        blocked,
+        xhr: null,
+        aborted: false,
+        cancelQueue: null,
+      };
+      files.set(item.id, entry);
+      renderEntry(item.id, entry);
+    }
+
+    async function loadExistingStaged() {
+      if (!restoreStaged) return;
+      try {
+        const resp = await fetch(uploadUrl, { credentials: "same-origin" });
+        if (!resp.ok) return;
+        const existing = await resp.json();
+        if (!Array.isArray(existing) || existing.length === 0) return;
+        restoredFromServer = true;
+        for (const item of existing) {
+          addRestoredEntry(item);
+        }
+        updateEmptyState();
+        notifyChange();
+      } catch (_) {
+        // ignore restore failures; user can still upload fresh files
+      }
+    }
+
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener("click", () => {
+        clearAllEntries();
+      });
+    }
+
     list.addEventListener("click", (event) => {
       const retryBtn = event.target.closest("[data-fp-retry]");
       if (retryBtn) {
@@ -403,9 +485,16 @@
         if (!requireFiles) return;
         const hasReady = [...files.values()].some((entry) => entry.status === "done");
         const hasBusy = [...files.values()].some(isBusy);
+        const hasErrors = [...files.values()].some((entry) => entry.status === "error");
         if (hasBusy) {
           event.preventDefault();
           setError(t("Wait for uploads to finish"));
+          errorEl?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          return;
+        }
+        if (hasErrors) {
+          event.preventDefault();
+          setError(t("Remove blocked or failed files before submitting"));
           errorEl?.scrollIntoView({ block: "nearest", behavior: "smooth" });
           return;
         }
@@ -418,7 +507,10 @@
     }
 
     updateEmptyState();
+    updateClearAllState();
+    updateRestoreHint();
     updateSubmitState();
+    loadExistingStaged();
   }
 
   document.querySelectorAll("[data-file-picker]").forEach(initFilePicker);

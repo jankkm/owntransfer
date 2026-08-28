@@ -321,13 +321,15 @@
 <button type="button" data-show-confirm="{{ panel_id }}" class="{{ button_class }}">{{ label }}</button>
 {%- endmacro %}
 
-{% macro file_picker(upload_url, delete_url_template, require_files=true, required_files_message=none, upload_concurrency=5, file_type_blocklist=none) -%}
+{% macro file_picker(upload_url, delete_url_template, require_files=true, required_files_message=none, upload_concurrency=5, file_type_blocklist=none, restore_staged=false, clear_all_url=none) -%}
 <div data-file-picker
      data-upload-url="{{ upload_url }}"
      data-delete-url-template="{{ delete_url_template }}"
      data-require-files="{{ 'true' if require_files else 'false' }}"
      data-upload-concurrency="{{ upload_concurrency }}"
      data-file-type-blocklist='{{ (file_type_blocklist or []) | tojson }}'
+     data-restore-staged="{{ 'true' if restore_staged else 'false' }}"
+     {% if clear_all_url %}data-clear-all-url="{{ clear_all_url }}"{% endif %}
      data-required-message="{{ required_files_message or _('Add at least one file') }}"
      class="space-y-3">
   <label class="block text-sm font-medium text-slate-700">{{ _('Files') }}</label>
@@ -337,6 +339,10 @@
     <p class="text-xs text-slate-500 mt-1">{{ _('Files upload automatically. You can remove them before submitting.') }}</p>
     <input data-file-input type="file" multiple class="hidden">
   </div>
+  {% if restore_staged %}
+  <p data-restore-hint class="hidden text-xs text-slate-500">{{ _('Files from a previous session are shown below.') }}</p>
+  <button type="button" data-clear-all class="hidden text-xs text-slate-500 hover:text-red-600">{{ _('Clear all') }}</button>
+  {% endif %}
   <p data-empty-state class="text-xs text-slate-500">{{ _('No files added yet.') }}</p>
   <ul data-file-list class="space-y-2"></ul>
   <p data-file-error class="hidden text-xs text-red-600"></p>

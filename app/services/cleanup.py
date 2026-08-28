@@ -14,6 +14,7 @@ from app.services.datetime_display import format_datetime_with_tz, utc_now
 from app.services.email import send_expired_unused, send_purge_reminder
 from app.services.settings import get_app_settings
 from app.services.share_lifecycle import purge_cutoff, purge_notify_at
+from app.services.staging import purge_stale_staging
 from app.services.storage import get_storage
 
 
@@ -245,33 +246,12 @@ async def purge_expired(db: AsyncSession) -> int:
     return purged
 
 
-async def purge_orphan_staging() -> int:
-    storage = get_storage()
-    staging_root = storage.absolute_path("staging")
-    if not staging_root.exists():
-        return 0
-
-    cutoff = _utcnow().timestamp() - (24 * 3600)
-    removed = 0
-    for path in staging_root.rglob("*"):
-        if path.is_file() and path.stat().st_mtime < cutoff:
-            path.unlink(missing_ok=True)
-            removed += 1
-    for path in sorted(staging_root.rglob("*"), reverse=True):
-        if path.is_dir():
-            try:
-                path.rmdir()
-            except OSError:
-                pass
-    return removed
-
-
 async def run_cleanup(db: AsyncSession) -> dict[str, int]:
     expired = await mark_expired(db)
     unused = await notify_expired_unused(db)
     purge_reminders = await send_purge_reminders(db)
     purged = await purge_expired(db)
-    staging = await purge_orphan_staging()
+    staging = await purge_stale_staging()
     return {
         "expired": expired,
         "unused": unused,
