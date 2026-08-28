@@ -25,6 +25,7 @@ async def get_app_settings(db: AsyncSession) -> AppSettings:
         max_share_expiry_days=settings.max_share_expiry_days,
         max_downloads_default=settings.max_downloads_default,
         max_uploads_default=settings.max_uploads_default,
+        share_password_length=settings.share_password_length,
         smtp_host=settings.smtp_host,
         smtp_port=settings.smtp_port,
         smtp_user=settings.smtp_user,

@@ -1,6 +1,24 @@
 (function () {
+  const CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*";
+
   function t(key) {
     return window.__(key);
+  }
+
+  function generatePassword(length) {
+    const bytes = new Uint8Array(length);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => CHARSET[byte % CHARSET.length]).join("");
+  }
+
+  function setPasswordVisible(input, visible, btn) {
+    input.type = visible ? "text" : "password";
+    btn.setAttribute("aria-pressed", visible ? "true" : "false");
+    btn.setAttribute("aria-label", visible ? t("Hide password") : t("Show password"));
+    const showIcon = btn.querySelector("[data-password-eye-show]");
+    const hideIcon = btn.querySelector("[data-password-eye-hide]");
+    if (showIcon) showIcon.classList.toggle("hidden", visible);
+    if (hideIcon) hideIcon.classList.toggle("hidden", !visible);
   }
 
   document.querySelectorAll("[data-password-toggle]").forEach((root) => {
@@ -9,7 +27,10 @@
     if (!checkbox || !field) return;
 
     const passwordInput = field.querySelector('input[name="password"]');
+    const generateBtn = root.querySelector("[data-password-generate-btn]");
+    const visibilityBtn = root.querySelector("[data-password-visibility-btn]");
     const hasPassword = root.dataset.hasPassword === "true";
+    const passwordLength = parseInt(root.dataset.passwordLength, 10) || 16;
     const form = root.closest("form");
 
     function sync() {
@@ -21,10 +42,32 @@
       }
       if (!enabled && passwordInput) {
         passwordInput.value = "";
+        if (visibilityBtn) {
+          setPasswordVisible(passwordInput, false, visibilityBtn);
+        }
       }
     }
 
     checkbox.addEventListener("change", sync);
+
+    if (generateBtn && passwordInput) {
+      generateBtn.addEventListener("click", () => {
+        if (!checkbox.checked) {
+          checkbox.checked = true;
+          sync();
+        }
+        passwordInput.value = generatePassword(passwordLength);
+        passwordInput.setCustomValidity("");
+        passwordInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
+
+    if (visibilityBtn && passwordInput) {
+      visibilityBtn.addEventListener("click", () => {
+        const visible = passwordInput.type === "password";
+        setPasswordVisible(passwordInput, visible, visibilityBtn);
+      });
+    }
 
     if (form && passwordInput) {
       form.addEventListener("submit", (event) => {

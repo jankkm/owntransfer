@@ -74,7 +74,7 @@
     {{ f.text_input("max_downloads", _("Max downloads"), transfer.max_downloads, type="number", required=true, hint=_('Current downloads: %(count)s. Use 0 for unlimited.') % {'count': transfer.download_count}) }}
   </div>
 
-  {{ f.password_protection_fields(has_password) }}
+  {{ f.password_protection_fields(has_password, share_password_length) }}
 
   {{ f.checkbox_input("notify_on_download", _("Notify me when someone downloads"), checked=transfer.notify_on_download) }}
 

@@ -773,6 +773,28 @@ msgstr "Leer lassen, um das aktuelle Passwort zu behalten"
 msgid "Required when password protection is enabled"
 msgstr "Erforderlich, wenn Passwortschutz aktiviert ist"
 
+#: app/templates/_macros.html:145
+msgid "Show password"
+msgstr "Passwort anzeigen"
+
+#: app/templates/_macros.html:145
+msgid "Hide password"
+msgstr "Passwort verbergen"
+
+#: app/templates/_macros.html:157
+msgid "Generate"
+msgstr "Generieren"
+
+#: app/templates/_macros.html:162 app/templates/_macros.html:164
+#, python-format
+msgid "Recommended: %(n)s characters (set by admin)."
+msgstr "Empfohlen: %(n)s Zeichen (vom Admin festgelegt)."
+
+#: app/auth/passwords.py
+#, python-format
+msgid "Password must be at least %(n)s characters"
+msgstr "Passwort muss mindestens %(n)s Zeichen lang sein"
+
 #: app/templates/_macros.html:167
 msgid "Copied!"
 msgstr "Kopiert!"
@@ -780,6 +802,10 @@ msgstr "Kopiert!"
 #: app/templates/_macros.html:168 app/templates/_macros.html:170
 msgid "Copy link"
 msgstr "Link kopieren"
+
+#: app/templates/_macros.html:145
+msgid "Copy password"
+msgstr "Passwort kopieren"
 
 #: app/templates/_macros.html:193
 msgid "Files are being prepared…"
@@ -1047,6 +1073,18 @@ msgid "0 = unlimited uploads."
 msgstr "0 = unbegrenzte Uploads."
 
 #: app/templates/admin.html:43
+msgid "Share password length"
+msgstr "Passwortlänge für Freigaben"
+
+#: app/templates/admin.html:43
+msgid ""
+"Length used by the Generate button on transfer and file request forms. "
+"Users cannot change this."
+msgstr ""
+"Länge für die Schaltfläche „Generieren“ in Übertragungs- und "
+"Dateianfrage-Formularen. Benutzer können dies nicht ändern."
+
+#: app/templates/admin.html:44
 msgid "Delete after expiry (days)"
 msgstr "Löschen nach Ablauf (Tage)"
 

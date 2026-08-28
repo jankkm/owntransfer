@@ -68,7 +68,7 @@
 
   {{ f.text_input("max_total_mb", _("Max total size per upload (MB)"), (file_request.max_total_bytes / 1024 / 1024)|int, type="number", required=true) }}
 
-  {{ f.password_protection_fields(has_password) }}
+  {{ f.password_protection_fields(has_password, share_password_length) }}
 
   <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Save changes') }}</button>
 </form>

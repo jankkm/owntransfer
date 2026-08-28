@@ -725,6 +725,26 @@ msgstr ""
 msgid "Required when password protection is enabled"
 msgstr ""
 
+#: app/templates/_macros.html:145
+msgid "Show password"
+msgstr ""
+
+#: app/templates/_macros.html:145
+msgid "Hide password"
+msgstr ""
+
+#: app/templates/_macros.html:157
+msgid "Generate"
+msgstr ""
+
+#: app/templates/_macros.html:162 app/templates/_macros.html:164
+msgid "Recommended: %(n)s characters (set by admin)."
+msgstr ""
+
+#: app/auth/passwords.py
+msgid "Password must be at least %(n)s characters"
+msgstr ""
+
 #: app/templates/_macros.html:167
 msgid "Copied!"
 msgstr ""
@@ -983,6 +1003,16 @@ msgid "0 = unlimited uploads."
 msgstr ""
 
 #: app/templates/admin.html:43
+msgid "Share password length"
+msgstr ""
+
+#: app/templates/admin.html:43
+msgid ""
+"Length used by the Generate button on transfer and file request forms. "
+"Users cannot change this."
+msgstr ""
+
+#: app/templates/admin.html:44
 msgid "Delete after expiry (days)"
 msgstr ""
 

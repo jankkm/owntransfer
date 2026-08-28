@@ -23,7 +23,7 @@
     </div>
   </div>
   {{ f.text_input("max_total_mb", _("Max total size per upload (MB)"), max_file_size_mb, type="number", required=true) }}
-  {{ f.password_protection_fields(false) }}
+  {{ f.password_protection_fields(false, share_password_length) }}
   <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Create file request') }}</button>
 </form>
 {% endblock %}

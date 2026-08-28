@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user
 from app.auth.login_redirect import dashboard_redirect
+from app.auth.passwords import is_share_password_valid, share_password_too_short_message
 from app.database import get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
@@ -109,12 +110,20 @@ async def create_request_route(
             "error": _("Enter a password to enable protection"),
         })
         return templates.TemplateResponse(request, "requests_new.html", ctx, status_code=400)
+    clean_password = password.strip() if use_password else None
+    if clean_password and not is_share_password_valid(clean_password, app_settings.share_password_length):
+        ctx = branding_context(app_settings)
+        ctx.update({
+            "user": user,
+            "error": share_password_too_short_message(app_settings.share_password_length),
+        })
+        return templates.TemplateResponse(request, "requests_new.html", ctx, status_code=400)
     await create_file_request(
         db,
         user=user,
         title=title,
         instructions=instructions or None,
-        password=password.strip() if use_password else None,
+        password=clean_password,
         expires_at=parse_expiry_date(expires_at),
         max_uploads=max_uploads,
         max_total_bytes=max_total_mb * 1024 * 1024,
@@ -189,13 +198,26 @@ async def edit_request_route(
         return dashboard_redirect()
     expiry = parse_expiry_date(expires_at)
     app_settings = await get_app_settings(db)
+    clean_password = password.strip() if password.strip() else None
+    if bool(use_password) and clean_password and not is_share_password_valid(
+        clean_password, app_settings.share_password_length
+    ):
+        ctx = branding_context(app_settings)
+        ctx.update({
+            "user": user,
+            "file_request": file_request,
+            "has_password": bool(file_request.password_hash),
+            "now": datetime.now(timezone.utc),
+            "error": share_password_too_short_message(app_settings.share_password_length),
+        })
+        return templates.TemplateResponse(request, "requests_edit.html", ctx, status_code=400)
     await update_file_request(
         db,
         req=file_request,
         user=user,
         title=title,
         instructions=instructions or None,
-        password=password or None,
+        password=clean_password,
         remove_password=not bool(use_password),
         expires_at=expiry,
         max_uploads=max_uploads,

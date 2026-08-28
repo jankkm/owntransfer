@@ -46,6 +46,7 @@ async def test_save_share_settings_persists_max_uploads_default(client: AsyncCli
             "max_share_expiry_days": "365",
             "max_downloads_default": "5",
             "max_uploads_default": "7",
+            "share_password_length": "20",
             "purge_grace_days": "7",
             "purge_notify_days": "0",
             "csrf_token": csrf,
@@ -59,6 +60,69 @@ async def test_save_share_settings_persists_max_uploads_default(client: AsyncCli
         settings = await get_app_settings(db)
         assert settings.max_uploads_default == 7
         assert settings.max_downloads_default == 5
+        assert settings.share_password_length == 20
+
+
+@pytest.mark.asyncio
+async def test_new_transfer_form_has_password_generator(client: AsyncClient):
+    await _login_admin(client)
+    response = await client.get("/transfers/new")
+    assert response.status_code == 200
+    assert 'data-password-length="16"' in response.text
+    assert 'data-password-generate-btn' in response.text
+    assert 'data-password-visibility-btn' in response.text
+    assert 'data-copy-password-btn' in response.text
+    assert "Generate" in response.text
+
+
+@pytest.mark.asyncio
+async def test_create_request_rejects_short_password(client: AsyncClient):
+    await _login_admin(client)
+    new_page = await client.get("/requests/new")
+    csrf = re.search(r'name="csrf-token" content="([^"]+)"', new_page.text).group(1)
+    expires_at = re.search(r'name="expires_at"[^>]*value="([^"]+)"', new_page.text).group(1)
+
+    response = await client.post(
+        "/requests/new",
+        data={
+            "title": "Protected request",
+            "instructions": "",
+            "expires_at": expires_at,
+            "max_uploads": "3",
+            "max_total_mb": "10",
+            "use_password": "1",
+            "password": "short",
+            "csrf_token": csrf,
+        },
+    )
+    assert response.status_code == 400
+    assert "Password must be at least 16 characters" in response.text
+
+
+@pytest.mark.asyncio
+async def test_create_request_accepts_valid_password(client: AsyncClient):
+    await _login_admin(client)
+    new_page = await client.get("/requests/new")
+    csrf = re.search(r'name="csrf-token" content="([^"]+)"', new_page.text).group(1)
+    expires_at = re.search(r'name="expires_at"[^>]*value="([^"]+)"', new_page.text).group(1)
+    password = "a" * 16
+
+    response = await client.post(
+        "/requests/new",
+        data={
+            "title": "Protected request",
+            "instructions": "",
+            "expires_at": expires_at,
+            "max_uploads": "3",
+            "max_total_mb": "10",
+            "use_password": "1",
+            "password": password,
+            "csrf_token": csrf,
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/requests?created=1"
 
 
 @pytest.mark.asyncio

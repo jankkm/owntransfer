@@ -24,7 +24,7 @@
       <p class="text-xs text-slate-500 mt-1">{{ _('Use 0 for unlimited downloads.') }}</p>
     </div>
   </div>
-  {{ f.password_protection_fields(false) }}
+  {{ f.password_protection_fields(false, share_password_length) }}
   {{ f.checkbox_input("notify_on_download", _("Notify me when someone downloads")) }}
   <button type="submit" data-submit-btn class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Create transfer') }}</button>
 </form>

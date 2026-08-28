@@ -59,4 +59,25 @@
       input.select();
     });
   });
+
+  document.querySelectorAll("[data-copy-password-btn]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const field = btn.closest("[data-password-field]");
+      const input = field?.querySelector('input[name="password"]');
+      if (!input) return;
+      const value = input.value.trim();
+      if (!value) {
+        input.focus();
+        return;
+      }
+
+      try {
+        await copyText(value);
+        showCopied(btn);
+      } catch (_) {
+        input.focus();
+        input.select();
+      }
+    });
+  });
 })();

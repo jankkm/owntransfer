@@ -24,6 +24,8 @@ JS_MESSAGE_KEYS = (
     "Yes, remove file",
     "Cancel",
     "Enter a password to enable protection",
+    "Show password",
+    "Hide password",
     "Drop files here or click to browse",
     "No files selected",
     "No files added yet.",

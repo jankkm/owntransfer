@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_admin
-from app.auth.passwords import hash_password, is_password_long_enough
+from app.auth.passwords import hash_password, is_password_long_enough, is_share_password_valid, share_password_too_short_message
 from app.database import get_db
 from app.i18n import _, normalize_locale, SUPPORTED_LOCALES
 from app.http.client_ip import get_client_ip
@@ -244,6 +244,31 @@ async def admin_edit_transfer_route(
     transfer = await get_transfer_for_admin(db, transfer_id)
     expiry = parse_expiry_date(expires_at)
     app_settings = await get_app_settings(db)
+    clean_password = password.strip() if password.strip() else None
+    if bool(use_password) and clean_password and not is_share_password_valid(
+        clean_password, app_settings.share_password_length
+    ):
+        download_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
+        owner_users = await _list_active_users(db)
+        ctx = branding_context(app_settings)
+        ctx.update({
+            "user": admin,
+            "transfer": transfer,
+            "download_logs": download_logs,
+            "has_password": bool(transfer.password_hash),
+            "admin_edit": True,
+            "owner_users": owner_users,
+            "back_url": _shares_url(tab=tab, user=user),
+            "form_action": f"/admin/shares/transfers/{transfer_id}/edit",
+            "regenerate_action": f"/admin/shares/transfers/{transfer_id}/regenerate-link",
+            "files_upload_url": f"/admin/shares/transfers/{transfer_id}/files",
+            "files_delete_url_template": f"/admin/shares/transfers/{transfer_id}/files/{{id}}",
+            "shares_tab": tab,
+            "shares_user": user,
+            "now": datetime.now(timezone.utc),
+            "error": share_password_too_short_message(app_settings.share_password_length),
+        })
+        return templates.TemplateResponse(request, "transfers_edit.html", ctx, status_code=400)
 
     await update_transfer(
         db,
@@ -251,7 +276,7 @@ async def admin_edit_transfer_route(
         user=admin,
         title=title,
         message=message or None,
-        password=password or None,
+        password=clean_password,
         remove_password=not bool(use_password),
         expires_at=expiry,
         max_downloads=max_downloads,
@@ -407,6 +432,29 @@ async def admin_edit_request_route(
     file_request = await get_file_request_for_admin(db, request_id)
     expiry = parse_expiry_date(expires_at)
     app_settings = await get_app_settings(db)
+    clean_password = password.strip() if password.strip() else None
+    if bool(use_password) and clean_password and not is_share_password_valid(
+        clean_password, app_settings.share_password_length
+    ):
+        owner_users = await _list_active_users(db)
+        ctx = branding_context(app_settings)
+        ctx.update({
+            "user": admin,
+            "file_request": file_request,
+            "has_password": bool(file_request.password_hash),
+            "admin_edit": True,
+            "owner_users": owner_users,
+            "back_url": _shares_url(tab=tab, user=user),
+            "form_action": f"/admin/shares/requests/{request_id}/edit",
+            "regenerate_action": f"/admin/shares/requests/{request_id}/regenerate-link",
+            "files_delete_url_template": f"/admin/shares/requests/{request_id}/files/{{id}}",
+            "files_download_url_prefix": f"/requests/{request_id}/files/",
+            "shares_tab": tab,
+            "shares_user": user,
+            "now": datetime.now(timezone.utc),
+            "error": share_password_too_short_message(app_settings.share_password_length),
+        })
+        return templates.TemplateResponse(request, "requests_edit.html", ctx, status_code=400)
 
     await update_file_request(
         db,
@@ -414,7 +462,7 @@ async def admin_edit_request_route(
         user=admin,
         title=title,
         instructions=instructions or None,
-        password=password or None,
+        password=clean_password,
         remove_password=not bool(use_password),
         expires_at=expiry,
         max_uploads=max_uploads,
@@ -537,6 +585,7 @@ async def save_share_settings(
     max_share_expiry_days: int = Form(...),
     max_downloads_default: int = Form(...),
     max_uploads_default: int = Form(...),
+    share_password_length: int = Form(...),
     purge_grace_days: int = Form(...),
     purge_notify_days: int = Form(...),
     db: AsyncSession = Depends(get_db),
@@ -547,6 +596,7 @@ async def save_share_settings(
     app_settings.max_share_expiry_days = max(1, max_share_expiry_days)
     app_settings.max_downloads_default = max_downloads_default
     app_settings.max_uploads_default = max_uploads_default
+    app_settings.share_password_length = min(128, max(8, share_password_length))
     app_settings.purge_grace_days = max(0, purge_grace_days)
     app_settings.purge_notify_days = max(0, purge_notify_days)
     await db.commit()

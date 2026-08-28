@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.deps import get_current_user, require_user_id
 from app.auth.exceptions import NotAuthenticated
 from app.auth.login_redirect import dashboard_redirect
+from app.auth.passwords import is_share_password_valid, share_password_too_short_message
 from app.database import async_session, get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
@@ -155,9 +156,16 @@ async def create_transfer_route(
             "error": _("Enter a password to enable protection"),
         })
         return templates.TemplateResponse(request, "transfers_new.html", ctx, status_code=400)
+    clean_password = password.strip() if use_password else None
+    if clean_password and not is_share_password_valid(clean_password, app_settings.share_password_length):
+        ctx = branding_context(app_settings)
+        ctx.update({
+            "user": user,
+            "error": share_password_too_short_message(app_settings.share_password_length),
+        })
+        return templates.TemplateResponse(request, "transfers_new.html", ctx, status_code=400)
     scope = _transfer_staging_scope(user.id)
     staged_files = await take_staged_files(scope)
-    clean_password = password.strip() if use_password else None
     try:
         transfer = await create_transfer(
             db,
@@ -295,6 +303,21 @@ async def edit_transfer_route(
         return dashboard_redirect()
     expiry = parse_expiry_date(expires_at)
     app_settings = await get_app_settings(db)
+    clean_password = password.strip() if password.strip() else None
+    if bool(use_password) and clean_password and not is_share_password_valid(
+        clean_password, app_settings.share_password_length
+    ):
+        download_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
+        ctx = branding_context(app_settings)
+        ctx.update({
+            "user": user,
+            "transfer": transfer,
+            "download_logs": download_logs,
+            "has_password": bool(transfer.password_hash),
+            "now": datetime.now(timezone.utc),
+            "error": share_password_too_short_message(app_settings.share_password_length),
+        })
+        return templates.TemplateResponse(request, "transfers_edit.html", ctx, status_code=400)
 
     await update_transfer(
         db,
@@ -302,7 +325,7 @@ async def edit_transfer_route(
         user=user,
         title=title,
         message=message or None,
-        password=password or None,
+        password=clean_password,
         remove_password=not bool(use_password),
         expires_at=expiry,
         max_downloads=max_downloads,

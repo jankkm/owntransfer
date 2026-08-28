@@ -112,6 +112,7 @@ def branding_context(app_settings: AppSettings) -> dict:
         "today_date": today_date(),
         "max_downloads_default": app_settings.max_downloads_default,
         "max_uploads_default": app_settings.max_uploads_default,
+        "share_password_length": app_settings.share_password_length,
         "purge_grace_days": app_settings.purge_grace_days,
         "allow_user_share_emails": app_settings.allow_user_share_emails,
         "impressum_enabled": app_settings.impressum_enabled

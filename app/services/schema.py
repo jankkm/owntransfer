@@ -23,6 +23,12 @@ def _apply_migrations(sync_conn) -> None:
         )
         sync_conn.commit()
 
+    if "share_password_length" not in columns:
+        sync_conn.execute(
+            text("ALTER TABLE app_settings ADD COLUMN share_password_length INTEGER NOT NULL DEFAULT 16")
+        )
+        sync_conn.commit()
+
     if "transfers" in insp.get_table_names():
         transfer_cols = {col["name"] for col in insp.get_columns("transfers")}
         if "is_preparing" not in transfer_cols:
