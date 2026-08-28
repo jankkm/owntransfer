@@ -11,6 +11,7 @@ from app.models import AuditLog
 
 SHARE_RESOURCE_TYPES = frozenset({"transfer", "file_request"})
 EXCLUDED_TIMELINE_ACTIONS = frozenset({"transfer.downloaded", "file_request.uploaded"})
+OWNER_CHANGED_ACTION_SUFFIX = ".owner_changed"
 
 
 async def log_audit(
@@ -85,6 +86,60 @@ async def resolve_actor_emails(db: AsyncSession, audit_events: list[AuditLog]) -
         return {}
     result = await db.execute(select(User).where(User.id.in_(actor_ids)))
     return {user.id: user.email for user in result.scalars().all()}
+
+
+def _owner_ids_from_metadata(meta: dict) -> set[uuid.UUID]:
+    owner_ids: set[uuid.UUID] = set()
+    for key in ("previous_owner_id", "new_owner_id"):
+        raw = meta.get(key)
+        if not raw:
+            continue
+        try:
+            owner_ids.add(uuid.UUID(str(raw)))
+        except ValueError:
+            continue
+    return owner_ids
+
+
+async def resolve_owner_emails_for_audit(
+    db: AsyncSession,
+    audit_events: list[AuditLog],
+) -> dict[str, str]:
+    from app.models import User
+
+    owner_ids: set[uuid.UUID] = set()
+    for entry in audit_events:
+        if not entry.action.endswith(OWNER_CHANGED_ACTION_SUFFIX):
+            continue
+        meta = parse_audit_metadata(entry)
+        if meta.get("changes"):
+            continue
+        owner_ids.update(_owner_ids_from_metadata(meta))
+    if not owner_ids:
+        return {}
+    result = await db.execute(select(User).where(User.id.in_(owner_ids)))
+    return {str(user.id): user.email for user in result.scalars().all()}
+
+
+def collect_owner_ids_from_snapshot(snapshot: dict) -> set[uuid.UUID]:
+    owner_ids: set[uuid.UUID] = set()
+    for item in snapshot.get("audit_events") or []:
+        if not str(item.get("action", "")).endswith(OWNER_CHANGED_ACTION_SUFFIX):
+            continue
+        meta = item.get("metadata") or {}
+        if meta.get("changes"):
+            continue
+        owner_ids.update(_owner_ids_from_metadata(meta))
+    return owner_ids
+
+
+async def resolve_owner_emails_by_id(db: AsyncSession, owner_ids: set[uuid.UUID]) -> dict[str, str]:
+    from app.models import User
+
+    if not owner_ids:
+        return {}
+    result = await db.execute(select(User).where(User.id.in_(owner_ids)))
+    return {str(user.id): user.email for user in result.scalars().all()}
 
 
 def parse_audit_metadata(entry: AuditLog) -> dict:

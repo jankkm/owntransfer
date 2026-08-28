@@ -142,6 +142,8 @@ async def test_admin_can_change_transfer_owner(client: AsyncClient):
         metadata = json.loads(audit.metadata_json or "{}")
         assert metadata["previous_owner_id"] == str(owner.id)
         assert metadata["new_owner_id"] == str(new_owner.id)
+        assert metadata["changes"][0]["old"] == owner.email
+        assert metadata["changes"][0]["new"] == new_owner.email
 
 
 @pytest.mark.asyncio
@@ -174,6 +176,8 @@ async def test_admin_can_change_file_request_owner(client: AsyncClient):
         metadata = json.loads(audit.metadata_json or "{}")
         assert metadata["previous_owner_id"] == str(owner.id)
         assert metadata["new_owner_id"] == str(new_owner.id)
+        assert metadata["changes"][0]["old"] == owner.email
+        assert metadata["changes"][0]["new"] == new_owner.email
 
 
 @pytest.mark.asyncio

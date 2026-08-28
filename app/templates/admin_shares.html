@@ -59,7 +59,7 @@
   </div>
 
   {% if tab == 'transfers' %}
-  <div class="overflow-x-auto">
+  <div>
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-slate-500 text-left">
         <tr>
@@ -77,7 +77,9 @@
       <tbody>
         {% for t in transfers %}
         <tr class="border-t border-slate-100 hover:bg-slate-50/50">
-          <td class="py-3 px-4 font-medium">{{ t.title }}</td>
+          <td class="py-3 px-4 font-medium max-w-[12rem]">
+            <span class="block truncate" title="{{ t.title }}">{{ t.title }}</span>
+          </td>
           <td class="py-3 px-4">
             {{ f.share_status_badges(
               transfer_is_enabled(t),
@@ -89,17 +91,18 @@
               t.notify_on_download
             ) }}
           </td>
-          <td class="py-3 px-4">
-            <a href="/admin/shares?tab=transfers&user={{ t.created_by }}" class="text-primary hover:underline">
+          <td class="py-3 px-4 max-w-[11rem]">
+            <a href="/admin/shares?tab=transfers&user={{ t.created_by }}" class="text-primary hover:underline block truncate"
+               title="{{ t.creator.email if t.creator else '' }}">
               {{ t.creator.email if t.creator else '—' }}
             </a>
           </td>
-          <td class="py-3 px-4">{{ t.files|length }}</td>
-          <td class="py-3 px-4">{{ t.download_count|format_download_limit_short(t.max_downloads) }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ t.files|length }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ t.download_count|format_download_limit_short(t.max_downloads) }}</td>
           <td class="py-3 px-4 whitespace-nowrap">{{ t.expires_at|format_date }}</td>
-          <td class="py-3 px-4 whitespace-nowrap">{{ t.created_at|format_datetime }}</td>
+          <td class="py-3 px-4">{{ f.created_at_cell(t.created_at) }}</td>
           <td class="py-3 px-4">
-            {{ f.copy_url_field(base_url ~ "/d/" ~ t.public_token, compact=true) }}
+            {{ f.copy_url_button(base_url ~ "/d/" ~ t.public_token) }}
           </td>
           <td class="py-3 px-4 whitespace-nowrap">
             <div class="flex flex-wrap items-center gap-2">
@@ -132,7 +135,7 @@
     </table>
   </div>
   {% elif tab == 'requests' %}
-  <div class="overflow-x-auto">
+  <div>
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-slate-500 text-left">
         <tr>
@@ -149,7 +152,9 @@
       <tbody>
         {% for r in file_requests %}
         <tr class="border-t border-slate-100 hover:bg-slate-50/50">
-          <td class="py-3 px-4 font-medium">{{ r.title }}</td>
+          <td class="py-3 px-4 font-medium max-w-[12rem]">
+            <span class="block truncate" title="{{ r.title }}">{{ r.title }}</span>
+          </td>
           <td class="py-3 px-4">
             {{ f.share_status_badges(
               file_request_is_enabled(r),
@@ -160,16 +165,17 @@
               file_request_expiry_pending(r, now)
             ) }}
           </td>
-          <td class="py-3 px-4">
-            <a href="/admin/shares?tab=requests&user={{ r.created_by }}" class="text-primary hover:underline">
+          <td class="py-3 px-4 max-w-[11rem]">
+            <a href="/admin/shares?tab=requests&user={{ r.created_by }}" class="text-primary hover:underline block truncate"
+               title="{{ r.creator.email if r.creator else '' }}">
               {{ r.creator.email if r.creator else '—' }}
             </a>
           </td>
-          <td class="py-3 px-4">{{ r.upload_count }}/{{ r.max_uploads }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ r.upload_count }}/{{ r.max_uploads }}</td>
           <td class="py-3 px-4 whitespace-nowrap">{{ r.expires_at|format_date }}</td>
-          <td class="py-3 px-4 whitespace-nowrap">{{ r.created_at|format_datetime }}</td>
+          <td class="py-3 px-4">{{ f.created_at_cell(r.created_at) }}</td>
           <td class="py-3 px-4">
-            {{ f.copy_url_field(base_url ~ "/r/" ~ r.public_token, compact=true) }}
+            {{ f.copy_url_button(base_url ~ "/r/" ~ r.public_token) }}
           </td>
           <td class="py-3 px-4 whitespace-nowrap">
             <div class="flex flex-wrap items-center gap-2">
@@ -202,7 +208,7 @@
     </table>
   </div>
   {% else %}
-  <div class="overflow-x-auto">
+  <div>
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-slate-500 text-left">
         <tr>
@@ -219,18 +225,21 @@
       <tbody>
         {% for a in archived_shares %}
         <tr class="border-t border-slate-100 hover:bg-slate-50/50">
-          <td class="py-3 px-4">
+          <td class="py-3 px-4 whitespace-nowrap">
             {% if a.resource_type == 'transfer' %}{{ _('Transfer') }}{% else %}{{ _('File request') }}{% endif %}
           </td>
-          <td class="py-3 px-4 font-medium">{{ a.title }}</td>
-          <td class="py-3 px-4">
-            <a href="/admin/shares?tab=archive&user={{ a.creator_id }}" class="text-primary hover:underline">
+          <td class="py-3 px-4 font-medium max-w-[12rem]">
+            <span class="block truncate" title="{{ a.title }}">{{ a.title }}</span>
+          </td>
+          <td class="py-3 px-4 max-w-[11rem]">
+            <a href="/admin/shares?tab=archive&user={{ a.creator_id }}" class="text-primary hover:underline block truncate"
+               title="{{ a.creator_email }}">
               {{ a.creator_email }}
             </a>
           </td>
           <td class="py-3 px-4">{{ a.file_count }}</td>
           <td class="py-3 px-4">{{ a.activity_count }}</td>
-          <td class="py-3 px-4 whitespace-nowrap">{{ a.archived_at|format_datetime }}</td>
+          <td class="py-3 px-4">{{ f.created_at_cell(a.archived_at) }}</td>
           <td class="py-3 px-4">
             {% if a.archived_reason == 'user_deleted' %}{{ _('Deleted by user') }}{% else %}{{ _('Auto-purged') }}{% endif %}
           </td>

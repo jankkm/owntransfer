@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ArchivedShare
-from app.services.audit import delete_share_audit
+from app.services.audit import collect_owner_ids_from_snapshot, delete_share_audit, resolve_owner_emails_by_id
 from app.services.datetime_display import utc_now
 from app.services.settings import get_app_settings
 from app.services.share_timeline import build_timeline_from_snapshot
@@ -36,9 +36,9 @@ def parse_snapshot(archived: ArchivedShare) -> dict:
     return json.loads(archived.snapshot_json)
 
 
-def archived_timeline(archived: ArchivedShare) -> list:
+def archived_timeline(archived: ArchivedShare, owner_emails: dict[str, str] | None = None) -> list:
     snapshot = parse_snapshot(archived)
-    return build_timeline_from_snapshot(snapshot, archived.resource_type)
+    return build_timeline_from_snapshot(snapshot, archived.resource_type, owner_emails=owner_emails)
 
 
 def snapshot_download_logs_display(snapshot: dict) -> list[SimpleNamespace]:

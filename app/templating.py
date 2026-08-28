@@ -15,6 +15,7 @@ from app.services.datetime_display import (
     format_date,
     format_datetime,
     format_datetime_with_tz,
+    format_time,
     input_date,
     max_expiry_date,
     today_date,
@@ -59,6 +60,7 @@ templates.env.globals["locale_display_name"] = locale_display_name
 templates.env.globals["current_locale"] = get_locale
 templates.env.filters["format_datetime"] = format_datetime
 templates.env.filters["format_date"] = format_date
+templates.env.filters["format_time"] = format_time
 templates.env.filters["input_date"] = input_date
 templates.env.filters["format_datetime_with_tz"] = format_datetime_with_tz
 templates.env.globals["user_uses_local_auth"] = uses_local_auth

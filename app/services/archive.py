@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models import ArchivedShare, AuditLog, FileRequest, RequestUpload, Transfer, User
-from app.services.audit import EXCLUDED_TIMELINE_ACTIONS, list_share_audit, parse_audit_metadata, resolve_actor_emails
+from app.services.audit import EXCLUDED_TIMELINE_ACTIONS, list_share_audit, parse_audit_metadata, resolve_actor_emails, resolve_owner_emails_for_audit
 from app.services.share_timeline import build_request_timeline, build_transfer_timeline
 
 
@@ -20,10 +20,12 @@ async def load_transfer_activity(
     download_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
     audit_events = await list_share_audit(db, resource_type="transfer", resource_id=str(transfer.id))
     actor_emails = await resolve_actor_emails(db, audit_events)
+    owner_emails = await resolve_owner_emails_for_audit(db, audit_events)
     timeline = build_transfer_timeline(
         download_logs=transfer.download_logs,
         audit_events=audit_events,
         actor_emails=actor_emails,
+        owner_emails=owner_emails,
     )
     return download_logs, timeline
 
@@ -36,10 +38,12 @@ async def load_request_activity(
     uploads_sorted = sorted(uploads, key=lambda u: u.created_at, reverse=True)
     audit_events = await list_share_audit(db, resource_type="file_request", resource_id=str(req.id))
     actor_emails = await resolve_actor_emails(db, audit_events)
+    owner_emails = await resolve_owner_emails_for_audit(db, audit_events)
     timeline = build_request_timeline(
         uploads=uploads,
         audit_events=audit_events,
         actor_emails=actor_emails,
+        owner_emails=owner_emails,
     )
     return uploads_sorted, timeline
 

@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from babel.dates import format_date as babel_format_date
 from babel.dates import format_datetime as babel_format_datetime
+from babel.dates import format_time as babel_format_time
 from fastapi import HTTPException
 
 from app.config import settings
@@ -50,6 +51,12 @@ def format_date(value: datetime | None, fmt: str = "medium") -> str:
     if value is None:
         return _(_EMPTY)
     return babel_format_date(_to_local(value), format=fmt, locale=get_locale())
+
+
+def format_time(value: datetime | None, fmt: str = "short") -> str:
+    if value is None:
+        return _(_EMPTY)
+    return babel_format_time(_to_local(value), format=fmt, locale=get_locale())
 
 
 def input_date(value: datetime | None) -> str:

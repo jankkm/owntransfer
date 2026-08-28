@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from typing import Any
 
@@ -145,6 +146,30 @@ def build_transfer_update_changes(
             )
 
     return changes
+
+
+def build_owner_change_metadata(
+    *,
+    previous_owner_email: str | None,
+    new_owner_email: str,
+    previous_owner_id: uuid.UUID,
+    new_owner_id: uuid.UUID,
+) -> dict[str, Any]:
+    old = previous_owner_email or str(previous_owner_id)
+    return {
+        "previous_owner_id": str(previous_owner_id),
+        "new_owner_id": str(new_owner_id),
+        "previous_owner_email": previous_owner_email,
+        "new_owner_email": new_owner_email,
+        "changes": [
+            {
+                "field": "owner",
+                "label": _("Owner"),
+                "old": old,
+                "new": new_owner_email,
+            }
+        ],
+    }
 
 
 def build_file_request_update_changes(

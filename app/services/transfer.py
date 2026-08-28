@@ -25,6 +25,7 @@ from app.services.datetime_display import ensure_expiry_within_limit, ensure_utc
 from app.services.download_limits import transfer_download_limit_reached
 from app.services.settings import generate_public_token, get_app_settings, is_extension_blocked, parse_blocklist
 from app.services.share_audit_metadata import (
+    build_owner_change_metadata,
     build_transfer_update_changes,
     serialize_file_row,
     serialize_transfer_files,
@@ -585,11 +586,13 @@ async def update_transfer(
 
     previous_owner_id = transfer.created_by
     owner_changed = False
+    new_owner_user: User | None = None
     if new_owner_id is not None and new_owner_id != transfer.created_by:
         result = await db.execute(
             select(User).where(User.id == new_owner_id, User.is_active.is_(True))
         )
-        if result.scalar_one_or_none() is None:
+        new_owner_user = result.scalar_one_or_none()
+        if new_owner_user is None:
             raise HTTPException(status_code=400, detail=_("Invalid owner"))
         transfer.created_by = new_owner_id
         owner_changed = True
@@ -624,7 +627,8 @@ async def update_transfer(
             ip_address=ip_address,
             metadata={"changes": update_changes},
         )
-    if owner_changed:
+    if owner_changed and new_owner_user is not None:
+        previous_owner = await db.get(User, previous_owner_id)
         await log_audit(
             db,
             action="transfer.owner_changed",
@@ -632,10 +636,12 @@ async def update_transfer(
             resource_id=str(transfer.id),
             actor_id=user.id,
             ip_address=ip_address,
-            metadata={
-                "previous_owner_id": str(previous_owner_id),
-                "new_owner_id": str(new_owner_id),
-            },
+            metadata=build_owner_change_metadata(
+                previous_owner_email=previous_owner.email if previous_owner else None,
+                new_owner_email=new_owner_user.email,
+                previous_owner_id=previous_owner_id,
+                new_owner_id=new_owner_id,
+            ),
         )
     return transfer
 
