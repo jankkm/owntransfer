@@ -19,6 +19,9 @@ class S3Storage(StorageBackend):
     async def save_file(self, relative_path: str, data: bytes) -> str:
         raise NotImplementedError
 
+    async def move_file(self, src_relative: str, dst_relative: str) -> str:
+        raise NotImplementedError
+
     async def save_stream(self, relative_path: str, stream: BinaryIO, chunk_size: int = 1024 * 1024) -> str:
         raise NotImplementedError
 

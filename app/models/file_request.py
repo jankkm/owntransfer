@@ -46,6 +46,7 @@ class RequestUpload(Base, TimestampMixin):
     uploader_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     uploader_email: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
     ip_address: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    is_preparing: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     file_request = relationship("FileRequest", back_populates="uploads")
     files = relationship(

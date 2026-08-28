@@ -456,22 +456,43 @@ async def admin_edit_request_route(
         })
         return templates.TemplateResponse(request, "requests_edit.html", ctx, status_code=400)
 
-    await update_file_request(
-        db,
-        req=file_request,
-        user=admin,
-        title=title,
-        instructions=instructions or None,
-        password=clean_password,
-        remove_password=not bool(use_password),
-        expires_at=expiry,
-        max_uploads=max_uploads,
-        max_total_bytes=max_total_mb * 1024 * 1024,
-        ip_address=get_client_ip(request),
-        enabled=bool(enabled) if has_enabled_field else None,
-        app_settings=app_settings,
-        new_owner_id=_parse_new_owner_id(created_by),
-    )
+    try:
+        await update_file_request(
+            db,
+            req=file_request,
+            user=admin,
+            title=title,
+            instructions=instructions or None,
+            password=clean_password,
+            remove_password=not bool(use_password),
+            expires_at=expiry,
+            max_uploads=max_uploads,
+            max_total_bytes=max_total_mb * 1024 * 1024,
+            ip_address=get_client_ip(request),
+            enabled=bool(enabled) if has_enabled_field else None,
+            app_settings=app_settings,
+            new_owner_id=_parse_new_owner_id(created_by),
+        )
+    except HTTPException as exc:
+        owner_users = await _list_active_users(db)
+        ctx = branding_context(app_settings)
+        ctx.update({
+            "user": admin,
+            "file_request": file_request,
+            "has_password": bool(file_request.password_hash),
+            "admin_edit": True,
+            "owner_users": owner_users,
+            "back_url": _shares_url(tab=tab, user=user),
+            "form_action": f"/admin/shares/requests/{request_id}/edit",
+            "regenerate_action": f"/admin/shares/requests/{request_id}/regenerate-link",
+            "files_delete_url_template": f"/admin/shares/requests/{request_id}/files/{{id}}",
+            "files_download_url_prefix": f"/requests/{request_id}/files/",
+            "shares_tab": tab,
+            "shares_user": user,
+            "now": datetime.now(timezone.utc),
+            "error": exc.detail if isinstance(exc.detail, str) else _("Could not update file request"),
+        })
+        return templates.TemplateResponse(request, "requests_edit.html", ctx, status_code=exc.status_code)
     return RedirectResponse(_shares_url(tab=tab, user=user, saved="request"), status_code=303)
 
 

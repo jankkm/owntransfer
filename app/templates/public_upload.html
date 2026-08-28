@@ -6,7 +6,7 @@
   <h1 class="text-2xl font-bold mb-2">{{ file_request.title }}</h1>
   {% if file_request.instructions %}<p class="text-slate-600 mb-4">{{ file_request.instructions }}</p>{% endif %}
   <p class="text-sm text-slate-500 mb-6">
-    {{ _('Expires %(expires)s · up to %(max_mb)s MB per upload') % {'expires': file_request.expires_at|format_datetime_with_tz, 'max_mb': (file_request.max_total_bytes / 1024 / 1024)|int} }}
+    {{ _('Expires %(expires)s · up to %(max_mb)s MB per upload') % {'expires': file_request.expires_at|format_datetime_with_tz, 'max_mb': upload_max_total_mb} }}
   </p>
   {% if success %}<p class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-4">{{ success }}</p>{% endif %}
   {% if access_blocked %}

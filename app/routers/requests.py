@@ -118,19 +118,27 @@ async def create_request_route(
             "error": share_password_too_short_message(app_settings.share_password_length),
         })
         return templates.TemplateResponse(request, "requests_new.html", ctx, status_code=400)
-    await create_file_request(
-        db,
-        user=user,
-        title=title,
-        instructions=instructions or None,
-        password=clean_password,
-        expires_at=parse_expiry_date(expires_at),
-        max_uploads=max_uploads,
-        max_total_bytes=max_total_mb * 1024 * 1024,
-        recipient_emails=emails,
-        app_settings=app_settings,
-        ip_address=get_client_ip(request),
-    )
+    try:
+        await create_file_request(
+            db,
+            user=user,
+            title=title,
+            instructions=instructions or None,
+            password=clean_password,
+            expires_at=parse_expiry_date(expires_at),
+            max_uploads=max_uploads,
+            max_total_bytes=max_total_mb * 1024 * 1024,
+            recipient_emails=emails,
+            app_settings=app_settings,
+            ip_address=get_client_ip(request),
+        )
+    except HTTPException as exc:
+        ctx = branding_context(app_settings)
+        ctx.update({
+            "user": user,
+            "error": exc.detail if isinstance(exc.detail, str) else _("Could not create file request"),
+        })
+        return templates.TemplateResponse(request, "requests_new.html", ctx, status_code=exc.status_code)
     return RedirectResponse("/requests?created=1", status_code=303)
 
 
@@ -211,21 +219,32 @@ async def edit_request_route(
             "error": share_password_too_short_message(app_settings.share_password_length),
         })
         return templates.TemplateResponse(request, "requests_edit.html", ctx, status_code=400)
-    await update_file_request(
-        db,
-        req=file_request,
-        user=user,
-        title=title,
-        instructions=instructions or None,
-        password=clean_password,
-        remove_password=not bool(use_password),
-        expires_at=expiry,
-        max_uploads=max_uploads,
-        max_total_bytes=max_total_mb * 1024 * 1024,
-        ip_address=get_client_ip(request),
-        enabled=bool(enabled) if has_enabled_field else None,
-        app_settings=app_settings,
-    )
+    try:
+        await update_file_request(
+            db,
+            req=file_request,
+            user=user,
+            title=title,
+            instructions=instructions or None,
+            password=clean_password,
+            remove_password=not bool(use_password),
+            expires_at=expiry,
+            max_uploads=max_uploads,
+            max_total_bytes=max_total_mb * 1024 * 1024,
+            ip_address=get_client_ip(request),
+            enabled=bool(enabled) if has_enabled_field else None,
+            app_settings=app_settings,
+        )
+    except HTTPException as exc:
+        ctx = branding_context(app_settings)
+        ctx.update({
+            "user": user,
+            "file_request": file_request,
+            "has_password": bool(file_request.password_hash),
+            "now": datetime.now(timezone.utc),
+            "error": exc.detail if isinstance(exc.detail, str) else _("Could not update file request"),
+        })
+        return templates.TemplateResponse(request, "requests_edit.html", ctx, status_code=exc.status_code)
     return RedirectResponse("/requests?updated=1", status_code=303)
 
 

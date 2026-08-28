@@ -169,8 +169,7 @@ async def finalize_transfer_files(
             storage = get_storage()
             for staged in staged_files:
                 rel_path = f"transfers/{transfer.id}/{uuid4()}/{_safe_filename(staged.original_name)}"
-                content = storage.absolute_path(staged.storage_path).read_bytes()
-                await storage.save_file(rel_path, content)
+                await storage.move_file(staged.storage_path, rel_path)
                 db.add(TransferFile(
                     transfer_id=transfer.id,
                     original_name=staged.original_name,

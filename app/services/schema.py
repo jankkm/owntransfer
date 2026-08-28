@@ -37,6 +37,14 @@ def _apply_migrations(sync_conn) -> None:
             )
             sync_conn.commit()
 
+    if "request_uploads" in insp.get_table_names():
+        upload_cols = {col["name"] for col in insp.get_columns("request_uploads")}
+        if "is_preparing" not in upload_cols:
+            sync_conn.execute(
+                text("ALTER TABLE request_uploads ADD COLUMN is_preparing BOOLEAN NOT NULL DEFAULT FALSE")
+            )
+            sync_conn.commit()
+
     if "users" in insp.get_table_names():
         user_columns = {col["name"] for col in insp.get_columns("users")}
         if "locale" not in user_columns:

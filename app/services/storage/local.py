@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-import os
+import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import AsyncIterator, BinaryIO
@@ -10,6 +10,10 @@ from typing import AsyncIterator, BinaryIO
 class StorageBackend(ABC):
     @abstractmethod
     async def save_file(self, relative_path: str, data: bytes) -> str:
+        ...
+
+    @abstractmethod
+    async def move_file(self, src_relative: str, dst_relative: str) -> str:
         ...
 
     @abstractmethod
@@ -53,10 +57,21 @@ class LocalStorage(StorageBackend):
         await asyncio.to_thread(self._write_bytes, path, data)
         return relative_path
 
+    async def move_file(self, src_relative: str, dst_relative: str) -> str:
+        src = self._resolve(src_relative)
+        dst = self._resolve(dst_relative)
+        await asyncio.to_thread(self._move_file, src, dst)
+        return dst_relative
+
     @staticmethod
     def _write_bytes(path: Path, data: bytes) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
+
+    @staticmethod
+    def _move_file(src: Path, dst: Path) -> None:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(src), str(dst))
 
     async def save_stream(self, relative_path: str, stream: BinaryIO, chunk_size: int = 1024 * 1024) -> str:
         path = self._resolve(relative_path)

@@ -66,7 +66,7 @@
     {{ f.text_input("max_uploads", _("Max uploads"), file_request.max_uploads, type="number", required=true, hint=_('Current uploads: %(count)s') % {'count': file_request.upload_count}) }}
   </div>
 
-  {{ f.text_input("max_total_mb", _("Max total size per upload (MB)"), (file_request.max_total_bytes / 1024 / 1024)|int, type="number", required=true) }}
+  {{ f.text_input("max_total_mb", _("Max total size per upload (MB)"), (file_request.max_total_bytes / 1024 / 1024)|int, type="number", required=true, min=1, max=max_file_size_mb, hint=_("Cannot exceed the system limit of %(max)s MB.") % {'max': max_file_size_mb}) }}
 
   {{ f.password_protection_fields(has_password, share_password_length) }}
 
@@ -104,10 +104,16 @@
           {% if upload.uploader_name %}· {{ upload.uploader_name }}{% endif %}
           {% if upload.uploader_email %}· {{ upload.uploader_email }}{% endif %}
           {% if upload.ip_address %}· {{ _('IP') }} {{ upload.ip_address }}{% endif %}
+          {% if upload.is_preparing %}· {{ f.status_badge(_('Preparing'), 'blue') }}{% endif %}
         </p>
+        {% if not upload.is_preparing %}
         <a href="/requests/{{ file_request.id }}/uploads/{{ upload.id }}/download"
            class="text-xs text-primary hover:underline font-medium shrink-0">{{ _('Download (ZIP)') }}</a>
+        {% endif %}
       </div>
+      {% if upload.is_preparing %}
+      <p class="text-xs text-slate-500">{{ _('Files are still being prepared for this upload.') }}</p>
+      {% else %}
       <ul class="space-y-2">
         {% for file in upload.files %}
         <li data-file-id="{{ file.id }}" data-file-size="{{ file.size_bytes }}" class="text-sm text-slate-600">
@@ -126,10 +132,15 @@
         </li>
         {% endfor %}
       </ul>
+      {% endif %}
     </div>
     {% endfor %}
   </div>
 </div>
+
+{% if file_request.uploads | selectattr('is_preparing') | list %}
+<script>setTimeout(() => location.reload(), 3000)</script>
+{% endif %}
 
 {% if admin_edit %}
 <form method="post" action="/admin/shares/requests/{{ file_request.id }}/delete" class="mt-4 bg-white border border-red-100 rounded-xl p-6">

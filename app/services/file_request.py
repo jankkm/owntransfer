@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime
 from pathlib import Path
@@ -12,15 +13,18 @@ from sqlalchemy.orm import selectinload
 
 from app.auth.passwords import hash_password, verify_password
 from app.config import settings
+from app.database import async_session
 from app.i18n import _
 from app.models import AppSettings, FileRequest, RequestUpload, UploadFile, User
 from app.services.audit import log_audit
 from app.services.email import send_request_email, send_upload_notify
 from app.services.datetime_display import ensure_expiry_within_limit, ensure_utc, format_datetime_with_tz, utc_now
-from app.services.settings import generate_public_token, is_extension_blocked, parse_blocklist
+from app.services.settings import generate_public_token, get_app_settings, is_extension_blocked, parse_blocklist
 from app.services.share_lifecycle import is_past_expiry, reset_expiry_notifications
-from app.services.staging import StagedFile
+from app.services.staging import StagedFile, discard_staged_paths
 from app.services.storage import get_storage
+
+logger = logging.getLogger(__name__)
 
 
 def _utcnow() -> datetime:
@@ -30,6 +34,19 @@ def _utcnow() -> datetime:
 def _safe_filename(name: str) -> str:
     base = name.replace("\\", "/").split("/")[-1].strip()
     return re.sub(r"[^\w.\- ()]", "_", base) or "file"
+
+
+def effective_request_max_total_bytes(req: FileRequest, app_settings: AppSettings) -> int:
+    return min(req.max_total_bytes, app_settings.max_file_size_bytes)
+
+
+def ensure_max_total_within_limit(max_total_bytes: int, app_settings: AppSettings) -> None:
+    if max_total_bytes > app_settings.max_file_size_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail=_("Max total size cannot exceed the system limit (%(max_mb)s MB)")
+            % {"max_mb": app_settings.max_file_size_bytes // (1024 * 1024)},
+        )
 
 
 async def create_file_request(
@@ -47,6 +64,7 @@ async def create_file_request(
     ip_address: str | None,
 ) -> FileRequest:
     ensure_expiry_within_limit(expires_at, app_settings.max_share_expiry_days)
+    ensure_max_total_within_limit(max_total_bytes, app_settings)
     req = FileRequest(
         public_token=generate_public_token(),
         created_by=user.id,
@@ -132,7 +150,29 @@ def verify_request_password(req: FileRequest, password: str | None) -> bool:
     return True
 
 
-async def finalize_request_upload(
+def _validate_staged_request_files(
+    staged_files: list[StagedFile],
+    *,
+    max_total_bytes: int,
+    file_type_blocklist: str | None,
+) -> None:
+    if not staged_files:
+        raise HTTPException(status_code=400, detail=_("Add at least one file to upload"))
+
+    blocklist = parse_blocklist(file_type_blocklist)
+    total_size = 0
+    for staged in staged_files:
+        if is_extension_blocked(staged.original_name, blocklist):
+            raise HTTPException(
+                status_code=400,
+                detail=_("File type not allowed: %(filename)s") % {"filename": staged.original_name},
+            )
+        total_size += staged.size_bytes
+        if total_size > max_total_bytes:
+            raise HTTPException(status_code=400, detail=_("Upload exceeds maximum allowed size for this request"))
+
+
+async def begin_request_upload(
     db: AsyncSession,
     *,
     req: FileRequest,
@@ -140,63 +180,103 @@ async def finalize_request_upload(
     uploader_name: str | None,
     uploader_email: str | None,
     app_settings: AppSettings,
-    creator: User,
     ip_address: str | None,
 ) -> RequestUpload:
-    if not staged_files:
-        raise HTTPException(status_code=400, detail=_("Add at least one file to upload"))
+    _validate_staged_request_files(
+        staged_files,
+        max_total_bytes=effective_request_max_total_bytes(req, app_settings),
+        file_type_blocklist=app_settings.file_type_blocklist,
+    )
 
-    blocklist = parse_blocklist(app_settings.file_type_blocklist)
-    storage = get_storage()
     upload = RequestUpload(
         file_request_id=req.id,
         uploader_name=uploader_name,
         uploader_email=uploader_email,
         ip_address=ip_address,
+        is_preparing=True,
     )
     db.add(upload)
-    await db.flush()
-
-    total_size = 0
-    for staged in staged_files:
-        if is_extension_blocked(staged.original_name, blocklist):
-            raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": staged.original_name})
-        total_size += staged.size_bytes
-        if total_size > req.max_total_bytes:
-            raise HTTPException(status_code=400, detail=_("Upload exceeds maximum allowed size for this request"))
-        rel_path = f"requests/{req.id}/{upload.id}/{staged.id}/{_safe_filename(staged.original_name)}"
-        content = storage.absolute_path(staged.storage_path).read_bytes()
-        await storage.save_file(rel_path, content)
-        db.add(
-            UploadFile(
-                upload_id=upload.id,
-                original_name=staged.original_name,
-                storage_path=rel_path,
-                size_bytes=staged.size_bytes,
-                content_type=staged.content_type,
-            )
-        )
-
     req.upload_count += 1
     await db.commit()
     await db.refresh(upload)
-
-    await send_upload_notify(
-        app_settings,
-        to=creator.email,
-        title=req.title,
-        dashboard_link=f"{settings.base_url.rstrip('/')}/requests",
-        locale=creator.locale,
-    )
-    await log_audit(
-        db,
-        action="file_request.uploaded",
-        resource_type="file_request",
-        resource_id=str(req.id),
-        ip_address=ip_address,
-        metadata={"uploader_email": uploader_email, "file_count": len(staged_files)},
-    )
     return upload
+
+
+async def finalize_request_upload_files(
+    upload_id: UUID,
+    request_id: UUID,
+    staged_files: list[StagedFile],
+    *,
+    uploader_name: str | None,
+    uploader_email: str | None,
+    ip_address: str | None,
+) -> None:
+    """Background task: move staged files into the request upload folder and mark it ready."""
+    try:
+        async with async_session() as db:
+            req = await db.get(FileRequest, request_id)
+            upload = await db.get(RequestUpload, upload_id)
+            if req is None or upload is None:
+                return
+            app_settings = await get_app_settings(db)
+            creator = await db.get(User, req.created_by)
+            if creator is None:
+                return
+
+            storage = get_storage()
+            for staged in staged_files:
+                rel_path = f"requests/{req.id}/{upload.id}/{staged.id}/{_safe_filename(staged.original_name)}"
+                await storage.move_file(staged.storage_path, rel_path)
+                db.add(
+                    UploadFile(
+                        upload_id=upload.id,
+                        original_name=staged.original_name,
+                        storage_path=rel_path,
+                        size_bytes=staged.size_bytes,
+                        content_type=staged.content_type,
+                    )
+                )
+            upload.is_preparing = False
+            await db.commit()
+
+        await discard_staged_paths(staged_files)
+
+        async with async_session() as db:
+            req = await db.get(FileRequest, request_id)
+            app_settings = await get_app_settings(db)
+            creator = await db.get(User, req.created_by) if req else None
+            if req is None or creator is None:
+                return
+            await send_upload_notify(
+                app_settings,
+                to=creator.email,
+                title=req.title,
+                dashboard_link=f"{settings.base_url.rstrip('/')}/requests",
+                locale=creator.locale,
+            )
+            await log_audit(
+                db,
+                action="file_request.uploaded",
+                resource_type="file_request",
+                resource_id=str(req.id),
+                ip_address=ip_address,
+                metadata={"uploader_email": uploader_email, "file_count": len(staged_files)},
+            )
+            await db.commit()
+    except Exception:
+        logger.exception("Failed to finalize request upload %s; rolling back", upload_id)
+        try:
+            async with async_session() as db:
+                req = await db.get(FileRequest, request_id)
+                upload = await db.get(RequestUpload, upload_id)
+                if upload is not None:
+                    await db.delete(upload)
+                if req is not None:
+                    req.upload_count = max(0, req.upload_count - 1)
+                    await db.commit()
+        except Exception:
+            logger.exception("Also failed to roll back broken request upload %s", upload_id)
+        await discard_staged_paths(staged_files)
 
 
 async def handle_public_upload(
@@ -238,7 +318,7 @@ async def handle_public_upload(
                 % {"max_mb": app_settings.max_file_size_bytes // (1024 * 1024), "filename": f.filename},
             )
         total_size += len(content)
-        if total_size > req.max_total_bytes:
+        if total_size > effective_request_max_total_bytes(req, app_settings):
             raise HTTPException(status_code=400, detail=_("Upload exceeds maximum allowed size for this request"))
         rel_path = f"requests/{req.id}/{upload.id}/{uuid4()}/{_safe_filename(f.filename)}"
         await storage.save_file(rel_path, content)
@@ -318,6 +398,8 @@ async def get_request_upload_file(
 
 def _find_upload_file(req: FileRequest, file_id: UUID) -> UploadFile:
     for upload in req.uploads:
+        if upload.is_preparing:
+            continue
         for upload_file in upload.files:
             if upload_file.id == file_id:
                 return upload_file
@@ -393,6 +475,8 @@ def file_request_zip_entries(req: FileRequest) -> list[tuple[Path, str]]:
     used: dict[str, int] = {}
     entries: list[tuple[Path, str]] = []
     for upload in sorted(req.uploads, key=lambda item: item.created_at):
+        if upload.is_preparing:
+            continue
         for upload_file in upload.files:
             path = storage.absolute_path(upload_file.storage_path)
             arcname = _unique_zip_name(_safe_filename(upload_file.original_name), used)
@@ -410,6 +494,8 @@ def find_request_upload(req: FileRequest, upload_id: UUID) -> RequestUpload:
 
 
 def request_upload_zip_entries(upload: RequestUpload) -> list[tuple[Path, str]]:
+    if upload.is_preparing:
+        raise HTTPException(status_code=503, detail=_("Upload is still being prepared"))
     storage = get_storage()
     used: dict[str, int] = {}
     entries: list[tuple[Path, str]] = []
@@ -452,6 +538,7 @@ async def update_file_request(
     now = _utcnow()
     if app_settings:
         ensure_expiry_within_limit(expires_at, app_settings.max_share_expiry_days)
+        ensure_max_total_within_limit(max_total_bytes, app_settings)
     if max_uploads < req.upload_count:
         raise HTTPException(
             status_code=400,

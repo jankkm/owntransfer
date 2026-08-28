@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,8 +27,10 @@ from app.services.file_request import (
     ACCESS_DISABLED,
     ACCESS_EXPIRED,
     ACCESS_UPLOAD_LIMIT,
-    finalize_request_upload,
+    begin_request_upload,
+    finalize_request_upload_files,
     lookup_request_by_token,
+    effective_request_max_total_bytes,
     request_access_issue,
     verify_request_password,
 )
@@ -260,6 +262,7 @@ def _render_upload_page(
     elif status_code is None:
         status_code = 200
     ctx = branding_context(app_settings)
+    ctx["upload_max_total_mb"] = effective_request_max_total_bytes(file_request, app_settings) // (1024 * 1024)
     ctx.update(_upload_page_context(request, file_request, token, **context_kwargs))
     return templates.TemplateResponse(
         request,
@@ -528,7 +531,7 @@ async def stage_request_file(
                 detail=_access_blocked_copy(issue, kind="request")["access_blocked_title"],
             )
         limits = StagingLimits.from_settings(app_settings)
-        max_total_bytes = file_request.max_total_bytes
+        max_total_bytes = effective_request_max_total_bytes(file_request, app_settings)
         scope = _request_staging_scope(token)
     _require_request_unlock(request, token, password_required=bool(file_request.password_hash))
     staged = await add_staged_file(
@@ -575,6 +578,7 @@ async def delete_staged_request_file(
 async def upload_handler(
     token: str,
     request: Request,
+    background_tasks: BackgroundTasks,
     password: str = Form(""),
     unlock: str = Form(""),
     uploader_name: str = Form(""),
@@ -629,14 +633,13 @@ async def upload_handler(
     scope = _request_staging_scope(token)
     staged_files = await take_staged_files(scope)
     try:
-        await finalize_request_upload(
+        upload = await begin_request_upload(
             db,
             req=file_request,
             staged_files=staged_files,
             uploader_name=uploader_name or None,
             uploader_email=uploader_email or None,
             app_settings=app_settings,
-            creator=creator,
             ip_address=get_client_ip(request),
         )
     except HTTPException as exc:
@@ -649,7 +652,19 @@ async def upload_handler(
             status_code=exc.status_code,
             error=exc.detail if isinstance(exc.detail, str) else _("Upload failed"),
         )
-    await discard_staged_paths(staged_files)
+
+    if upload.is_preparing:
+        background_tasks.add_task(
+            finalize_request_upload_files,
+            upload.id,
+            file_request.id,
+            staged_files,
+            uploader_name=uploader_name or None,
+            uploader_email=uploader_email or None,
+            ip_address=get_client_ip(request),
+        )
+    else:
+        await discard_staged_paths(staged_files)
 
     return _render_upload_page(
         request,

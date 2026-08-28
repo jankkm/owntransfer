@@ -126,6 +126,38 @@ async def test_create_request_accepts_valid_password(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_create_request_rejects_max_total_above_system_limit(client: AsyncClient):
+    await _login_admin(client)
+    new_page = await client.get("/requests/new")
+    csrf = re.search(r'name="csrf-token" content="([^"]+)"', new_page.text).group(1)
+    expires_at = re.search(r'name="expires_at"[^>]*value="([^"]+)"', new_page.text).group(1)
+
+    response = await client.post(
+        "/requests/new",
+        data={
+            "title": "Too large request",
+            "instructions": "",
+            "expires_at": expires_at,
+            "max_uploads": "3",
+            "max_total_mb": "11",
+            "csrf_token": csrf,
+        },
+    )
+    assert response.status_code == 400
+    assert "system limit" in response.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_new_request_form_caps_max_total_mb(client: AsyncClient):
+    await _login_admin(client)
+    response = await client.get("/requests/new")
+    assert response.status_code == 200
+    # conftest seeds max_file_size_bytes=10MB
+    assert 'name="max_total_mb"' in response.text
+    assert 'max="10"' in response.text
+
+
+@pytest.mark.asyncio
 async def test_new_request_form_prefills_max_uploads_default(client: AsyncClient):
     await _login_admin(client)
     response = await client.get("/requests/new")
