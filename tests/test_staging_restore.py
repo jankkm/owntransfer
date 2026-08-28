@@ -100,6 +100,36 @@ async def test_purge_stale_staging_removes_old_keeps_fresh():
 
 
 @pytest.mark.asyncio
+async def test_create_transfer_via_post_with_staged_files(client: AsyncClient):
+    async with async_session() as db:
+        user = (await db.execute(select(User))).scalar_one()
+        scope = f"transfer_{user.id}"
+
+    await _login(client)
+    new_page = await client.get("/transfers/new")
+    csrf_match = re.search(r'name="csrf-token" content="([^"]+)"', new_page.text)
+    assert csrf_match
+    csrf_token = csrf_match.group(1)
+
+    await _stage_file(scope, "notes.pdf", b"%PDF-1.4")
+
+    expiry = (datetime.now(timezone.utc) + timedelta(days=7)).strftime("%Y-%m-%d")
+    response = await client.post(
+        "/transfers/new",
+        data={
+            "title": "Staged transfer",
+            "message": "",
+            "expires_at": expiry,
+            "max_downloads": "5",
+            "csrf_token": csrf_token,
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert "created=" in response.headers["location"]
+
+
+@pytest.mark.asyncio
 async def test_transfers_new_page_enables_staged_restore(client: AsyncClient):
     await _login(client)
     response = await client.get("/transfers/new")

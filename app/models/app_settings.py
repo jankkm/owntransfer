@@ -34,6 +34,7 @@ class AppSettings(Base):
     upload_concurrency: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
     purge_grace_days: Mapped[int] = mapped_column(Integer, nullable=False, default=7)
     purge_notify_days: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    archive_retention_days: Mapped[int] = mapped_column(Integer, nullable=False, default=90)
     setup_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     impressum_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     impressum_markdown: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

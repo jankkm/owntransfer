@@ -1,0 +1,68 @@
+{% import "_macros.html" as f %}
+{% if download_logs is defined %}
+<div class="mt-6 bg-white border rounded-xl p-6">
+  <h2 class="font-semibold text-lg mb-3">{{ _('Download log') }}</h2>
+  {% if download_logs %}
+  <div class="overflow-x-auto text-sm">
+    <table class="w-full">
+      <thead>
+        <tr class="text-left border-b text-slate-500">
+          <th class="py-2 pr-4">{{ _('Date & time') }}</th>
+          <th class="py-2 pr-4">{{ _('IP address') }}</th>
+          <th class="py-2 pr-4">{{ _('Type') }}</th>
+          <th class="py-2">{{ _('File') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in download_logs %}
+        <tr class="border-b border-slate-100">
+          <td class="py-2 pr-4 whitespace-nowrap">{{ log.created_at|format_datetime }}</td>
+          <td class="py-2 pr-4 font-mono text-xs">{{ log.ip_address or '—' }}</td>
+          <td class="py-2 pr-4">{{ log.download_type|format_download_type }}</td>
+          <td class="py-2">{{ log.file_name or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-sm text-slate-500">{{ _('No downloads recorded yet.') }}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if request_uploads is defined %}
+<div class="mt-6 bg-white border rounded-xl p-6">
+  <h2 class="font-semibold text-lg mb-3">{{ _('Upload log') }}</h2>
+  {% if request_uploads %}
+  <div class="overflow-x-auto text-sm">
+    <table class="w-full">
+      <thead>
+        <tr class="text-left border-b text-slate-500">
+          <th class="py-2 pr-4">{{ _('Date & time') }}</th>
+          <th class="py-2 pr-4">{{ _('IP address') }}</th>
+          <th class="py-2 pr-4">{{ _('Uploader') }}</th>
+          <th class="py-2">{{ _('Files') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for upload in request_uploads %}
+        <tr class="border-b border-slate-100">
+          <td class="py-2 pr-4 whitespace-nowrap">{{ upload.created_at|format_datetime }}</td>
+          <td class="py-2 pr-4 font-mono text-xs">{{ upload.ip_address or '—' }}</td>
+          <td class="py-2 pr-4">
+            {% if upload.uploader_name %}{{ upload.uploader_name }}{% endif %}
+            {% if upload.uploader_email %}<span class="text-slate-500">{{ upload.uploader_email }}</span>{% endif %}
+            {% if not upload.uploader_name and not upload.uploader_email %}—{% endif %}
+          </td>
+          <td class="py-2">{{ upload.files|length }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-sm text-slate-500">{{ _('No uploads recorded yet.') }}</p>
+  {% endif %}
+</div>
+{% endif %}

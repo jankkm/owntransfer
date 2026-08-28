@@ -39,6 +39,7 @@ from app.services.share_lifecycle import (
     transfer_deletion_pending,
     transfer_expiry_pending,
 )
+from app.services.share_timeline import download_type_label
 
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -82,6 +83,7 @@ templates.env.globals["file_request_expiry_pending"] = file_request_expiry_pendi
 templates.env.globals["share_timeline_notice"] = share_timeline_notice
 templates.env.filters["format_download_limit"] = format_download_limit
 templates.env.filters["format_download_limit_short"] = format_download_limit_short
+templates.env.filters["format_download_type"] = download_type_label
 templates.env.filters["user_initials"] = user_initials
 
 

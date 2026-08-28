@@ -43,6 +43,7 @@
     {{ f.text_input("share_password_length", _("Share password length"), app_settings.share_password_length, type="number", required=true, hint=_("Length used by the Generate button on transfer and file request forms. Users cannot change this.")) }}
     {{ f.text_input("purge_grace_days", _("Delete after expiry (days)"), app_settings.purge_grace_days, type="number", required=true, hint=_("Expired shares are permanently deleted this many days after expiry. 0 = disabled (no auto-delete).")) }}
     {{ f.text_input("purge_notify_days", _("Deletion reminder (days before purge)"), app_settings.purge_notify_days, type="number", required=true, hint=_("Email owners this many days before auto-delete. 0 = disabled.")) }}
+    {{ f.text_input("archive_retention_days", _("Keep in archive (days)"), app_settings.archive_retention_days, type="number", required=true, hint=_("Archived metadata is removed after this many days. 0 = never auto-delete.")) }}
     <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save shares') }}</button>
   </form>
   <form method="post" action="/admin/limits/access" class="bg-white border rounded-xl p-6 space-y-4">
@@ -157,7 +158,8 @@
   </div>
 </div>
 <div class="mt-6 bg-white border rounded-xl p-6">
-  <h2 class="font-semibold text-lg mb-3">{{ _('Recent audit log') }}</h2>
+  <h2 class="font-semibold text-lg mb-1">{{ _('System audit log') }}</h2>
+  <p class="text-xs text-slate-500 mb-3">{{ _('Share activity is shown on each transfer or file request and in the archive.') }}</p>
   <div class="overflow-x-auto text-sm">
     <table class="w-full">
       <thead><tr class="text-left border-b"><th class="py-2">{{ _('Time') }}</th><th>{{ _('Action') }}</th><th>{{ _('Resource') }}</th><th>{{ _('IP') }}</th></tr></thead>

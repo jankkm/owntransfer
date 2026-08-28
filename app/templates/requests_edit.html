@@ -142,6 +142,9 @@
 <script>setTimeout(() => location.reload(), 3000)</script>
 {% endif %}
 
+{% include "_share_activity_summary.html" %}
+{% include "_share_timeline.html" %}
+
 {% if admin_edit %}
 <form method="post" action="/admin/shares/requests/{{ file_request.id }}/delete" class="mt-4 bg-white border border-red-100 rounded-xl p-6">
   {{ csrf_input() }}

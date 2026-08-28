@@ -15,14 +15,25 @@ from app.auth.passwords import hash_password, is_password_long_enough, is_share_
 from app.database import get_db
 from app.i18n import _, normalize_locale, SUPPORTED_LOCALES
 from app.http.client_ip import get_client_ip
-from app.models import AuditLog, User
+from app.models import User
+from app.services.admin_archive import (
+    archived_timeline,
+    delete_archived_share,
+    get_archived_share,
+    list_archived_shares,
+    parse_snapshot,
+    snapshot_download_logs_display,
+    snapshot_uploads_display,
+)
 from app.services.admin_overview import (
     get_shares_summary,
+    get_shares_tab_counts,
     get_user_resource_counts,
     list_all_file_requests,
     list_all_transfers,
 )
-from app.services.audit import log_audit
+from app.services.audit import list_system_audit, log_audit
+from app.services.archive import load_request_activity, load_transfer_activity
 from app.services.branding import apply_logo_upload, clear_logo, normalize_hex_color
 from app.services.datetime_display import parse_expiry_date
 from app.services.email_templates import (
@@ -95,9 +106,7 @@ async def admin_home(
         (await db.execute(select(User).where(User.is_active.is_(True)).order_by(User.created_at))).scalars().all()
     )
     user_counts = await get_user_resource_counts(db)
-    audit_logs = list(
-        (await db.execute(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(50))).scalars().all()
-    )
+    audit_logs = await list_system_audit(db, limit=50)
     ctx = branding_context(app_settings)
     ctx.update({
         "user": user,
@@ -149,15 +158,17 @@ async def admin_shares(
         except ValueError:
             filter_user_id = None
 
-    if tab not in ("transfers", "requests"):
+    if tab not in ("transfers", "requests", "archive"):
         tab = "transfers"
 
     filter_users = list(
         (await db.execute(select(User).where(User.is_active.is_(True)).order_by(User.email))).scalars().all()
     )
-    transfers = await list_all_transfers(db, creator_id=filter_user_id)
-    file_requests = await list_all_file_requests(db, creator_id=filter_user_id)
+    transfers = await list_all_transfers(db, creator_id=filter_user_id) if tab != "archive" else []
+    file_requests = await list_all_file_requests(db, creator_id=filter_user_id) if tab != "archive" else []
+    archived_shares = await list_archived_shares(db, creator_id=filter_user_id) if tab == "archive" else []
     summary = await get_shares_summary(db)
+    tab_counts = await get_shares_tab_counts(db, creator_id=filter_user_id)
 
     ctx = branding_context(app_settings)
     ctx.update({
@@ -165,7 +176,9 @@ async def admin_shares(
         "tab": tab,
         "transfers": transfers,
         "file_requests": file_requests,
+        "archived_shares": archived_shares,
         "summary": summary,
+        "tab_counts": tab_counts,
         "filter_users": filter_users,
         "filter_user_id": user if filter_user_id else "",
         "now": datetime.now(timezone.utc),
@@ -180,6 +193,8 @@ async def admin_shares(
         ctx["success"] = _("Transfer deleted.")
     elif saved == "deleted_request":
         ctx["success"] = _("File request deleted.")
+    elif saved == "deleted_archive":
+        ctx["success"] = _("Archive record deleted.")
     error = request.query_params.get("error")
     if error:
         ctx["error"] = error.replace("+", " ")
@@ -197,13 +212,14 @@ async def admin_edit_transfer_page(
 ):
     app_settings = await get_app_settings(db)
     transfer = await get_transfer_for_admin(db, transfer_id)
-    download_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
+    download_logs, timeline = await load_transfer_activity(db, transfer)
     owner_users = await _list_active_users(db)
     ctx = branding_context(app_settings)
     ctx.update({
         "user": admin_user,
         "transfer": transfer,
         "download_logs": download_logs,
+        "timeline": timeline,
         "has_password": bool(transfer.password_hash),
         "admin_edit": True,
         "owner_users": owner_users,
@@ -248,13 +264,14 @@ async def admin_edit_transfer_route(
     if bool(use_password) and clean_password and not is_share_password_valid(
         clean_password, app_settings.share_password_length
     ):
-        download_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
+        download_logs, timeline = await load_transfer_activity(db, transfer)
         owner_users = await _list_active_users(db)
         ctx = branding_context(app_settings)
         ctx.update({
             "user": admin,
             "transfer": transfer,
             "download_logs": download_logs,
+            "timeline": timeline,
             "has_password": bool(transfer.password_hash),
             "admin_edit": True,
             "owner_users": owner_users,
@@ -376,6 +393,55 @@ async def admin_delete_transfer(
     return RedirectResponse(_shares_url(tab=tab, user=user, saved="deleted_transfer"), status_code=303)
 
 
+@router.get("/shares/archive/{archive_id}", response_class=HTMLResponse)
+async def admin_archive_detail(
+    archive_id: uuid.UUID,
+    request: Request,
+    tab: str = "archive",
+    user: str = "",
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+):
+    app_settings = await get_app_settings(db)
+    archived = await get_archived_share(db, archive_id)
+    if not archived:
+        raise HTTPException(status_code=404, detail=_("Archive record not found"))
+
+    snapshot = parse_snapshot(archived)
+    timeline = archived_timeline(archived)
+    ctx = branding_context(app_settings)
+    ctx.update({
+        "user": admin_user,
+        "archived": archived,
+        "snapshot": snapshot,
+        "timeline": timeline,
+        "back_url": _shares_url(tab=tab, user=user),
+        "filter_user_id": user,
+        "active": "shares",
+    })
+    if archived.resource_type == "transfer":
+        ctx["download_logs"] = snapshot_download_logs_display(snapshot)
+    else:
+        ctx["request_uploads"] = snapshot_uploads_display(snapshot)
+    return templates.TemplateResponse(request, "admin_archive_detail.html", ctx)
+
+
+@router.post("/shares/archive/{archive_id}/delete")
+async def admin_delete_archive(
+    archive_id: uuid.UUID,
+    request: Request,
+    tab: str = Form("archive"),
+    user: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    archived = await get_archived_share(db, archive_id)
+    if not archived:
+        raise HTTPException(status_code=404, detail=_("Archive record not found"))
+    await delete_archived_share(db, archived)
+    return RedirectResponse(_shares_url(tab=tab, user=user, saved="deleted_archive"), status_code=303)
+
+
 @router.get("/shares/requests/{request_id}/edit", response_class=HTMLResponse)
 async def admin_edit_request_page(
     request_id: uuid.UUID,
@@ -387,11 +453,14 @@ async def admin_edit_request_page(
 ):
     app_settings = await get_app_settings(db)
     file_request = await get_file_request_for_admin(db, request_id)
+    request_uploads, timeline = await load_request_activity(db, file_request)
     owner_users = await _list_active_users(db)
     ctx = branding_context(app_settings)
     ctx.update({
         "user": admin_user,
         "file_request": file_request,
+        "request_uploads": request_uploads,
+        "timeline": timeline,
         "has_password": bool(file_request.password_hash),
         "admin_edit": True,
         "owner_users": owner_users,
@@ -436,11 +505,14 @@ async def admin_edit_request_route(
     if bool(use_password) and clean_password and not is_share_password_valid(
         clean_password, app_settings.share_password_length
     ):
+        request_uploads, timeline = await load_request_activity(db, file_request)
         owner_users = await _list_active_users(db)
         ctx = branding_context(app_settings)
         ctx.update({
             "user": admin,
             "file_request": file_request,
+            "request_uploads": request_uploads,
+            "timeline": timeline,
             "has_password": bool(file_request.password_hash),
             "admin_edit": True,
             "owner_users": owner_users,
@@ -474,11 +546,14 @@ async def admin_edit_request_route(
             new_owner_id=_parse_new_owner_id(created_by),
         )
     except HTTPException as exc:
+        request_uploads, timeline = await load_request_activity(db, file_request)
         owner_users = await _list_active_users(db)
         ctx = branding_context(app_settings)
         ctx.update({
             "user": admin,
             "file_request": file_request,
+            "request_uploads": request_uploads,
+            "timeline": timeline,
             "has_password": bool(file_request.password_hash),
             "admin_edit": True,
             "owner_users": owner_users,
@@ -609,6 +684,7 @@ async def save_share_settings(
     share_password_length: int = Form(...),
     purge_grace_days: int = Form(...),
     purge_notify_days: int = Form(...),
+    archive_retention_days: int = Form(...),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_admin),
 ):
@@ -620,6 +696,7 @@ async def save_share_settings(
     app_settings.share_password_length = min(128, max(8, share_password_length))
     app_settings.purge_grace_days = max(0, purge_grace_days)
     app_settings.purge_notify_days = max(0, purge_notify_days)
+    app_settings.archive_retention_days = max(0, archive_retention_days)
     await db.commit()
     return RedirectResponse("/admin?shares_saved=1", status_code=303)
 

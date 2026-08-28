@@ -37,6 +37,7 @@ async def get_app_settings(db: AsyncSession) -> AppSettings:
         upload_concurrency=settings.upload_concurrency,
         purge_grace_days=settings.purge_grace_days,
         purge_notify_days=settings.purge_notify_days,
+        archive_retention_days=settings.archive_retention_days,
         setup_completed=False,
     )
     db.add(row)

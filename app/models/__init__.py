@@ -1,3 +1,4 @@
+from .archived_share import ArchivedShare
 from .audit import AuditLog
 from .app_settings import AppSettings
 from .base import Base
@@ -7,6 +8,7 @@ from .transfer import Transfer, TransferFile
 from .user import User
 
 __all__ = [
+    "ArchivedShare",
     "AuditLog",
     "AppSettings",
     "Base",

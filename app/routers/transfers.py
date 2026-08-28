@@ -16,6 +16,7 @@ from app.i18n import _
 from app.http.client_ip import get_client_ip
 from app.limiter import limiter
 from app.models import User
+from app.services.archive import load_transfer_activity
 from app.services.datetime_display import parse_expiry_date
 from app.services.settings import get_app_settings
 from app.services.share_list import apply_transfer_list_query, parse_share_list_query
@@ -248,12 +249,13 @@ async def edit_transfer_page(
     transfer = await find_user_transfer(db, transfer_id, user.id)
     if transfer is None:
         return dashboard_redirect()
-    download_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
+    download_logs, timeline = await load_transfer_activity(db, transfer)
     ctx = branding_context(app_settings)
     ctx.update({
         "user": user,
         "transfer": transfer,
         "download_logs": download_logs,
+        "timeline": timeline,
         "has_password": bool(transfer.password_hash),
         "now": datetime.now(timezone.utc),
         "success": _("Share link regenerated. The old link no longer works.")
@@ -338,12 +340,13 @@ async def edit_transfer_route(
     if bool(use_password) and clean_password and not is_share_password_valid(
         clean_password, app_settings.share_password_length
     ):
-        download_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
+        download_logs, timeline = await load_transfer_activity(db, transfer)
         ctx = branding_context(app_settings)
         ctx.update({
             "user": user,
             "transfer": transfer,
             "download_logs": download_logs,
+            "timeline": timeline,
             "has_password": bool(transfer.password_hash),
             "now": datetime.now(timezone.utc),
             "error": share_password_too_short_message(app_settings.share_password_length),

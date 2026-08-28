@@ -14,6 +14,7 @@ from app.database import get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
 from app.models import User
+from app.services.archive import load_request_activity
 from app.services.file_request import (
     create_file_request,
     delete_file_request,
@@ -153,10 +154,13 @@ async def edit_request_page(
     file_request = await find_user_request(db, request_id, user.id)
     if file_request is None:
         return dashboard_redirect()
+    request_uploads, timeline = await load_request_activity(db, file_request)
     ctx = branding_context(app_settings)
     ctx.update({
         "user": user,
         "file_request": file_request,
+        "request_uploads": request_uploads,
+        "timeline": timeline,
         "has_password": bool(file_request.password_hash),
         "now": datetime.now(timezone.utc),
         "success": _("Share link regenerated. The old link no longer works.")
@@ -210,10 +214,13 @@ async def edit_request_route(
     if bool(use_password) and clean_password and not is_share_password_valid(
         clean_password, app_settings.share_password_length
     ):
+        request_uploads, timeline = await load_request_activity(db, file_request)
         ctx = branding_context(app_settings)
         ctx.update({
             "user": user,
             "file_request": file_request,
+            "request_uploads": request_uploads,
+            "timeline": timeline,
             "has_password": bool(file_request.password_hash),
             "now": datetime.now(timezone.utc),
             "error": share_password_too_short_message(app_settings.share_password_length),
@@ -236,10 +243,13 @@ async def edit_request_route(
             app_settings=app_settings,
         )
     except HTTPException as exc:
+        request_uploads, timeline = await load_request_activity(db, file_request)
         ctx = branding_context(app_settings)
         ctx.update({
             "user": user,
             "file_request": file_request,
+            "request_uploads": request_uploads,
+            "timeline": timeline,
             "has_password": bool(file_request.password_hash),
             "now": datetime.now(timezone.utc),
             "error": exc.detail if isinstance(exc.detail, str) else _("Could not update file request"),

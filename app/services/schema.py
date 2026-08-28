@@ -29,6 +29,12 @@ def _apply_migrations(sync_conn) -> None:
         )
         sync_conn.commit()
 
+    if "archive_retention_days" not in columns:
+        sync_conn.execute(
+            text("ALTER TABLE app_settings ADD COLUMN archive_retention_days INTEGER NOT NULL DEFAULT 90")
+        )
+        sync_conn.commit()
+
     if "transfers" in insp.get_table_names():
         transfer_cols = {col["name"] for col in insp.get_columns("transfers")}
         if "is_preparing" not in transfer_cols:

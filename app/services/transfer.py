@@ -19,10 +19,16 @@ from app.database import async_session
 from app.i18n import _
 from app.models import AppSettings, Transfer, TransferDownloadLog, TransferFile, User
 from app.services.audit import log_audit
+from app.services.archive import archive_share_before_delete
 from app.services.email import send_download_notify, send_share_email
 from app.services.datetime_display import ensure_expiry_within_limit, ensure_utc, format_datetime_with_tz, utc_now
 from app.services.download_limits import transfer_download_limit_reached
 from app.services.settings import generate_public_token, get_app_settings, is_extension_blocked, parse_blocklist
+from app.services.share_audit_metadata import (
+    build_transfer_update_changes,
+    serialize_file_row,
+    serialize_transfer_files,
+)
 from app.services.share_lifecycle import is_past_expiry, reset_expiry_notifications
 from app.services.staging import StagedFile, _save_upload, discard_staged_paths
 from app.services.storage import get_storage
@@ -94,6 +100,7 @@ async def create_transfer(
     storage = get_storage()
     total_size = 0
     saved_count = 0
+    saved_files: list[dict] = []
 
     if files:
         for upload in files:
@@ -115,6 +122,9 @@ async def create_transfer(
                     size_bytes=len(content),
                     content_type=upload.content_type,
                 )
+            )
+            saved_files.append(
+                serialize_file_row(upload.filename, len(content), upload.content_type)
             )
             saved_count += 1
 
@@ -143,7 +153,11 @@ async def create_transfer(
         resource_id=str(transfer.id),
         actor_id=user.id,
         ip_address=ip_address,
-        metadata={"title": title},
+        metadata={
+            "title": title,
+            "files": saved_files,
+            "file_count": len(saved_files),
+        },
     )
     return transfer
 
@@ -203,7 +217,14 @@ async def finalize_transfer_files(
                 resource_id=str(transfer_id),
                 actor_id=user_id,
                 ip_address=ip_address,
-                metadata={"title": title},
+                metadata={
+                    "title": title,
+                    "files": [
+                        serialize_file_row(s.original_name, s.size_bytes, s.content_type)
+                        for s in staged_files
+                    ],
+                    "file_count": len(staged_files),
+                },
             )
             await db.commit()
     except Exception:
@@ -427,6 +448,8 @@ async def delete_transfer_file(
 
     transfer_file = await get_transfer_file(transfer, file_id)
     file_name = transfer_file.original_name
+    size_bytes = transfer_file.size_bytes
+    content_type = transfer_file.content_type
     storage = get_storage()
     await storage.delete_file(transfer_file.storage_path)
     await db.delete(transfer_file)
@@ -440,7 +463,11 @@ async def delete_transfer_file(
         resource_id=str(transfer.id),
         actor_id=user.id,
         ip_address=ip_address,
-        metadata={"file_name": file_name},
+        metadata={
+            "file_name": file_name,
+            "size_bytes": size_bytes,
+            "content_type": content_type,
+        },
     )
 
 
@@ -527,6 +554,14 @@ async def update_transfer(
             % {"count": transfer.download_count},
         )
 
+    old_title = transfer.title
+    old_message = transfer.message
+    old_expires_at = transfer.expires_at
+    old_max_downloads = transfer.max_downloads
+    old_notify_on_download = transfer.notify_on_download
+    had_password = bool(transfer.password_hash)
+    old_enabled = not transfer.is_disabled
+
     transfer.title = title
     transfer.message = message
     transfer.expires_at = expires_at
@@ -561,20 +596,33 @@ async def update_transfer(
     await db.commit()
     await db.refresh(transfer)
 
-    metadata: dict[str, str] = {"title": title}
-    if owner_changed:
-        metadata["previous_owner_id"] = str(previous_owner_id)
-        metadata["new_owner_id"] = str(new_owner_id)
-
-    await log_audit(
-        db,
-        action="transfer.updated",
-        resource_type="transfer",
-        resource_id=str(transfer.id),
-        actor_id=user.id,
-        ip_address=ip_address,
-        metadata=metadata,
+    update_changes = build_transfer_update_changes(
+        old_title=old_title,
+        new_title=title,
+        old_message=old_message,
+        new_message=message,
+        old_expires_at=old_expires_at,
+        new_expires_at=expires_at,
+        old_max_downloads=old_max_downloads,
+        new_max_downloads=max_downloads,
+        old_notify_on_download=old_notify_on_download,
+        new_notify_on_download=notify_on_download,
+        had_password=had_password,
+        remove_password=remove_password,
+        new_password=password,
+        old_enabled=old_enabled,
+        enabled=enabled,
     )
+    if update_changes:
+        await log_audit(
+            db,
+            action="transfer.updated",
+            resource_type="transfer",
+            resource_id=str(transfer.id),
+            actor_id=user.id,
+            ip_address=ip_address,
+            metadata={"changes": update_changes},
+        )
     if owner_changed:
         await log_audit(
             db,
@@ -598,19 +646,18 @@ async def delete_transfer(
     user: User,
     ip_address: str | None,
 ) -> None:
-    storage = get_storage()
-    await storage.delete_directory(f"transfers/{transfer.id}")
-    transfer_id = str(transfer.id)
-    await db.delete(transfer)
-    await db.commit()
-    await log_audit(
+    await archive_share_before_delete(
         db,
-        action="transfer.deleted",
         resource_type="transfer",
-        resource_id=transfer_id,
-        actor_id=user.id,
+        entity=transfer,
+        reason="user_deleted",
+        deleted_by=user,
         ip_address=ip_address,
     )
+    storage = get_storage()
+    await storage.delete_directory(f"transfers/{transfer.id}")
+    await db.delete(transfer)
+    await db.commit()
 
 
 async def regenerate_transfer_link(

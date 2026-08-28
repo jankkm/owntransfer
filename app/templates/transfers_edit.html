@@ -122,38 +122,8 @@
   </div>
 </div>
 
-{% if download_logs %}
-<div class="mt-6 bg-white border rounded-xl p-6">
-  <h2 class="font-semibold text-lg mb-3">{{ _('Download log') }}</h2>
-  <div class="overflow-x-auto text-sm">
-    <table class="w-full">
-      <thead>
-        <tr class="text-left border-b text-slate-500">
-          <th class="py-2 pr-4">{{ _('Date & time') }}</th>
-          <th class="py-2 pr-4">{{ _('IP address') }}</th>
-          <th class="py-2 pr-4">{{ _('Type') }}</th>
-          <th class="py-2">{{ _('File') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for log in download_logs %}
-        <tr class="border-b">
-          <td class="py-2 pr-4 whitespace-nowrap">{{ log.created_at|format_datetime }}</td>
-          <td class="py-2 pr-4">{{ log.ip_address or '—' }}</td>
-          <td class="py-2 pr-4">{{ log.download_type }}</td>
-          <td class="py-2">{{ log.file_name or '—' }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-{% else %}
-<div class="mt-6 bg-white border rounded-xl p-6">
-  <h2 class="font-semibold text-lg mb-1">{{ _('Download log') }}</h2>
-  <p class="text-sm text-slate-500">{{ _('No downloads recorded yet.') }}</p>
-</div>
-{% endif %}
+{% include "_share_activity_summary.html" %}
+{% include "_share_timeline.html" %}
 
 {% if admin_edit %}
 <form method="post" action="/admin/shares/transfers/{{ transfer.id }}/delete" class="mt-4 bg-white border border-red-100 rounded-xl p-6">

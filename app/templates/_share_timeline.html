@@ -1,0 +1,97 @@
+{% if timeline is defined %}
+<div class="mt-4 bg-white border rounded-xl overflow-hidden">
+  <details class="group">
+    <summary class="flex items-center justify-between gap-3 px-6 py-4 cursor-pointer select-none hover:bg-slate-50/80 transition-colors list-none [&::-webkit-details-marker]:hidden">
+      <div>
+        <h2 class="font-semibold text-lg">{{ _('Activity timeline') }}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">{{ ngettext('%(count)s event', '%(count)s events', timeline|length) % {'count': timeline|length} }}</p>
+      </div>
+      <span class="text-slate-400 text-sm shrink-0 transition-transform group-open:rotate-180" aria-hidden="true">▼</span>
+    </summary>
+    <div class="px-6 pb-6 border-t border-slate-100">
+      {% if timeline %}
+      <ol class="relative mt-4 space-y-0">
+        {% for entry in timeline %}
+        <li class="relative flex gap-4 pb-6 last:pb-0">
+          {% if not loop.last %}
+          <span class="absolute left-[15px] top-8 bottom-0 w-px bg-slate-200" aria-hidden="true"></span>
+          {% endif %}
+          <div class="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-white shadow-sm text-xs font-bold
+                      {% if entry.kind == 'download' %}bg-blue-100 text-blue-700
+                      {% elif entry.kind == 'upload' %}bg-emerald-100 text-emerald-700
+                      {% elif entry.kind in ('file_removed', 'deleted', 'purged') %}bg-red-100 text-red-700
+                      {% elif entry.kind in ('file_added', 'created') %}bg-violet-100 text-violet-700
+                      {% else %}bg-slate-100 text-slate-600{% endif %}">
+            {% if entry.kind == 'download' %}↓
+            {% elif entry.kind == 'upload' %}↑
+            {% elif entry.kind == 'file_removed' %}−
+            {% elif entry.kind == 'file_added' %}+
+            {% elif entry.kind == 'link_regenerated' %}⟳
+            {% elif entry.kind == 'owner_changed' %}⇄
+            {% elif entry.kind in ('deleted', 'purged') %}✕
+            {% else %}●{% endif %}
+          </div>
+          <div class="min-w-0 flex-1 pt-0.5">
+            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p class="text-sm font-medium text-slate-800">{{ entry.label }}</p>
+              <time class="text-xs text-slate-500 whitespace-nowrap">{{ entry.at|format_datetime }}</time>
+            </div>
+            <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+              {% if entry.actor_email %}
+              <span>{{ _('By') }} <span class="text-slate-700">{{ entry.actor_email }}</span></span>
+              {% endif %}
+              {% if entry.ip_address %}
+              <span>{{ _('IP') }} <span class="font-mono text-slate-600">{{ entry.ip_address }}</span></span>
+              {% endif %}
+            </div>
+            {% if entry.details.get('changes') %}
+            <ul class="mt-2 text-xs text-slate-600 space-y-1">
+              {% for change in entry.details.changes %}
+              <li>
+                <span class="font-medium">{{ change.label or change.field }}:</span>
+                {{ change.old }} → {{ change.new }}
+              </li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if entry.details.get('file_count') and not entry.details.get('files') %}
+            <p class="mt-1 text-xs text-slate-600">
+              {{ ngettext('%(count)s file', '%(count)s files', entry.details.file_count) % {'count': entry.details.file_count} }}
+            </p>
+            {% endif %}
+            {% if entry.details.get('file_name') %}
+            <p class="mt-1 text-xs text-slate-600">
+              <span class="font-medium">{{ _('File') }}:</span> {{ entry.details.file_name }}
+              {% if entry.details.get('size_bytes') %}
+              <span class="text-slate-400">· {{ (entry.details.size_bytes / 1024 / 1024)|round(2) }} MB</span>
+              {% endif %}
+            </p>
+            {% endif %}
+            {% if entry.details.get('files') %}
+            <ul class="mt-2 text-xs text-slate-600 space-y-0.5">
+              {% for file in entry.details.files %}
+              <li class="truncate">
+                {{ file.name or file.get('name') }}
+                {% set sz = file.size_bytes if file.size_bytes is defined else file.get('size_bytes') %}
+                {% if sz %}<span class="text-slate-400">· {{ (sz / 1024 / 1024)|round(2) }} MB</span>{% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if entry.details.get('uploader_name') or entry.details.get('uploader_email') %}
+            <p class="mt-1 text-xs text-slate-600">
+              {{ entry.details.uploader_name or '' }}
+              {% if entry.details.uploader_email %}<span class="text-slate-500">{{ entry.details.uploader_email }}</span>{% endif %}
+            </p>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="text-sm text-slate-500 mt-4">{{ _('No activity recorded yet.') }}</p>
+      {% endif %}
+    </div>
+  </details>
+</div>
+{% endif %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}{{ _('Archive') }} — {{ archived.title }} — {{ _('Admin') }} — {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <a href="{{ back_url }}" class="text-sm text-slate-500 hover:text-primary">&larr; {{ _('Back to archive') }}</a>
+</div>
+
+<h1 class="text-2xl font-bold mb-2">{{ archived.title }}</h1>
+<p class="text-sm text-slate-500 mb-6">
+  {% if archived.resource_type == 'transfer' %}{{ _('Transfer') }}{% else %}{{ _('File request') }}{% endif %}
+  · {{ _('Owner') }} {{ archived.creator_email }}
+  · {{ _('Archived') }} {{ archived.archived_at|format_datetime }}
+</p>
+
+<div class="grid md:grid-cols-2 gap-4 mb-6">
+  <div class="bg-white border rounded-xl p-4">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">{{ _('Reason') }}</p>
+    <p class="text-sm font-medium mt-1">
+      {% if archived.archived_reason == 'user_deleted' %}{{ _('Deleted by user') }}{% else %}{{ _('Auto-deleted after expiry') }}{% endif %}
+    </p>
+  </div>
+  <div class="bg-white border rounded-xl p-4">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">{{ _('Files at deletion') }}</p>
+    <p class="text-sm font-medium mt-1">{{ archived.file_count }} · {{ (archived.total_bytes / 1024 / 1024)|round(2) }} MB</p>
+  </div>
+  <div class="bg-white border rounded-xl p-4">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">{{ _('Created') }}</p>
+    <p class="text-sm font-medium mt-1">{{ archived.created_at|format_datetime }}</p>
+  </div>
+  <div class="bg-white border rounded-xl p-4">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">{{ _('Expired') }}</p>
+    <p class="text-sm font-medium mt-1">{{ archived.expires_at|format_datetime }}</p>
+  </div>
+</div>
+
+{% if snapshot.message %}
+<div class="bg-white border rounded-xl p-6 mb-4">
+  <h2 class="font-semibold text-sm text-slate-700 mb-2">{{ _('Message') }}</h2>
+  <p class="text-sm text-slate-600 whitespace-pre-wrap">{{ snapshot.message }}</p>
+</div>
+{% endif %}
+
+{% if snapshot.files %}
+<div class="bg-white border rounded-xl p-6 mb-4">
+  <h2 class="font-semibold text-lg mb-3">{{ _('Files at deletion') }}</h2>
+  <ul class="text-sm space-y-2">
+    {% for file in snapshot.files %}
+    <li class="flex justify-between gap-3 border-b border-slate-100 py-2 last:border-0">
+      <span class="truncate font-medium">{{ file.name }}</span>
+      <span class="text-slate-500 shrink-0">{{ (file.size_bytes / 1024 / 1024)|round(2) }} MB</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% include "_share_activity_summary.html" %}
+{% include "_share_timeline.html" %}
+
+<form method="post" action="/admin/shares/archive/{{ archived.id }}/delete" class="mt-6 bg-white border border-red-100 rounded-xl p-6">
+  {{ csrf_input() }}
+  <input type="hidden" name="tab" value="archive">
+  {% if filter_user_id %}<input type="hidden" name="user" value="{{ filter_user_id }}">{% endif %}
+  <p class="text-sm font-medium text-slate-700 mb-1">{{ _('Remove archive record') }}</p>
+  <p class="text-xs text-slate-500 mb-3">{{ _('Permanently delete this archive entry. File data is already removed; this only erases the metadata record.') }}</p>
+  {{ f.confirm_trigger("delete-archive-panel", _("Delete archive record"), "text-red-600 text-sm hover:underline") }}
+  {{ f.confirm_panel(
+    "delete-archive-panel",
+    _("Delete this archive record?"),
+    _("This metadata record will be permanently removed."),
+    _("Yes, delete record"),
+    variant="red"
+  ) }}
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ static_url('inline_remove_confirm.js') }}"></script>
+{% endblock %}

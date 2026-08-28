@@ -17,9 +17,11 @@ from app.database import async_session
 from app.i18n import _
 from app.models import AppSettings, FileRequest, RequestUpload, UploadFile, User
 from app.services.audit import log_audit
+from app.services.archive import archive_share_before_delete
 from app.services.email import send_request_email, send_upload_notify
 from app.services.datetime_display import ensure_expiry_within_limit, ensure_utc, format_datetime_with_tz, utc_now
 from app.services.settings import generate_public_token, get_app_settings, is_extension_blocked, parse_blocklist
+from app.services.share_audit_metadata import build_file_request_update_changes
 from app.services.share_lifecycle import is_past_expiry, reset_expiry_notifications
 from app.services.staging import StagedFile, discard_staged_paths
 from app.services.storage import get_storage
@@ -428,6 +430,8 @@ async def delete_request_upload_file(
         raise HTTPException(status_code=404, detail=_("File not found"))
 
     file_name = file_match.original_name
+    size_bytes = file_match.size_bytes
+    content_type = file_match.content_type
     storage = get_storage()
     await storage.delete_file(file_match.storage_path)
     await db.delete(file_match)
@@ -447,7 +451,11 @@ async def delete_request_upload_file(
         resource_id=str(req.id),
         actor_id=user.id,
         ip_address=ip_address,
-        metadata={"file_name": file_name},
+        metadata={
+            "file_name": file_name,
+            "size_bytes": size_bytes,
+            "content_type": content_type,
+        },
     )
 
 
@@ -539,12 +547,20 @@ async def update_file_request(
     if app_settings:
         ensure_expiry_within_limit(expires_at, app_settings.max_share_expiry_days)
         ensure_max_total_within_limit(max_total_bytes, app_settings)
-    if max_uploads < req.upload_count:
+    if max_uploads != 0 and max_uploads < req.upload_count:
         raise HTTPException(
             status_code=400,
             detail=_("Max uploads cannot be less than current count (%(count)s)")
             % {"count": req.upload_count},
         )
+
+    old_title = req.title
+    old_instructions = req.instructions
+    old_expires_at = req.expires_at
+    old_max_uploads = req.max_uploads
+    old_max_total_bytes = req.max_total_bytes
+    had_password = bool(req.password_hash)
+    old_enabled = not req.is_disabled
 
     req.title = title
     req.instructions = instructions
@@ -580,20 +596,33 @@ async def update_file_request(
     await db.commit()
     await db.refresh(req)
 
-    metadata: dict[str, str] = {"title": title}
-    if owner_changed:
-        metadata["previous_owner_id"] = str(previous_owner_id)
-        metadata["new_owner_id"] = str(new_owner_id)
-
-    await log_audit(
-        db,
-        action="file_request.updated",
-        resource_type="file_request",
-        resource_id=str(req.id),
-        actor_id=user.id,
-        ip_address=ip_address,
-        metadata=metadata,
+    update_changes = build_file_request_update_changes(
+        old_title=old_title,
+        new_title=title,
+        old_instructions=old_instructions,
+        new_instructions=instructions,
+        old_expires_at=old_expires_at,
+        new_expires_at=expires_at,
+        old_max_uploads=old_max_uploads,
+        new_max_uploads=max_uploads,
+        old_max_total_bytes=old_max_total_bytes,
+        new_max_total_bytes=max_total_bytes,
+        had_password=had_password,
+        remove_password=remove_password,
+        new_password=password,
+        old_enabled=old_enabled,
+        enabled=enabled,
     )
+    if update_changes:
+        await log_audit(
+            db,
+            action="file_request.updated",
+            resource_type="file_request",
+            resource_id=str(req.id),
+            actor_id=user.id,
+            ip_address=ip_address,
+            metadata={"changes": update_changes},
+        )
     if owner_changed:
         await log_audit(
             db,
@@ -617,19 +646,18 @@ async def delete_file_request(
     user: User,
     ip_address: str | None,
 ) -> None:
-    storage = get_storage()
-    await storage.delete_directory(f"requests/{req.id}")
-    request_id = str(req.id)
-    await db.delete(req)
-    await db.commit()
-    await log_audit(
+    await archive_share_before_delete(
         db,
-        action="file_request.deleted",
         resource_type="file_request",
-        resource_id=request_id,
-        actor_id=user.id,
+        entity=req,
+        reason="user_deleted",
+        deleted_by=user,
         ip_address=ip_address,
     )
+    storage = get_storage()
+    await storage.delete_directory(f"requests/{req.id}")
+    await db.delete(req)
+    await db.commit()
 
 
 async def regenerate_file_request_link(

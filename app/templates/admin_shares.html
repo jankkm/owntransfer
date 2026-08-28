@@ -17,7 +17,12 @@
     <p class="text-2xl font-bold mt-1">{{ summary.request_total }}</p>
     <p class="text-xs text-slate-500 mt-1">{{ _('%(count)s active') % {'count': summary.active_requests} }}</p>
   </div>
-  <div class="bg-white border rounded-xl p-4 md:col-span-2">
+  <div class="bg-white border rounded-xl p-4">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">{{ _('Archive') }}</p>
+    <p class="text-2xl font-bold mt-1">{{ summary.archive_total }}</p>
+    <p class="text-xs text-slate-500 mt-1">{{ _('Deleted shares') }}</p>
+  </div>
+  <div class="bg-white border rounded-xl p-4">
     <form method="get" class="flex flex-col sm:flex-row gap-3 items-end h-full">
       <input type="hidden" name="tab" value="{{ tab }}">
       <div class="flex-1 w-full">
@@ -41,11 +46,15 @@
   <div class="flex border-b text-sm px-4">
     <a href="/admin/shares?tab=transfers{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
        class="py-3 px-2 mr-4 {% if tab == 'transfers' %}tab-active font-medium{% else %}text-slate-500{% endif %}">
-      {{ _('Transfers (%(count)s)') % {'count': transfers|length} }}
+      {{ _('Transfers (%(count)s)') % {'count': tab_counts.transfers} }}
     </a>
     <a href="/admin/shares?tab=requests{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
-       class="py-3 px-2 {% if tab == 'requests' %}tab-active font-medium{% else %}text-slate-500{% endif %}">
-      {{ _('File requests (%(count)s)') % {'count': file_requests|length} }}
+       class="py-3 px-2 mr-4 {% if tab == 'requests' %}tab-active font-medium{% else %}text-slate-500{% endif %}">
+      {{ _('File requests (%(count)s)') % {'count': tab_counts.requests} }}
+    </a>
+    <a href="/admin/shares?tab=archive{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
+       class="py-3 px-2 {% if tab == 'archive' %}tab-active font-medium{% else %}text-slate-500{% endif %}">
+      {{ _('Archive (%(count)s)') % {'count': tab_counts.archive} }}
     </a>
   </div>
 
@@ -96,20 +105,24 @@
             <div class="flex flex-wrap items-center gap-2">
               <a href="/admin/shares/transfers/{{ t.id }}/edit?tab={{ tab }}{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
                  class="text-primary hover:underline text-xs">{{ _('Edit') }}</a>
-              <form method="post" action="/admin/shares/transfers/{{ t.id }}/delete" class="inline">
-                {{ csrf_input() }}
-                <input type="hidden" name="tab" value="{{ tab }}">
-                {% if filter_user_id %}<input type="hidden" name="user" value="{{ filter_user_id }}">{% endif %}
-                {{ f.confirm_trigger("delete-transfer-" ~ loop.index, _("Delete"), "text-red-600 hover:underline text-xs") }}
-                {{ f.confirm_panel(
-                  "delete-transfer-" ~ loop.index,
-                  _("Delete this transfer?"),
-                  _("All files will be permanently removed. This cannot be undone."),
-                  _("Yes, delete"),
-                  variant="red"
-                ) }}
-              </form>
+              {{ f.confirm_trigger("delete-transfer-" ~ loop.index, _("Delete"), "text-red-600 hover:underline text-xs") }}
             </div>
+          </td>
+        </tr>
+        <tr class="hover:bg-slate-50/50">
+          <td colspan="9" class="px-4 pb-3 pt-0">
+            <form method="post" action="/admin/shares/transfers/{{ t.id }}/delete" class="w-full">
+              {{ csrf_input() }}
+              <input type="hidden" name="tab" value="{{ tab }}">
+              {% if filter_user_id %}<input type="hidden" name="user" value="{{ filter_user_id }}">{% endif %}
+              {{ f.confirm_panel(
+                "delete-transfer-" ~ loop.index,
+                _("Delete this transfer?"),
+                _("All files will be permanently removed. This cannot be undone."),
+                _("Yes, delete"),
+                variant="red"
+              ) }}
+            </form>
           </td>
         </tr>
         {% else %}
@@ -118,7 +131,7 @@
       </tbody>
     </table>
   </div>
-  {% else %}
+  {% elif tab == 'requests' %}
   <div class="overflow-x-auto">
     <table class="w-full text-sm">
       <thead class="bg-slate-50 text-slate-500 text-left">
@@ -162,24 +175,91 @@
             <div class="flex flex-wrap items-center gap-2">
               <a href="/admin/shares/requests/{{ r.id }}/edit?tab={{ tab }}{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
                  class="text-primary hover:underline text-xs">{{ _('Edit') }}</a>
-              <form method="post" action="/admin/shares/requests/{{ r.id }}/delete" class="inline">
-                {{ csrf_input() }}
-                <input type="hidden" name="tab" value="{{ tab }}">
-                {% if filter_user_id %}<input type="hidden" name="user" value="{{ filter_user_id }}">{% endif %}
-                {{ f.confirm_trigger("delete-request-" ~ loop.index, _("Delete"), "text-red-600 hover:underline text-xs") }}
-                {{ f.confirm_panel(
-                  "delete-request-" ~ loop.index,
-                  _("Delete this file request?"),
-                  _("All uploads will be permanently removed. This cannot be undone."),
-                  _("Yes, delete"),
-                  variant="red"
-                ) }}
-              </form>
+              {{ f.confirm_trigger("delete-request-" ~ loop.index, _("Delete"), "text-red-600 hover:underline text-xs") }}
             </div>
+          </td>
+        </tr>
+        <tr class="hover:bg-slate-50/50">
+          <td colspan="9" class="px-4 pb-3 pt-0">
+            <form method="post" action="/admin/shares/requests/{{ r.id }}/delete" class="w-full">
+              {{ csrf_input() }}
+              <input type="hidden" name="tab" value="{{ tab }}">
+              {% if filter_user_id %}<input type="hidden" name="user" value="{{ filter_user_id }}">{% endif %}
+              {{ f.confirm_panel(
+                "delete-request-" ~ loop.index,
+                _("Delete this file request?"),
+                _("All uploads will be permanently removed. This cannot be undone."),
+                _("Yes, delete"),
+                variant="red"
+              ) }}
+            </form>
           </td>
         </tr>
         {% else %}
         <tr><td colspan="9" class="py-8 px-4 text-center text-slate-500">{{ _('No file requests found.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-500 text-left">
+        <tr>
+          <th class="py-3 px-4 font-medium">{{ _('Type') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Title') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Owner') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Files') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Activity') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Archived') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Reason') }}</th>
+          <th class="py-3 px-4 font-medium">{{ _('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in archived_shares %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50/50">
+          <td class="py-3 px-4">
+            {% if a.resource_type == 'transfer' %}{{ _('Transfer') }}{% else %}{{ _('File request') }}{% endif %}
+          </td>
+          <td class="py-3 px-4 font-medium">{{ a.title }}</td>
+          <td class="py-3 px-4">
+            <a href="/admin/shares?tab=archive&user={{ a.creator_id }}" class="text-primary hover:underline">
+              {{ a.creator_email }}
+            </a>
+          </td>
+          <td class="py-3 px-4">{{ a.file_count }}</td>
+          <td class="py-3 px-4">{{ a.activity_count }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ a.archived_at|format_datetime }}</td>
+          <td class="py-3 px-4">
+            {% if a.archived_reason == 'user_deleted' %}{{ _('Deleted by user') }}{% else %}{{ _('Auto-purged') }}{% endif %}
+          </td>
+          <td class="py-3 px-4 whitespace-nowrap">
+            <div class="flex flex-wrap items-center gap-2">
+              <a href="/admin/shares/archive/{{ a.id }}?tab=archive{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
+                 class="text-primary hover:underline text-xs">{{ _('View') }}</a>
+              {{ f.confirm_trigger("delete-archive-" ~ loop.index, _("Delete"), "text-red-600 hover:underline text-xs") }}
+            </div>
+          </td>
+        </tr>
+        <tr class="hover:bg-slate-50/50">
+          <td colspan="8" class="px-4 pb-3 pt-0">
+            <form method="post" action="/admin/shares/archive/{{ a.id }}/delete" class="w-full">
+              {{ csrf_input() }}
+              <input type="hidden" name="tab" value="archive">
+              {% if filter_user_id %}<input type="hidden" name="user" value="{{ filter_user_id }}">{% endif %}
+              {{ f.confirm_panel(
+                "delete-archive-" ~ loop.index,
+                _("Delete archive record?"),
+                _("This metadata record will be permanently removed."),
+                _("Yes, delete"),
+                variant="red"
+              ) }}
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="py-8 px-4 text-center text-slate-500">{{ _('No archived shares found.') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

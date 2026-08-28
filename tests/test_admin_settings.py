@@ -49,6 +49,7 @@ async def test_save_share_settings_persists_max_uploads_default(client: AsyncCli
             "share_password_length": "20",
             "purge_grace_days": "7",
             "purge_notify_days": "0",
+            "archive_retention_days": "120",
             "csrf_token": csrf,
         },
         follow_redirects=False,
@@ -61,6 +62,7 @@ async def test_save_share_settings_persists_max_uploads_default(client: AsyncCli
         assert settings.max_uploads_default == 7
         assert settings.max_downloads_default == 5
         assert settings.share_password_length == 20
+        assert settings.archive_retention_days == 120
 
 
 @pytest.mark.asyncio
@@ -193,3 +195,42 @@ def test_max_uploads_nonzero_allows_when_under_limit():
     now = datetime.now(timezone.utc)
     req = _make_request(max_uploads=5, upload_count=4)
     assert file_request_is_accessible(req, now) is True
+
+
+@pytest.mark.asyncio
+async def test_update_file_request_allows_zero_max_uploads_with_existing_uploads():
+    from sqlalchemy import select
+
+    from app.models import FileRequest, User
+    from app.services.file_request import update_file_request
+
+    async with async_session() as db:
+        user = (await db.execute(select(User).where(User.email == "admin@test.com"))).scalar_one()
+        req = FileRequest(
+            public_token=f"zero-max-{datetime.now(timezone.utc).timestamp()}",
+            created_by=user.id,
+            title="Original title",
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            max_uploads=0,
+            max_total_bytes=10 * 1024 * 1024,
+            upload_count=1,
+        )
+        db.add(req)
+        await db.commit()
+        await db.refresh(req)
+
+        updated = await update_file_request(
+            db,
+            req=req,
+            user=user,
+            title="Updated title",
+            instructions=None,
+            password=None,
+            remove_password=True,
+            expires_at=req.expires_at,
+            max_uploads=0,
+            max_total_bytes=req.max_total_bytes,
+            ip_address="127.0.0.1",
+        )
+        assert updated.title == "Updated title"
+        assert updated.max_uploads == 0

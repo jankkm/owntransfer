@@ -9,12 +9,12 @@ from sqlalchemy.orm import selectinload
 from app.config import settings
 from app.i18n import _, activate, email_locale
 from app.models import FileRequest, RequestUpload, Transfer, User
-from app.services.audit import log_audit
+from app.services.archive import archive_share_before_delete
 from app.services.datetime_display import format_datetime_with_tz, utc_now
 from app.services.email import send_expired_unused, send_purge_reminder
 from app.services.settings import get_app_settings
 from app.services.share_lifecycle import purge_cutoff, purge_notify_at
-from app.services.staging import purge_stale_staging
+from app.services.admin_archive import purge_archived_shares
 from app.services.storage import get_storage
 
 
@@ -212,19 +212,19 @@ async def purge_expired(db: AsyncSession) -> int:
 
     result = await db.execute(
         select(Transfer)
-        .options(selectinload(Transfer.files))
+        .options(selectinload(Transfer.files), selectinload(Transfer.download_logs))
         .where(Transfer.is_expired.is_(True), Transfer.expires_at < cutoff)
     )
     for transfer in result.scalars():
+        await archive_share_before_delete(
+            db,
+            resource_type="transfer",
+            entity=transfer,
+            reason="auto_purged",
+        )
         await storage.delete_directory(f"transfers/{transfer.id}")
         await db.delete(transfer)
         purged += 1
-        await log_audit(
-            db,
-            action="transfer.purged",
-            resource_type="transfer",
-            resource_id=str(transfer.id),
-        )
 
     result = await db.execute(
         select(FileRequest)
@@ -232,15 +232,15 @@ async def purge_expired(db: AsyncSession) -> int:
         .where(FileRequest.is_expired.is_(True), FileRequest.expires_at < cutoff)
     )
     for req in result.scalars():
+        await archive_share_before_delete(
+            db,
+            resource_type="file_request",
+            entity=req,
+            reason="auto_purged",
+        )
         await storage.delete_directory(f"requests/{req.id}")
         await db.delete(req)
         purged += 1
-        await log_audit(
-            db,
-            action="file_request.purged",
-            resource_type="file_request",
-            resource_id=str(req.id),
-        )
 
     await db.commit()
     return purged
@@ -251,11 +251,13 @@ async def run_cleanup(db: AsyncSession) -> dict[str, int]:
     unused = await notify_expired_unused(db)
     purge_reminders = await send_purge_reminders(db)
     purged = await purge_expired(db)
+    archived_purged = await purge_archived_shares(db)
     staging = await purge_stale_staging()
     return {
         "expired": expired,
         "unused": unused,
         "purge_reminders": purge_reminders,
         "purged": purged,
+        "archived_purged": archived_purged,
         "staging": staging,
     }

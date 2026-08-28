@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.services.datetime_display import utc_now
 from app.services.share_lifecycle import is_past_expiry
-from app.models import FileRequest, Transfer, User
+from app.models import ArchivedShare, FileRequest, Transfer, User
 
 
 def _utcnow() -> datetime:
@@ -67,6 +67,25 @@ async def list_all_file_requests(
     return list(result.scalars().all())
 
 
+async def get_shares_tab_counts(
+    db: AsyncSession,
+    *,
+    creator_id: UUID | None = None,
+) -> dict[str, int]:
+    transfer_query = select(func.count()).select_from(Transfer)
+    request_query = select(func.count()).select_from(FileRequest)
+    archive_query = select(func.count()).select_from(ArchivedShare)
+    if creator_id:
+        transfer_query = transfer_query.where(Transfer.created_by == creator_id)
+        request_query = request_query.where(FileRequest.created_by == creator_id)
+        archive_query = archive_query.where(ArchivedShare.creator_id == creator_id)
+    return {
+        "transfers": await db.scalar(transfer_query) or 0,
+        "requests": await db.scalar(request_query) or 0,
+        "archive": await db.scalar(archive_query) or 0,
+    }
+
+
 async def get_shares_summary(db: AsyncSession) -> dict[str, int]:
     now = _utcnow().replace(tzinfo=None)
     transfer_total = await db.scalar(select(func.count()).select_from(Transfer)) or 0
@@ -87,9 +106,11 @@ async def get_shares_summary(db: AsyncSession) -> dict[str, int]:
             (FileRequest.max_uploads == 0) | (FileRequest.upload_count < FileRequest.max_uploads),
         )
     ) or 0
+    archive_total = await db.scalar(select(func.count()).select_from(ArchivedShare)) or 0
     return {
         "transfer_total": transfer_total,
         "request_total": request_total,
         "active_transfers": active_transfers,
         "active_requests": active_requests,
+        "archive_total": archive_total,
     }

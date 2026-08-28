@@ -25,13 +25,15 @@ _Screenshots coming soon._
 - Enable or disable a link without deleting it
 - Edit transfers after creation, including extending expiry on expired links
 - Regenerate public token (invalidates the old link)
+- **Activity** on the edit page: download log plus a collapsible timeline (uploads, edits, file changes, deletions)
 
 ### File requests (inbound)
 
 - Create a link for external users to upload files to you
-- Staged multi-file upload with optional password and upload limits
+- Staged multi-file upload with optional password and upload limits (`0` = unlimited uploads)
 - Download received uploads as a ZIP from the dashboard
 - Same enable/disable, edit, expiry, and link-regeneration workflow as transfers
+- **Activity** on the edit page: upload log plus a collapsible timeline (uploads, edits, file changes, deletions)
 
 ### Public access
 
@@ -53,13 +55,13 @@ _Screenshots coming soon._
 | Area | What you can configure |
 |------|------------------------|
 | **Branding** | App name, logo, color scheme |
-| **Limits** | Max file size, default expiry, max share lifetime, default download limit, purge grace period, file extension blocklist, local login, user-sent share emails |
+| **Limits** | Max file size, parallel uploads, default expiry, max share lifetime, default download/upload limits, share password length, purge grace period, **archive retention**, file extension blocklist, local login, user-sent share emails |
 | **SMTP** | Outbound mail for share links and notifications |
 | **Email templates** | Editable Jinja2 subjects and HTML bodies for all notification types |
-| **Shares** | Overview of all transfers and requests across users; edit or delete any share; reassign ownership to another active user |
+| **Shares** | Overview of transfers, file requests, and **archive** across users; edit or delete any share; reassign ownership; per-tab counts and user filter |
 | **Users** | Create users, promote/demote admins, reset passwords, delete accounts |
 | **Impressum** | Optional legal notice page (Markdown) |
-| **Audit log** | Recent admin and system actions (including owner changes on transfers and file requests) |
+| **System audit log** | Recent admin and app-level actions (user management, settings changes). Per-share activity lives on each share’s edit page and in the archive |
 
 ### Email notifications
 
@@ -81,7 +83,8 @@ A background job runs every 15 minutes to:
 1. Mark shares past their expiry date as expired
 2. Email owners when an expired share had no downloads or uploads
 3. Email owners before auto-delete, if **Deletion reminder** is enabled in admin limits
-4. Permanently delete expired shares after a configurable **purge grace period** (days; `0` = auto-delete disabled)
+4. Permanently delete expired shares after a configurable **purge grace period** (days; `0` = auto-delete disabled), archiving metadata before file removal
+5. Purge archived share metadata older than **Keep in archive (days)** (`0` = disabled)
 
 During the grace period, shares show an **Expired** and **Deletion pending** badge in the UI. Extending expiry on the edit page clears the expired state and resets notification flags.
 
@@ -89,7 +92,30 @@ During the grace period, shares show an **Expired** and **Deletion pending** bad
 
 Transfers and file requests display clear status badges: Active, Expired, Disabled, download/upload limit reached, Password protected, Notifications (transfers with download alerts), and Deletion pending.
 
-## Quick start
+### Activity and audit
+
+OwnTransfer records what happens to each share and surfaces it in the UI:
+
+| Where | What you see |
+|-------|----------------|
+| **Transfer / file request edit** (owners and admins) | Download or upload log, plus an **Activity timeline** (collapsible) with downloads, uploads, edits, link regeneration, owner changes, and deletion |
+| **Admin → Shares → Archive** | Same activity view for deleted shares (metadata only; file bytes are already removed) |
+| **Admin → Settings** | **System audit log** — admin and app-level events (user accounts, settings, security). Per-share activity is not mixed into this list |
+
+Timeline entries include useful detail where available: file names and sizes on upload/download, field-level change summaries on edits, and who performed admin actions.
+
+When a transfer or file request is deleted (by a user or by auto-purge after expiry), a final **deleted** or **auto-deleted** entry is stored in the archive snapshot.
+
+### Archive (deleted shares)
+
+Deleting a transfer or file request does not erase history immediately:
+
+- File bytes are removed from storage, but a **metadata archive** is created (title, owner, files at deletion, download/upload logs, audit events)
+- Admins browse archived shares under **Admin → Shares → Archive** (filter by user, view detail, delete archive records)
+- **Keep in archive (days)** in admin limits controls retention (`0` = never auto-delete archived metadata)
+- The background cleanup job also purges archive records past that retention period
+
+Owners and admins can still review what happened to a deleted share from the archive detail page until the record is purged.
 
 ```bash
 git clone https://github.com/your-org/owntransfer.git
@@ -126,6 +152,7 @@ See [.env.example](.env.example) for the full list. Important variables:
 | `DATABASE_URL` | Optional full database URL override |
 | `UPLOAD_DIR` | Local file storage path (default `/data/uploads`) |
 | `UPLOAD_CONCURRENCY` | Default for **Admin → Limits → Parallel file uploads** on first boot (default `5`, range 1–50) |
+| `ARCHIVE_RETENTION_DAYS` | Default for **Keep in archive (days)** on first boot (default `90`; `0` = never auto-delete archived metadata) |
 | `DISPLAY_TIMEZONE` | IANA timezone for UI and emails (e.g. `Europe/Berlin`) |
 | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | Microsoft OAuth (optional) |
 | `SMTP_*` | Email defaults (overridable in admin after first boot) |
@@ -238,7 +265,7 @@ Run the same container image with a persistent volume claim for `/data`, configu
 - Rate limiting on public download and upload routes
 - Session cookies are HTTP-only
 - File extension blocklist configurable in admin
-- Audit log for administrative actions (including `transfer.owner_changed` and `file_request.owner_changed` when an admin reassigns a share)
+- **Audit logging** — system events in **Admin → Settings**; per-share activity on edit pages and in the archive (downloads, uploads, edits, deletions). Owner reassignments and share lifecycle events are recorded on the share timeline
 
 ### Fail2ban
 
