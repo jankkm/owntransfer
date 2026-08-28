@@ -59,28 +59,41 @@
   </div>
 
   {% if tab == 'transfers' %}
-  <div>
-    <table class="w-full text-sm">
+  <div class="min-w-0 overflow-hidden">
+    <table class="w-full table-fixed text-sm">
+      <colgroup>
+        <col>
+        <col style="width: 8rem">
+        <col style="width: 9rem">
+        <col style="width: 7rem">
+        <col style="width: 8rem">
+        <col style="width: 3.5rem">
+        <col style="width: 5.5rem">
+      </colgroup>
       <thead class="bg-slate-50 text-slate-500 text-left">
         <tr>
-          <th class="py-3 px-4 font-medium">{{ _('Title') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Status') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Owner') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Files') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Downloads') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Expires') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Created') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Link') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Actions') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Title') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Status') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Owner') }}</th>
+          <th class="py-3 px-3 font-medium">
+            <span class="block">{{ _('Files') }}</span>
+            <span class="block text-xs font-normal">{{ _('Downloads') }}</span>
+          </th>
+          <th class="py-3 px-3 font-medium">
+            <span class="block">{{ _('Expires') }}</span>
+            <span class="block text-xs font-normal">{{ _('Created') }}</span>
+          </th>
+          <th class="py-3 px-3 font-medium">{{ _('Link') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Actions') }}</th>
         </tr>
       </thead>
       <tbody>
         {% for t in transfers %}
         <tr class="border-t border-slate-100 hover:bg-slate-50/50">
-          <td class="py-3 px-4 font-medium max-w-[12rem]">
+          <td class="py-3 px-3 font-medium max-w-0">
             <span class="block truncate" title="{{ t.title }}">{{ t.title }}</span>
           </td>
-          <td class="py-3 px-4">
+          <td class="py-3 px-3 max-w-0">
             {{ f.share_status_badges(
               transfer_is_enabled(t),
               transfer_inactive_reason_code(t, now),
@@ -88,24 +101,29 @@
               t.password_hash,
               transfer_deletion_pending(t, purge_grace_days, now),
               transfer_expiry_pending(t, now),
-              t.notify_on_download
+              t.notify_on_download,
+              stacked=true
             ) }}
           </td>
-          <td class="py-3 px-4 max-w-[11rem]">
+          <td class="py-3 px-3 max-w-0">
             <a href="/admin/shares?tab=transfers&user={{ t.created_by }}" class="text-primary hover:underline block truncate"
                title="{{ t.creator.email if t.creator else '' }}">
               {{ t.creator.email if t.creator else '—' }}
             </a>
           </td>
-          <td class="py-3 px-4 whitespace-nowrap">{{ t.files|length }}</td>
-          <td class="py-3 px-4 whitespace-nowrap">{{ t.download_count|format_download_limit_short(t.max_downloads) }}</td>
-          <td class="py-3 px-4 whitespace-nowrap">{{ t.expires_at|format_date }}</td>
-          <td class="py-3 px-4">{{ f.created_at_cell(t.created_at) }}</td>
-          <td class="py-3 px-4">
+          <td class="py-3 px-3 text-xs leading-5">
+            <span class="block whitespace-nowrap">{{ _('Files') }}: {{ t.files|length }}</span>
+            <span class="block whitespace-nowrap text-slate-500">{{ _('Downloads') }}: {{ t.download_count|format_download_limit_short(t.max_downloads) }}</span>
+          </td>
+          <td class="py-3 px-3 text-xs leading-5">
+            <span class="block whitespace-nowrap"><span class="text-slate-500">{{ _('Expires') }}:</span> {{ t.expires_at|format_date }}</span>
+            <span class="block whitespace-nowrap"><span class="text-slate-500">{{ _('Created') }}:</span> {{ t.created_at|format_date }}</span>
+          </td>
+          <td class="py-3 px-3">
             {{ f.copy_url_button(base_url ~ "/d/" ~ t.public_token) }}
           </td>
-          <td class="py-3 px-4 whitespace-nowrap">
-            <div class="flex flex-wrap items-center gap-2">
+          <td class="py-3 px-3">
+            <div class="flex flex-col items-start gap-1 text-xs">
               <a href="/admin/shares/transfers/{{ t.id }}/edit?tab={{ tab }}{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
                  class="text-primary hover:underline text-xs">{{ _('Edit') }}</a>
               {{ f.confirm_trigger("delete-transfer-" ~ loop.index, _("Delete"), "text-red-600 hover:underline text-xs") }}
@@ -113,7 +131,7 @@
           </td>
         </tr>
         <tr class="hover:bg-slate-50/50">
-          <td colspan="9" class="px-4 pb-3 pt-0">
+          <td colspan="7" class="px-4 pb-3 pt-0">
             <form method="post" action="/admin/shares/transfers/{{ t.id }}/delete" class="w-full">
               {{ csrf_input() }}
               <input type="hidden" name="tab" value="{{ tab }}">
@@ -129,56 +147,72 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="9" class="py-8 px-4 text-center text-slate-500">{{ _('No transfers found.') }}</td></tr>
+        <tr><td colspan="7" class="py-8 px-4 text-center text-slate-500">{{ _('No transfers found.') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
   {% elif tab == 'requests' %}
-  <div>
-    <table class="w-full text-sm">
+  <div class="min-w-0 overflow-hidden">
+    <table class="w-full table-fixed text-sm">
+      <colgroup>
+        <col>
+        <col style="width: 8rem">
+        <col style="width: 9rem">
+        <col style="width: 6rem">
+        <col style="width: 8rem">
+        <col style="width: 3.5rem">
+        <col style="width: 5.5rem">
+      </colgroup>
       <thead class="bg-slate-50 text-slate-500 text-left">
         <tr>
-          <th class="py-3 px-4 font-medium">{{ _('Title') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Status') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Owner') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Uploads') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Expires') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Created') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Link') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Actions') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Title') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Status') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Owner') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Uploads') }}</th>
+          <th class="py-3 px-3 font-medium">
+            <span class="block">{{ _('Expires') }}</span>
+            <span class="block text-xs font-normal">{{ _('Created') }}</span>
+          </th>
+          <th class="py-3 px-3 font-medium">{{ _('Link') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Actions') }}</th>
         </tr>
       </thead>
       <tbody>
         {% for r in file_requests %}
         <tr class="border-t border-slate-100 hover:bg-slate-50/50">
-          <td class="py-3 px-4 font-medium max-w-[12rem]">
+          <td class="py-3 px-3 font-medium max-w-0">
             <span class="block truncate" title="{{ r.title }}">{{ r.title }}</span>
           </td>
-          <td class="py-3 px-4">
+          <td class="py-3 px-3 max-w-0">
             {{ f.share_status_badges(
               file_request_is_enabled(r),
               file_request_inactive_reason_code(r, now),
               file_request_is_expired(r, now),
               r.password_hash,
               file_request_deletion_pending(r, purge_grace_days, now),
-              file_request_expiry_pending(r, now)
+              file_request_expiry_pending(r, now),
+              stacked=true
             ) }}
           </td>
-          <td class="py-3 px-4 max-w-[11rem]">
+          <td class="py-3 px-3 max-w-0">
             <a href="/admin/shares?tab=requests&user={{ r.created_by }}" class="text-primary hover:underline block truncate"
                title="{{ r.creator.email if r.creator else '' }}">
               {{ r.creator.email if r.creator else '—' }}
             </a>
           </td>
-          <td class="py-3 px-4 whitespace-nowrap">{{ r.upload_count }}/{{ r.max_uploads }}</td>
-          <td class="py-3 px-4 whitespace-nowrap">{{ r.expires_at|format_date }}</td>
-          <td class="py-3 px-4">{{ f.created_at_cell(r.created_at) }}</td>
-          <td class="py-3 px-4">
+          <td class="py-3 px-3 text-xs">
+            <span class="block whitespace-nowrap">{{ _('Uploads') }}: {{ r.upload_count }}/{{ r.max_uploads }}</span>
+          </td>
+          <td class="py-3 px-3 text-xs leading-5">
+            <span class="block whitespace-nowrap"><span class="text-slate-500">{{ _('Expires') }}:</span> {{ r.expires_at|format_date }}</span>
+            <span class="block whitespace-nowrap"><span class="text-slate-500">{{ _('Created') }}:</span> {{ r.created_at|format_date }}</span>
+          </td>
+          <td class="py-3 px-3">
             {{ f.copy_url_button(base_url ~ "/r/" ~ r.public_token) }}
           </td>
-          <td class="py-3 px-4 whitespace-nowrap">
-            <div class="flex flex-wrap items-center gap-2">
+          <td class="py-3 px-3">
+            <div class="flex flex-col items-start gap-1 text-xs">
               <a href="/admin/shares/requests/{{ r.id }}/edit?tab={{ tab }}{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
                  class="text-primary hover:underline text-xs">{{ _('Edit') }}</a>
               {{ f.confirm_trigger("delete-request-" ~ loop.index, _("Delete"), "text-red-600 hover:underline text-xs") }}
@@ -186,7 +220,7 @@
           </td>
         </tr>
         <tr class="hover:bg-slate-50/50">
-          <td colspan="9" class="px-4 pb-3 pt-0">
+          <td colspan="7" class="px-4 pb-3 pt-0">
             <form method="post" action="/admin/shares/requests/{{ r.id }}/delete" class="w-full">
               {{ csrf_input() }}
               <input type="hidden" name="tab" value="{{ tab }}">
@@ -202,49 +236,57 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="9" class="py-8 px-4 text-center text-slate-500">{{ _('No file requests found.') }}</td></tr>
+        <tr><td colspan="7" class="py-8 px-4 text-center text-slate-500">{{ _('No file requests found.') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
   {% else %}
-  <div>
-    <table class="w-full text-sm">
+  <div class="min-w-0 overflow-hidden">
+    <table class="w-full table-fixed text-sm">
+      <colgroup>
+        <col>
+        <col style="width: 10rem">
+        <col style="width: 7rem">
+        <col style="width: 7rem">
+        <col style="width: 11rem">
+        <col style="width: 6rem">
+      </colgroup>
       <thead class="bg-slate-50 text-slate-500 text-left">
         <tr>
-          <th class="py-3 px-4 font-medium">{{ _('Type') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Title') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Owner') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Files') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Activity') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Archived') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Reason') }}</th>
-          <th class="py-3 px-4 font-medium">{{ _('Actions') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Title') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Owner') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Activity') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Archived') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Reason') }}</th>
+          <th class="py-3 px-3 font-medium">{{ _('Actions') }}</th>
         </tr>
       </thead>
       <tbody>
         {% for a in archived_shares %}
         <tr class="border-t border-slate-100 hover:bg-slate-50/50">
-          <td class="py-3 px-4 whitespace-nowrap">
-            {% if a.resource_type == 'transfer' %}{{ _('Transfer') }}{% else %}{{ _('File request') }}{% endif %}
-          </td>
-          <td class="py-3 px-4 font-medium max-w-[12rem]">
+          <td class="py-3 px-3 font-medium max-w-0">
             <span class="block truncate" title="{{ a.title }}">{{ a.title }}</span>
+            <span class="block mt-0.5 text-xs font-normal text-slate-500">
+              {% if a.resource_type == 'transfer' %}{{ _('Transfer') }}{% else %}{{ _('File request') }}{% endif %}
+            </span>
           </td>
-          <td class="py-3 px-4 max-w-[11rem]">
+          <td class="py-3 px-3 max-w-0">
             <a href="/admin/shares?tab=archive&user={{ a.creator_id }}" class="text-primary hover:underline block truncate"
                title="{{ a.creator_email }}">
               {{ a.creator_email }}
             </a>
           </td>
-          <td class="py-3 px-4">{{ a.file_count }}</td>
-          <td class="py-3 px-4">{{ a.activity_count }}</td>
-          <td class="py-3 px-4">{{ f.created_at_cell(a.archived_at) }}</td>
-          <td class="py-3 px-4">
+          <td class="py-3 px-3 text-xs leading-5">
+            <span class="block whitespace-nowrap">{{ _('Files') }}: {{ a.file_count }}</span>
+            <span class="block whitespace-nowrap text-slate-500">{{ _('Activity') }}: {{ a.activity_count }}</span>
+          </td>
+          <td class="py-3 px-3">{{ f.created_at_cell(a.archived_at) }}</td>
+          <td class="py-3 px-3 text-xs">
             {% if a.archived_reason == 'user_deleted' %}{{ _('Deleted by user') }}{% else %}{{ _('Auto-purged') }}{% endif %}
           </td>
-          <td class="py-3 px-4 whitespace-nowrap">
-            <div class="flex flex-wrap items-center gap-2">
+          <td class="py-3 px-3">
+            <div class="flex flex-col items-start gap-1 text-xs">
               <a href="/admin/shares/archive/{{ a.id }}?tab=archive{% if filter_user_id %}&user={{ filter_user_id }}{% endif %}"
                  class="text-primary hover:underline text-xs">{{ _('View') }}</a>
               {{ f.confirm_trigger("delete-archive-" ~ loop.index, _("Delete"), "text-red-600 hover:underline text-xs") }}
@@ -252,7 +294,7 @@
           </td>
         </tr>
         <tr class="hover:bg-slate-50/50">
-          <td colspan="8" class="px-4 pb-3 pt-0">
+          <td colspan="6" class="px-4 pb-3 pt-0">
             <form method="post" action="/admin/shares/archive/{{ a.id }}/delete" class="w-full">
               {{ csrf_input() }}
               <input type="hidden" name="tab" value="archive">
@@ -268,7 +310,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="8" class="py-8 px-4 text-center text-slate-500">{{ _('No archived shares found.') }}</td></tr>
+        <tr><td colspan="6" class="py-8 px-4 text-center text-slate-500">{{ _('No archived shares found.') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

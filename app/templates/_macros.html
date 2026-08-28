@@ -70,9 +70,9 @@
 {% endif %}
 {%- endmacro %}
 
-{% macro share_status_badges(is_enabled, inactive_reason='', is_expired=false, has_password=false, deletion_pending=false, expiry_pending=false, notify_on_download=false, is_preparing=false) -%}
+{% macro share_status_badges(is_enabled, inactive_reason='', is_expired=false, has_password=false, deletion_pending=false, expiry_pending=false, notify_on_download=false, is_preparing=false, stacked=false) -%}
 {% set show_active = is_enabled and not is_expired and not is_preparing and inactive_reason != 'download_limit' and inactive_reason != 'upload_limit' %}
-<div class="flex flex-wrap gap-1">
+<div class="flex {% if stacked %}flex-col items-start gap-0.5{% else %}flex-wrap gap-1{% endif %}">
   {% if is_preparing %}
   {{ status_badge(_('Preparing'), 'blue') }}
   {% elif show_active %}
