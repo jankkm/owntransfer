@@ -87,6 +87,7 @@ async def test_delete_transfer_creates_archive(client: AsyncClient):
         assert archived.archived_reason == "user_deleted"
         assert archived.file_count == 1
         snapshot = json.loads(archived.snapshot_json)
+        assert snapshot["share_link"].endswith(f"/d/{transfer.public_token}")
         assert snapshot["files"][0]["name"] == "report.pdf"
         assert len(snapshot["download_logs"]) == 1
         assert snapshot["download_logs"][0]["ip_address"] == "203.0.113.1"
@@ -99,6 +100,7 @@ async def test_delete_transfer_creates_archive(client: AsyncClient):
     detail = await client.get(f"/admin/shares/archive/{archive_id}?tab=archive")
     assert detail.status_code == 200
     assert "Archive me" in detail.text
+    assert f"/d/{transfer.public_token}" in detail.text
 
 
 @pytest.mark.asyncio

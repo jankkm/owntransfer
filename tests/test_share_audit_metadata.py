@@ -11,12 +11,13 @@ from sqlalchemy import select
 
 from app.auth.passwords import hash_password
 from app.database import async_session
-from app.models import AuditLog, Transfer, User
+from app.models import AuditLog, FileRequest, Transfer, User
+from app.services.file_request import create_file_request, regenerate_file_request_link
 from app.services.share_audit_metadata import (
     build_transfer_update_changes,
     serialize_file_row,
 )
-from app.services.transfer import update_transfer
+from app.services.transfer import regenerate_transfer_link, update_transfer
 from app.services.settings import get_app_settings
 
 
@@ -167,3 +168,84 @@ async def test_create_transfer_via_post_audit_has_files(client: AsyncClient):
         meta = json.loads(row.metadata_json)
         assert meta.get("file_count") == 1
         assert meta["files"][0]["name"] == "doc.pdf"
+        assert meta["share_link"].endswith(f"/d/{transfer.public_token}")
+
+
+@pytest.mark.asyncio
+async def test_file_request_create_and_link_regeneration_audit_full_links():
+    async with async_session() as db:
+        user = (await db.execute(select(User).where(User.email == "admin@test.com"))).scalar_one()
+        app_settings = await get_app_settings(db)
+        req = await create_file_request(
+            db,
+            user=user,
+            title="Audit request links",
+            instructions=None,
+            password=None,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            max_uploads=5,
+            max_total_bytes=1024 * 1024,
+            recipient_emails=[],
+            app_settings=app_settings,
+            ip_address="127.0.0.1",
+        )
+        old_token = req.public_token
+
+        await regenerate_file_request_link(
+            db,
+            req=req,
+            user=user,
+            ip_address="127.0.0.1",
+        )
+
+        rows = (
+            await db.execute(
+                select(AuditLog)
+                .where(AuditLog.resource_id == str(req.id))
+            )
+        ).scalars().all()
+        metadata_by_action = {
+            row.action: json.loads(row.metadata_json)
+            for row in rows
+        }
+        created_meta = metadata_by_action["file_request.created"]
+        regenerated_meta = metadata_by_action["file_request.link_regenerated"]
+        assert created_meta["share_link"].endswith(f"/r/{old_token}")
+        assert regenerated_meta["old_share_link"].endswith(f"/r/{old_token}")
+        assert regenerated_meta["new_share_link"].endswith(f"/r/{req.public_token}")
+
+
+@pytest.mark.asyncio
+async def test_transfer_link_regeneration_audit_has_old_and_new_links():
+    async with async_session() as db:
+        user = (await db.execute(select(User).where(User.email == "admin@test.com"))).scalar_one()
+        transfer = Transfer(
+            public_token=f"audit-regenerate-{uuid.uuid4().hex}",
+            created_by=user.id,
+            title="Regenerate link",
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            max_downloads=5,
+        )
+        db.add(transfer)
+        await db.commit()
+        await db.refresh(transfer)
+        old_token = transfer.public_token
+
+        await regenerate_transfer_link(
+            db,
+            transfer=transfer,
+            user=user,
+            ip_address="127.0.0.1",
+        )
+
+        row = (
+            await db.execute(
+                select(AuditLog).where(
+                    AuditLog.action == "transfer.link_regenerated",
+                    AuditLog.resource_id == str(transfer.id),
+                )
+            )
+        ).scalar_one()
+        meta = json.loads(row.metadata_json)
+        assert meta["old_share_link"].endswith(f"/d/{old_token}")
+        assert meta["new_share_link"].endswith(f"/d/{transfer.public_token}")

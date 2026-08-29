@@ -101,6 +101,9 @@ async def create_file_request(
         resource_id=str(req.id),
         actor_id=user.id,
         ip_address=ip_address,
+        metadata={
+            "share_link": f"{settings.base_url.rstrip('/')}/r/{req.public_token}",
+        },
     )
     return req
 
@@ -686,6 +689,9 @@ async def regenerate_file_request_link(
         resource_id=str(req.id),
         actor_id=user.id,
         ip_address=ip_address,
-        metadata={"old_token_prefix": old_token[:8]},
+        metadata={
+            "old_share_link": f"{settings.base_url.rstrip('/')}/r/{old_token}",
+            "new_share_link": f"{settings.base_url.rstrip('/')}/r/{req.public_token}",
+        },
     )
     return req

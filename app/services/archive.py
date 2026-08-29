@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.config import settings
 from app.models import ArchivedShare, AuditLog, FileRequest, RequestUpload, Transfer, User
 from app.services.audit import EXCLUDED_TIMELINE_ACTIONS, list_share_audit, parse_audit_metadata, resolve_actor_emails, resolve_owner_emails_for_audit
 from app.services.share_timeline import build_request_timeline, build_transfer_timeline
@@ -100,6 +101,8 @@ async def archive_share_before_delete(
     deleted_by: User | None = None,
     ip_address: str | None = None,
 ) -> None:
+    public_path = "d" if resource_type == "transfer" else "r"
+    share_link = f"{settings.base_url.rstrip('/')}/{public_path}/{entity.public_token}"
     db.add(
         AuditLog(
             actor_id=deleted_by.id if deleted_by else None,
@@ -107,7 +110,10 @@ async def archive_share_before_delete(
             resource_type=resource_type,
             resource_id=str(entity.id),
             ip_address=ip_address,
-            metadata_json=json.dumps({"archived_reason": reason}),
+            metadata_json=json.dumps({
+                "archived_reason": reason,
+                "share_link": share_link,
+            }),
         )
     )
     await db.flush()
@@ -146,6 +152,7 @@ async def archive_share_before_delete(
         actor_emails = await resolve_actor_emails(db, audit_events)
         snapshot = {
             "message": message,
+            "share_link": share_link,
             "files": snapshot_files,
             "download_logs": [_serialize_download_log(log) for log in download_logs],
             "uploads": [],
@@ -185,6 +192,7 @@ async def archive_share_before_delete(
         actor_emails = await resolve_actor_emails(db, audit_events)
         snapshot = {
             "message": message,
+            "share_link": share_link,
             "files": snapshot_files,
             "download_logs": [],
             "uploads": [_serialize_upload(u) for u in uploads],

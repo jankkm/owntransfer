@@ -1239,6 +1239,14 @@ msgstr ""
 msgid "IP"
 msgstr ""
 
+#: app/templates/_share_timeline.html:67
+msgid "Old share link"
+msgstr ""
+
+#: app/templates/_share_timeline.html:73
+msgid "New share link"
+msgstr ""
+
 #: app/templates/_share_timeline.html:59 app/templates/requests_edit.html:83
 #: app/templates/transfers_list.html:32
 #, python-format
@@ -1629,6 +1637,10 @@ msgstr ""
 #: app/templates/admin_archive_detail.html:24
 #: app/templates/admin_archive_detail.html:46
 msgid "Files at deletion"
+msgstr ""
+
+#: app/templates/admin_archive_detail.html:39
+msgid "Share link at deletion"
 msgstr ""
 
 #: app/templates/admin_archive_detail.html:28

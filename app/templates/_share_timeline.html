@@ -54,6 +54,28 @@
               {% endfor %}
             </ul>
             {% endif %}
+            {% if entry.details.get('share_link') %}
+            <p class="mt-2 text-xs text-slate-600 break-all">
+              <span class="font-medium">{{ _('Share link') }}:</span>
+              <span class="font-mono">{{ entry.details.share_link }}</span>
+            </p>
+            {% endif %}
+            {% if entry.details.get('old_share_link') or entry.details.get('new_share_link') %}
+            <dl class="mt-2 text-xs text-slate-600 space-y-1">
+              {% if entry.details.get('old_share_link') %}
+              <div class="break-all">
+                <dt class="inline font-medium">{{ _('Old share link') }}:</dt>
+                <dd class="inline font-mono">{{ entry.details.old_share_link }}</dd>
+              </div>
+              {% endif %}
+              {% if entry.details.get('new_share_link') %}
+              <div class="break-all">
+                <dt class="inline font-medium">{{ _('New share link') }}:</dt>
+                <dd class="inline font-mono">{{ entry.details.new_share_link }}</dd>
+              </div>
+              {% endif %}
+            </dl>
+            {% endif %}
             {% if entry.details.get('file_count') and not entry.details.get('files') %}
             <p class="mt-1 text-xs text-slate-600">
               {{ ngettext('%(count)s file', '%(count)s files', entry.details.file_count) % {'count': entry.details.file_count} }}

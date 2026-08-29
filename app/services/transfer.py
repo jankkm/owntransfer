@@ -156,6 +156,7 @@ async def create_transfer(
         ip_address=ip_address,
         metadata={
             "title": title,
+            "share_link": f"{settings.base_url.rstrip('/')}/d/{transfer.public_token}",
             "files": saved_files,
             "file_count": len(saved_files),
         },
@@ -220,6 +221,7 @@ async def finalize_transfer_files(
                 ip_address=ip_address,
                 metadata={
                     "title": title,
+                    "share_link": f"{settings.base_url.rstrip('/')}/d/{transfer.public_token}",
                     "files": [
                         serialize_file_row(s.original_name, s.size_bytes, s.content_type)
                         for s in staged_files
@@ -687,6 +689,9 @@ async def regenerate_transfer_link(
         resource_id=str(transfer.id),
         actor_id=user.id,
         ip_address=ip_address,
-        metadata={"old_token_prefix": old_token[:8]},
+        metadata={
+            "old_share_link": f"{settings.base_url.rstrip('/')}/d/{old_token}",
+            "new_share_link": f"{settings.base_url.rstrip('/')}/d/{transfer.public_token}",
+        },
     )
     return transfer

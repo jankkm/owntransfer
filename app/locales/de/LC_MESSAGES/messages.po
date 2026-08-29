@@ -1304,6 +1304,14 @@ msgstr "Von"
 msgid "IP"
 msgstr "IP"
 
+#: app/templates/_share_timeline.html:67
+msgid "Old share link"
+msgstr "Alter Freigabelink"
+
+#: app/templates/_share_timeline.html:73
+msgid "New share link"
+msgstr "Neuer Freigabelink"
+
 #: app/templates/_share_timeline.html:59 app/templates/requests_edit.html:83
 #: app/templates/transfers_list.html:32
 #, python-format
@@ -1715,6 +1723,10 @@ msgstr "Nach Ablauf automatisch gelöscht"
 #: app/templates/admin_archive_detail.html:46
 msgid "Files at deletion"
 msgstr "Dateien bei Löschung"
+
+#: app/templates/admin_archive_detail.html:39
+msgid "Share link at deletion"
+msgstr "Freigabelink zum Zeitpunkt der Löschung"
 
 #: app/templates/admin_archive_detail.html:28
 #: app/templates/admin_shares.html:72 app/templates/admin_shares.html:140
