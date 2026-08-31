@@ -136,7 +136,7 @@
               file_request_expiry_pending(r, now)
             ) }}
           </td>
-          <td class="py-3 px-4 whitespace-nowrap">{{ r.upload_count }}/{{ r.max_uploads }}</td>
+          <td class="py-3 px-4 whitespace-nowrap">{{ r.upload_count|format_upload_limit_short(r.max_uploads) }}</td>
           <td class="py-3 px-4 whitespace-nowrap">{{ r.expires_at|format_date }}</td>
           <td class="py-3 px-4 whitespace-nowrap">{{ r.created_at|format_datetime }}</td>
           <td class="py-3 px-4">

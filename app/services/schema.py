@@ -52,6 +52,11 @@ def _apply_migrations(sync_conn) -> None:
                 text("ALTER TABLE request_uploads ADD COLUMN is_preparing BOOLEAN NOT NULL DEFAULT FALSE")
             )
 
+    if "upload_files" in insp.get_table_names():
+        file_cols = {col["name"] for col in insp.get_columns("upload_files")}
+        if "deleted_at" not in file_cols:
+            sync_conn.execute(text("ALTER TABLE upload_files ADD COLUMN deleted_at DATETIME"))
+
     if "users" in insp.get_table_names():
         user_columns = {col["name"] for col in insp.get_columns("users")}
         if "locale" not in user_columns:

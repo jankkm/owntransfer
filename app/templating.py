@@ -30,7 +30,7 @@ from app.i18n import (
     ngettext,
 )
 from app.services import share_status
-from app.services.download_limits import format_download_limit, format_download_limit_short
+from app.services.download_limits import format_download_limit, format_download_limit_short, format_upload_limit_short
 from app.auth.users import uses_local_auth, user_initials
 
 from app.services.share_lifecycle import (
@@ -85,6 +85,7 @@ templates.env.globals["file_request_expiry_pending"] = file_request_expiry_pendi
 templates.env.globals["share_timeline_notice"] = share_timeline_notice
 templates.env.filters["format_download_limit"] = format_download_limit
 templates.env.filters["format_download_limit_short"] = format_download_limit_short
+templates.env.filters["format_upload_limit_short"] = format_upload_limit_short
 templates.env.filters["format_download_type"] = download_type_label
 templates.env.filters["user_initials"] = user_initials
 

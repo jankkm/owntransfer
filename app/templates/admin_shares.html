@@ -202,7 +202,7 @@
             </a>
           </td>
           <td class="py-3 px-3 text-xs">
-            <span class="block whitespace-nowrap">{{ _('Uploads') }}: {{ r.upload_count }}/{{ r.max_uploads }}</span>
+            <span class="block whitespace-nowrap">{{ _('Uploads') }}: {{ r.upload_count|format_upload_limit_short(r.max_uploads) }}</span>
           </td>
           <td class="py-3 px-3 text-xs leading-5">
             <span class="block whitespace-nowrap"><span class="text-slate-500">{{ _('Expires') }}:</span> {{ r.expires_at|format_date }}</span>

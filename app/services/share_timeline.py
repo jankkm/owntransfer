@@ -121,15 +121,19 @@ def _download_to_entry(log: TransferDownloadLog) -> TimelineEntry:
     )
 
 
+def _upload_file_details(upload_file) -> dict:
+    details = {
+        "name": upload_file.original_name,
+        "size_bytes": upload_file.size_bytes,
+        "content_type": upload_file.content_type,
+    }
+    if upload_file.deleted_at is not None:
+        details["removed"] = True
+    return details
+
+
 def _upload_to_entry(upload: RequestUpload) -> TimelineEntry:
-    files = [
-        {
-            "name": f.original_name,
-            "size_bytes": f.size_bytes,
-            "content_type": f.content_type,
-        }
-        for f in upload.files
-    ]
+    files = [_upload_file_details(f) for f in upload.files]
     return TimelineEntry(
         kind="upload",
         at=upload.created_at,

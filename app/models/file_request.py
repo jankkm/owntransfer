@@ -53,6 +53,10 @@ class RequestUpload(Base, TimestampMixin):
         "UploadFile", back_populates="upload", cascade="all, delete-orphan"
     )
 
+    @property
+    def active_files(self) -> list["UploadFile"]:
+        return [f for f in self.files if f.deleted_at is None]
+
 
 class UploadFile(Base, TimestampMixin):
     __tablename__ = "upload_files"
@@ -65,5 +69,6 @@ class UploadFile(Base, TimestampMixin):
     storage_path: Mapped[str] = mapped_column(String(1024), nullable=False)
     size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
     content_type: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     upload = relationship("RequestUpload", back_populates="files")

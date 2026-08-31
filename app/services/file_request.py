@@ -405,7 +405,7 @@ def _find_upload_file(req: FileRequest, file_id: UUID) -> UploadFile:
         if upload.is_preparing:
             continue
         for upload_file in upload.files:
-            if upload_file.id == file_id:
+            if upload_file.id == file_id and upload_file.deleted_at is None:
                 return upload_file
     raise HTTPException(status_code=404, detail=_("File not found"))
 
@@ -418,34 +418,16 @@ async def delete_request_upload_file(
     user: User,
     ip_address: str | None,
 ) -> None:
-    upload_match: RequestUpload | None = None
-    file_match: UploadFile | None = None
-    for upload in req.uploads:
-        for upload_file in upload.files:
-            if upload_file.id == file_id:
-                upload_match = upload
-                file_match = upload_file
-                break
-        if file_match:
-            break
-    if not file_match or not upload_match:
-        raise HTTPException(status_code=404, detail=_("File not found"))
+    file_match = _find_upload_file(req, file_id)
 
     file_name = file_match.original_name
     size_bytes = file_match.size_bytes
     content_type = file_match.content_type
     storage_path = file_match.storage_path
     storage = get_storage()
-    await db.delete(file_match)
-    upload_match.files = [f for f in upload_match.files if f.id != file_id]
-
-    if not upload_match.files:
-        await db.delete(upload_match)
-        req.upload_count = max(0, req.upload_count - 1)
-        req.uploads = [upload for upload in req.uploads if upload.id != upload_match.id]
-
-    await db.commit()
     await storage.delete_file(storage_path)
+    file_match.deleted_at = utc_now()
+    await db.commit()
 
     await log_audit(
         db,
@@ -463,6 +445,8 @@ async def delete_request_upload_file(
 
 
 def iter_upload_file(upload_file: UploadFile):
+    if upload_file.deleted_at is not None:
+        raise HTTPException(status_code=404, detail=_("File not found"))
     storage = get_storage()
     path = storage.absolute_path(upload_file.storage_path)
     with open(path, "rb") as f:
@@ -488,7 +472,7 @@ def file_request_zip_entries(req: FileRequest) -> list[tuple[Path, str]]:
     for upload in sorted(req.uploads, key=lambda item: item.created_at):
         if upload.is_preparing:
             continue
-        for upload_file in upload.files:
+        for upload_file in upload.active_files:
             path = storage.absolute_path(upload_file.storage_path)
             arcname = _unique_zip_name(_safe_filename(upload_file.original_name), used)
             entries.append((path, arcname))
@@ -510,7 +494,7 @@ def request_upload_zip_entries(upload: RequestUpload) -> list[tuple[Path, str]]:
     storage = get_storage()
     used: dict[str, int] = {}
     entries: list[tuple[Path, str]] = []
-    for upload_file in upload.files:
+    for upload_file in upload.active_files:
         path = storage.absolute_path(upload_file.storage_path)
         arcname = _unique_zip_name(_safe_filename(upload_file.original_name), used)
         entries.append((path, arcname))

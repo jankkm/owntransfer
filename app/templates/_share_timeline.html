@@ -99,8 +99,11 @@
             {% if entry.details.get('files') %}
             <ul class="mt-2 text-xs text-slate-600 space-y-0.5">
               {% for file in entry.details.files %}
-              <li class="truncate">
+              <li class="truncate{% if file.removed or file.get('removed') %} text-slate-400 line-through{% endif %}">
                 {{ file.name or file.get('name') }}
+                {% if file.removed or file.get('removed') %}
+                <span class="no-underline text-slate-400">({{ _('removed') }})</span>
+                {% endif %}
                 {% set sz = file.size_bytes if file.size_bytes is defined else file.get('size_bytes') %}
                 {% if sz %}<span class="text-slate-400">· {{ (sz / 1024 / 1024)|round(2) }} MB</span>{% endif %}
               </li>

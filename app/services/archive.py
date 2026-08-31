@@ -70,6 +70,7 @@ def _serialize_upload(upload: RequestUpload) -> dict:
                 "name": f.original_name,
                 "size_bytes": f.size_bytes,
                 "content_type": f.content_type,
+                **({"removed": True} if f.deleted_at is not None else {}),
             }
             for f in upload.files
         ],

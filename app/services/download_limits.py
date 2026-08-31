@@ -13,6 +13,16 @@ def downloads_unlimited(max_downloads: int) -> bool:
     return max_downloads <= 0
 
 
+def uploads_unlimited(max_uploads: int) -> bool:
+    return max_uploads <= 0
+
+
+def _format_limit_short(count: int, maximum: int) -> str:
+    if maximum <= 0:
+        return _("%(count)s / ∞") % {"count": count}
+    return _("%(count)s / %(max)s") % {"count": count, "max": maximum}
+
+
 def transfer_download_limit_reached(transfer: Transfer) -> bool:
     if downloads_unlimited(transfer.max_downloads):
         return False
@@ -51,6 +61,8 @@ def format_download_limit(download_count: int, max_downloads: int) -> str:
 
 
 def format_download_limit_short(download_count: int, max_downloads: int) -> str:
-    if downloads_unlimited(max_downloads):
-        return _("%(count)s / ∞") % {"count": download_count}
-    return _("%(count)s/%(max)s") % {"count": download_count, "max": max_downloads}
+    return _format_limit_short(download_count, max_downloads)
+
+
+def format_upload_limit_short(upload_count: int, max_uploads: int) -> str:
+    return _format_limit_short(upload_count, max_uploads)

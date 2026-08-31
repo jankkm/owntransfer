@@ -76,14 +76,20 @@
 <div class="bg-white border rounded-xl p-6 mb-4" data-request-files
      data-delete-url-template="{{ files_delete_url_template or ('/requests/' ~ file_request.id ~ '/files/{id}') }}">
   <div class="flex items-center justify-between gap-3 mb-1">
+    {% set active_ns = namespace(files=0, uploads=0, preparing=false) %}
+    {% for upload in file_request.uploads %}
+      {% if upload.is_preparing %}{% set active_ns.preparing = true %}{% endif %}
+      {% if upload.active_files %}
+        {% set active_ns.uploads = active_ns.uploads + 1 %}
+        {% set active_ns.files = active_ns.files + upload.active_files|length %}
+      {% endif %}
+    {% endfor %}
     <p class="text-sm font-medium text-slate-700" data-files-title>
-      {{ _('Received uploads (%(uploads)s)') % {'uploads': file_request.uploads|length} }} ·
-      {% set ns = namespace(count=0) %}
-      {% for upload in file_request.uploads %}{% set ns.count = ns.count + upload.files|length %}{% endfor %}
-      {{ ngettext('%(count)s file', '%(count)s files', ns.count) % {'count': ns.count} }}
+      {{ _('Received uploads (%(uploads)s)') % {'uploads': active_ns.uploads} }} ·
+      {{ ngettext('%(count)s file', '%(count)s files', active_ns.files) % {'count': active_ns.files} }}
     </p>
     <div class="flex items-center gap-3 shrink-0">
-      {% if file_request.uploads %}
+      {% if active_ns.files > 0 %}
       <a href="/requests/{{ file_request.id }}/download"
          class="text-sm text-primary hover:underline"
          data-files-download-all>{{ _('Download all (ZIP)') }}</a>
@@ -94,9 +100,10 @@
   </div>
   <p class="text-xs text-slate-500 mb-3">{{ _('File removals are saved immediately.') }}</p>
   <p data-files-error class="hidden text-xs text-red-600 mb-2"></p>
-  <p data-files-empty class="text-sm text-slate-500 {% if file_request.uploads %}hidden{% endif %}">{{ _('No uploads yet.') }}</p>
+  <p data-files-empty class="text-sm text-slate-500 {% if active_ns.files > 0 or active_ns.preparing %}hidden{% endif %}">{{ _('No uploads yet.') }}</p>
   <div data-files-list class="space-y-3">
     {% for upload in file_request.uploads|sort(attribute='created_at', reverse=true) %}
+    {% if upload.active_files %}
     <div data-upload-id="{{ upload.id }}" class="rounded-lg border border-slate-200 bg-slate-50 p-3">
       <div class="flex items-start justify-between gap-3 mb-2">
         <p class="text-xs text-slate-500 min-w-0">
@@ -115,7 +122,7 @@
       <p class="text-xs text-slate-500">{{ _('Files are still being prepared for this upload.') }}</p>
       {% else %}
       <ul class="space-y-2">
-        {% for file in upload.files %}
+        {% for file in upload.active_files %}
         <li data-file-id="{{ file.id }}" data-file-size="{{ file.size_bytes }}" class="text-sm text-slate-600">
           <div class="flex items-start justify-between gap-3 rounded-lg px-2.5 py-1.5 -mx-1 border border-transparent hover:border-primary hover:bg-white transition-colors">
             <div class="min-w-0 flex-1">
@@ -134,6 +141,7 @@
       </ul>
       {% endif %}
     </div>
+    {% endif %}
     {% endfor %}
   </div>
 </div>
