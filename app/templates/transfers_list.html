@@ -30,7 +30,7 @@
       {{ f.share_meta_item(_("Created"), t.created_at|format_date) }}
       {{ f.share_meta_item(_("Expires"), t.expires_at|format_date) }}
       {{ f.share_meta_item(_("Files"), ngettext('%(count)s file', '%(count)s files', t.files|length) % {'count': t.files|length}) }}
-      {{ f.share_meta_item(_("Downloads"), t.download_count|format_download_limit(t.max_downloads)) }}
+      {{ f.share_meta_item(_("Access"), t.download_count|format_download_limit_short(t.max_downloads)) }}
     </div>
 
     {% if t.message %}

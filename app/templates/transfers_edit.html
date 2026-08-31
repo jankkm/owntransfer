@@ -71,7 +71,7 @@
              min="{{ today_date }}" max="{{ max_expiry_date }}"
              class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
     </div>
-    {{ f.text_input("max_downloads", _("Max downloads"), transfer.max_downloads, type="number", required=true, hint=_('Current downloads: %(count)s. Use 0 for unlimited.') % {'count': transfer.download_count}) }}
+    {{ f.text_input("max_downloads", _("Max access"), transfer.max_downloads, type="number", required=true, hint=_('Current access: %(count)s. Use 0 for unlimited.') % {'count': transfer.download_count}) }}
   </div>
 
   {{ f.password_protection_fields(has_password, share_password_length) }}

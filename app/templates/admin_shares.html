@@ -77,7 +77,7 @@
           <th class="py-3 px-3 font-medium">{{ _('Owner') }}</th>
           <th class="py-3 px-3 font-medium">
             <span class="block">{{ _('Files') }}</span>
-            <span class="block text-xs font-normal">{{ _('Downloads') }}</span>
+            <span class="block text-xs font-normal">{{ _('Access') }}</span>
           </th>
           <th class="py-3 px-3 font-medium">
             <span class="block">{{ _('Expires') }}</span>
@@ -113,7 +113,7 @@
           </td>
           <td class="py-3 px-3 text-xs leading-5">
             <span class="block whitespace-nowrap">{{ _('Files') }}: {{ t.files|length }}</span>
-            <span class="block whitespace-nowrap text-slate-500">{{ _('Downloads') }}: {{ t.download_count|format_download_limit_short(t.max_downloads) }}</span>
+            <span class="block whitespace-nowrap text-slate-500">{{ _('Access') }}: {{ t.download_count|format_download_limit_short(t.max_downloads) }}</span>
           </td>
           <td class="py-3 px-3 text-xs leading-5">
             <span class="block whitespace-nowrap"><span class="text-slate-500">{{ _('Expires') }}:</span> {{ t.expires_at|format_date }}</span>

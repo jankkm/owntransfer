@@ -18,11 +18,18 @@
           {% endif %}
           <div class="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-white shadow-sm text-xs font-bold
                       {% if entry.kind == 'download' %}bg-blue-100 text-blue-700
+                      {% elif entry.kind == 'access' %}bg-amber-100 text-amber-700
                       {% elif entry.kind == 'upload' %}bg-emerald-100 text-emerald-700
+                      {% elif entry.kind == 'file_added' %}bg-emerald-100 text-emerald-700
                       {% elif entry.kind in ('file_removed', 'deleted', 'purged') %}bg-red-100 text-red-700
-                      {% elif entry.kind in ('file_added', 'created') %}bg-violet-100 text-violet-700
+                      {% elif entry.kind == 'created' %}bg-violet-100 text-violet-700
                       {% else %}bg-slate-100 text-slate-600{% endif %}">
             {% if entry.kind == 'download' %}↓
+            {% elif entry.kind == 'access' %}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+            </svg>
             {% elif entry.kind == 'upload' %}↑
             {% elif entry.kind == 'file_removed' %}−
             {% elif entry.kind == 'file_added' %}+

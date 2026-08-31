@@ -97,7 +97,7 @@ def build_transfer_update_changes(
     append_change(
         changes,
         field="max_downloads",
-        label=_("Max downloads"),
+        label=_("Max access"),
         old=old_max_downloads,
         new=new_max_downloads,
     )

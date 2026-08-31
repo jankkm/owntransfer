@@ -11,14 +11,15 @@ from sqlalchemy.orm import selectinload
 from app.config import settings
 from app.models import ArchivedShare, AuditLog, FileRequest, RequestUpload, Transfer, User
 from app.services.audit import EXCLUDED_TIMELINE_ACTIONS, list_share_audit, parse_audit_metadata, resolve_actor_emails, resolve_owner_emails_for_audit
-from app.services.share_timeline import build_request_timeline, build_transfer_timeline
+from app.services.share_timeline import build_request_timeline, build_transfer_timeline, transfer_file_download_logs
 
 
 async def load_transfer_activity(
     db: AsyncSession,
     transfer: Transfer,
 ) -> tuple[list, list]:
-    download_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
+    all_logs = sorted(transfer.download_logs, key=lambda log: log.created_at, reverse=True)
+    download_logs = transfer_file_download_logs(all_logs)
     audit_events = await list_share_audit(db, resource_type="transfer", resource_id=str(transfer.id))
     actor_emails = await resolve_actor_emails(db, audit_events)
     owner_emails = await resolve_owner_emails_for_audit(db, audit_events)

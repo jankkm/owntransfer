@@ -61,7 +61,7 @@ async def create_transfer(
 ) -> Transfer:
     ensure_expiry_within_limit(expires_at, app_settings.max_share_expiry_days)
     if max_downloads < 0:
-        raise HTTPException(status_code=400, detail=_("Max downloads cannot be negative"))
+        raise HTTPException(status_code=400, detail=_("Max access cannot be negative"))
     blocklist = parse_blocklist(app_settings.file_type_blocklist)
 
     # Validate staged files upfront (fast, no I/O) so errors can still restore staging
@@ -308,7 +308,7 @@ def ensure_transfer_accessible(
     if issue == ACCESS_EXPIRED:
         raise HTTPException(status_code=410, detail=_("This link has expired"))
     if issue == ACCESS_DOWNLOAD_LIMIT:
-        raise HTTPException(status_code=410, detail=_("Download limit reached"))
+        raise HTTPException(status_code=410, detail=_("Access limit reached"))
 
 
 def verify_transfer_password(transfer: Transfer, password: str | None) -> bool:
@@ -639,11 +639,11 @@ async def update_transfer(
     if app_settings:
         ensure_expiry_within_limit(expires_at, app_settings.max_share_expiry_days)
     if max_downloads < 0:
-        raise HTTPException(status_code=400, detail=_("Max downloads cannot be negative"))
+        raise HTTPException(status_code=400, detail=_("Max access cannot be negative"))
     if max_downloads > 0 and max_downloads < transfer.download_count:
         raise HTTPException(
             status_code=400,
-            detail=_("Max downloads cannot be less than current count (%(count)s)")
+            detail=_("Max access cannot be less than current count (%(count)s)")
             % {"count": transfer.download_count},
         )
 

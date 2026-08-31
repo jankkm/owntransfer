@@ -18,10 +18,10 @@
              class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
     </div>
     <div>
-      {{ f.field_label(_("Max downloads"), "max_downloads") }}
+      {{ f.field_label(_("Max access"), "max_downloads") }}
       <input type="number" id="max_downloads" name="max_downloads" value="{{ max_downloads_default }}" min="0"
              class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
-      <p class="text-xs text-slate-500 mt-1">{{ _('Use 0 for unlimited downloads.') }}</p>
+      <p class="text-xs text-slate-500 mt-1">{{ _('Use 0 for unlimited access.') }}</p>
     </div>
   </div>
   {{ f.password_protection_fields(false, share_password_length) }}

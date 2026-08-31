@@ -15,7 +15,7 @@
   {% if is_expired %}
   <p class="text-xs text-amber-800">{{ _('This link has expired and is not publicly accessible until you extend the expiry date.') }}</p>
   {% elif is_enabled and inactive_reason_code == 'download_limit' %}
-  <p class="text-xs text-amber-800">{{ _('This link has reached its download limit and is not publicly accessible until you raise the limit.') }}</p>
+  <p class="text-xs text-amber-800">{{ _('This link has reached its access limit and is not publicly accessible until you raise the limit.') }}</p>
   {% elif is_enabled and inactive_reason_code == 'upload_limit' %}
   <p class="text-xs text-amber-800">{{ _('This link has reached its upload limit and is not publicly accessible until you raise the limit.') }}</p>
   {% endif %}

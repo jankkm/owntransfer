@@ -90,6 +90,9 @@ def test_gettext_german_translation():
     assert gettext("Dashboard") == "Dashboard"
     assert gettext("Login") == "Anmelden"
     assert gettext("Invalid credentials") == "Ungültige Anmeldedaten"
+    assert gettext("Transfer created") == "Übertragung erstellt"
+    assert gettext("File added") == "Datei hinzugefügt"
+    assert gettext("File removed") == "Datei entfernt"
 
 
 def test_ngettext_german():
@@ -103,6 +106,9 @@ def test_gettext_spanish_translation():
     assert gettext("Dashboard") == "Panel"
     assert gettext("Login") == "Iniciar sesión"
     assert gettext("Invalid credentials") == "Credenciales no válidas"
+    assert gettext("Transfer created") == "Transferencia creada"
+    assert gettext("File added") == "Archivo añadido"
+    assert gettext("File removed") == "Archivo eliminado"
 
 
 def test_ngettext_spanish():

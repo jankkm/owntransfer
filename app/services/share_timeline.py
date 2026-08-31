@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from app.i18n import _
+from app.i18n import N_, _
 from app.models import AuditLog, RequestUpload, TransferDownloadLog
 from app.services.audit import EXCLUDED_TIMELINE_ACTIONS, OWNER_CHANGED_ACTION_SUFFIX, parse_audit_metadata
 
@@ -20,22 +20,22 @@ class TimelineEntry:
 
 
 _ACTION_MSGIDS: dict[str, str] = {
-    "transfer.created": "Transfer created",
-    "transfer.updated": "Transfer updated",
-    "transfer.file_added": "File added",
-    "transfer.file_removed": "File removed",
-    "transfer.link_regenerated": "Share link regenerated",
-    "transfer.owner_changed": "Owner changed",
-    "transfer.deleted": "Transfer deleted",
-    "transfer.purged": "Transfer auto-deleted after expiry",
-    "file_request.created": "File request created",
-    "file_request.updated": "File request updated",
-    "file_request.uploaded": "Files uploaded",
-    "file_request.file_removed": "File removed",
-    "file_request.link_regenerated": "Share link regenerated",
-    "file_request.owner_changed": "Owner changed",
-    "file_request.deleted": "File request deleted",
-    "file_request.purged": "File request auto-deleted after expiry",
+    "transfer.created": N_("Transfer created"),
+    "transfer.updated": N_("Transfer updated"),
+    "transfer.file_added": N_("File added"),
+    "transfer.file_removed": N_("File removed"),
+    "transfer.link_regenerated": N_("Share link regenerated"),
+    "transfer.owner_changed": N_("Owner changed"),
+    "transfer.deleted": N_("Transfer deleted"),
+    "transfer.purged": N_("Transfer auto-deleted after expiry"),
+    "file_request.created": N_("File request created"),
+    "file_request.updated": N_("File request updated"),
+    "file_request.uploaded": N_("Files uploaded"),
+    "file_request.file_removed": N_("File removed"),
+    "file_request.link_regenerated": N_("Share link regenerated"),
+    "file_request.owner_changed": N_("Owner changed"),
+    "file_request.deleted": N_("File request deleted"),
+    "file_request.purged": N_("File request auto-deleted after expiry"),
 }
 
 
@@ -45,7 +45,15 @@ def _action_label(action: str) -> str:
 
 
 def download_type_label(download_type: str) -> str:
-    return _("ZIP download") if download_type == "zip" else _("File download")
+    if download_type == "access":
+        return _("Unlock access")
+    if download_type == "zip":
+        return _("ZIP download")
+    return _("File download")
+
+
+def transfer_file_download_logs(logs: list[TransferDownloadLog]) -> list[TransferDownloadLog]:
+    return [log for log in logs if log.download_type != "access"]
 
 
 def _enrich_owner_change_metadata(meta: dict, owner_emails: dict[str, str]) -> dict:
@@ -91,6 +99,14 @@ def _audit_to_entry(
 
 
 def _download_to_entry(log: TransferDownloadLog) -> TimelineEntry:
+    if log.download_type == "access":
+        return TimelineEntry(
+            kind="access",
+            at=log.created_at,
+            label=_("Link unlocked"),
+            ip_address=log.ip_address,
+            details={"download_type": log.download_type},
+        )
     file_label = log.file_name or _("All files (ZIP)")
     download_type = download_type_label(log.download_type)
     return TimelineEntry(
@@ -128,11 +144,19 @@ def _upload_to_entry(upload: RequestUpload) -> TimelineEntry:
 
 
 def _snapshot_download_to_entry(data: dict) -> TimelineEntry:
-    file_name = data.get("file_name")
     download_type = data.get("download_type", "file")
+    at = datetime.fromisoformat(data["at"])
+    if download_type == "access":
+        return TimelineEntry(
+            kind="access",
+            at=at,
+            label=_("Link unlocked"),
+            ip_address=data.get("ip_address"),
+            details={"download_type": download_type},
+        )
+    file_name = data.get("file_name")
     file_label = file_name or _("All files (ZIP)")
     type_label = download_type_label(download_type)
-    at = datetime.fromisoformat(data["at"])
     return TimelineEntry(
         kind="download",
         at=at,

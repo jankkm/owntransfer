@@ -46,6 +46,8 @@ async def archived_timeline(db: AsyncSession, archived: ArchivedShare) -> list:
 def snapshot_download_logs_display(snapshot: dict) -> list[SimpleNamespace]:
     rows = []
     for item in snapshot.get("download_logs") or []:
+        if item.get("download_type") == "access":
+            continue
         rows.append(
             SimpleNamespace(
                 created_at=datetime.fromisoformat(item["at"]),

@@ -80,6 +80,15 @@ async def test_unlock_counts_once_and_allows_all_files_in_session(client: AsyncC
             await session.execute(select(Transfer).where(Transfer.public_token == "limit-one"))
         ).scalar_one()
         assert transfer.download_count == 1
+        from app.models import TransferDownloadLog
+
+        logs = (
+            await session.execute(
+                select(TransferDownloadLog).where(TransferDownloadLog.transfer_id == transfer.id)
+            )
+        ).scalars().all()
+        assert len(logs) == 1
+        assert logs[0].download_type == "access"
 
     r1 = await client.get(f"/d/limit-one/files/{file_a_id}")
     r2 = await client.get(f"/d/limit-one/files/{file_b_id}")
@@ -93,6 +102,53 @@ async def test_unlock_counts_once_and_allows_all_files_in_session(client: AsyncC
             await session.execute(select(Transfer).where(Transfer.public_token == "limit-one"))
         ).scalar_one()
         assert transfer.download_count == 1
+
+
+@pytest.mark.asyncio
+async def test_unlock_shows_in_timeline_not_download_log(client: AsyncClient):
+    import re
+
+    storage = get_storage()
+    rel_path = "limits/unlock-only.txt"
+    await storage.save_file(rel_path, b"unlock")
+
+    async with async_session() as session:
+        user = (await session.execute(select(User))).scalar_one()
+        transfer = Transfer(
+            public_token="unlock-only",
+            created_by=user.id,
+            title="Unlock only",
+            max_downloads=5,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+        )
+        session.add(transfer)
+        await session.flush()
+        session.add(
+            TransferFile(
+                transfer_id=transfer.id,
+                original_name="unlock.txt",
+                storage_path=rel_path,
+                size_bytes=6,
+                content_type="text/plain",
+            )
+        )
+        await session.commit()
+        transfer_id = transfer.id
+
+    await _unlock_transfer(client, "unlock-only")
+
+    login_page = await client.get("/auth/login")
+    csrf = re.search(r'name="csrf-token" content="([^"]+)"', login_page.text).group(1)
+    await client.post(
+        "/auth/login/local",
+        data={"email": "admin@test.com", "password": "password123", "csrf_token": csrf},
+        follow_redirects=True,
+    )
+
+    edit_page = await client.get(f"/transfers/{transfer_id}/edit")
+    assert edit_page.status_code == 200
+    assert "Link unlocked" in edit_page.text
+    assert "No downloads recorded yet." in edit_page.text
 
 
 @pytest.mark.asyncio
@@ -133,7 +189,7 @@ async def test_new_session_blocked_after_download_limit_reached(client: AsyncCli
     async with AsyncClient(transport=transport, base_url="http://test") as other:
         blocked_page = await other.get("/d/limit-exhausted")
         assert blocked_page.status_code == 410
-        assert "Download limit reached" in blocked_page.text
+        assert "Access limit reached" in blocked_page.text
         assert "application/json" not in blocked_page.headers.get("content-type", "")
 
 
@@ -173,8 +229,48 @@ async def test_download_limit_message_is_localized_in_german(client: AsyncClient
         cookies={LOCALE_COOKIE: "de"},
     )
     assert response.status_code == 410
-    assert "Alle verfügbaren Downloads" in response.text
-    assert "All available downloads" not in response.text
+    assert "Alle verfügbaren Zugriffe" in response.text
+    assert "All available access" not in response.text
+
+
+@pytest.mark.asyncio
+async def test_download_limit_message_is_localized_in_spanish(client: AsyncClient):
+    from app.i18n import LOCALE_COOKIE
+
+    storage = get_storage()
+    rel_path = "limits/es-locale.txt"
+    await storage.save_file(rel_path, b"es")
+
+    async with async_session() as session:
+        user = (await session.execute(select(User))).scalar_one()
+        transfer = Transfer(
+            public_token="limit-es",
+            created_by=user.id,
+            title="Spanish limit test",
+            max_downloads=1,
+            download_count=1,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+        )
+        session.add(transfer)
+        await session.flush()
+        session.add(
+            TransferFile(
+                transfer_id=transfer.id,
+                original_name="es.txt",
+                storage_path=rel_path,
+                size_bytes=2,
+                content_type="text/plain",
+            )
+        )
+        await session.commit()
+
+    response = await client.get(
+        "/d/limit-es",
+        cookies={LOCALE_COOKIE: "es"},
+    )
+    assert response.status_code == 410
+    assert "todos los accesos disponibles" in response.text
+    assert "All available access" not in response.text
 
 
 @pytest.mark.asyncio

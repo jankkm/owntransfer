@@ -38,7 +38,7 @@
     <h2 class="font-semibold text-lg">{{ _('Shares') }}</h2>
     {{ f.text_input("default_expiry_days", _("Default expiry (days)"), app_settings.default_expiry_days, type="number", required=true) }}
     {{ f.text_input("max_share_expiry_days", _("Max share lifetime (days)"), app_settings.max_share_expiry_days, type="number", required=true, hint=_("How far in the future users can set expiry dates for transfers and file requests.")) }}
-    {{ f.text_input("max_downloads_default", _("Default max downloads"), app_settings.max_downloads_default, type="number", required=true, hint=_("0 = unlimited downloads.")) }}
+    {{ f.text_input("max_downloads_default", _("Default max access"), app_settings.max_downloads_default, type="number", required=true, hint=_("0 = unlimited access.")) }}
     {{ f.text_input("max_uploads_default", _("Default max uploads"), app_settings.max_uploads_default, type="number", required=true, hint=_("0 = unlimited uploads.")) }}
     {{ f.text_input("share_password_length", _("Share password length"), app_settings.share_password_length, type="number", required=true, hint=_("Length used by the Generate button on transfer and file request forms. Users cannot change this.")) }}
     {{ f.text_input("purge_grace_days", _("Delete after expiry (days)"), app_settings.purge_grace_days, type="number", required=true, hint=_("Expired shares are permanently deleted this many days after expiry. 0 = disabled (no auto-delete).")) }}
@@ -48,7 +48,7 @@
   </form>
   <form method="post" action="/admin/limits/access" class="bg-white border rounded-xl p-6 space-y-4">
     {{ csrf_input() }}
-    <h2 class="font-semibold text-lg">{{ _('Access') }}</h2>
+    <h2 class="font-semibold text-lg">{{ _('Access settings') }}</h2>
     {{ f.checkbox_input("allow_local_login", _("Allow local login"), checked=app_settings.allow_local_login) }}
     {{ f.checkbox_input("allow_user_share_emails", _("Allow users to email share links to recipients"), checked=app_settings.allow_user_share_emails) }}
     <p class="text-xs text-slate-500">{{ _('Internal notifications (download alerts, upload received) are always sent when enabled per transfer.') }}</p>

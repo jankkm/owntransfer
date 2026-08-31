@@ -146,9 +146,9 @@ def _download_limit_warning(transfer: Transfer) -> str | None:
     if transfer.max_downloads <= 0:
         return None
     return ngettext(
-        "This transfer allows %(max)s download. Unlocking uses one download; "
+        "This transfer allows %(max)s access. Unlocking uses one access; "
         "you can then download all files in this browser session.",
-        "This transfer allows %(max)s downloads. Unlocking uses one download; "
+        "This transfer allows %(max)s accesses. Unlocking uses one access; "
         "you can then download all files in this browser session.",
         transfer.max_downloads,
     ) % {"max": transfer.max_downloads}
@@ -157,9 +157,9 @@ def _download_limit_warning(transfer: Transfer) -> str | None:
 def _access_blocked_copy(issue: str, *, kind: str = "transfer") -> dict[str, str]:
     if issue == ACCESS_DOWNLOAD_LIMIT:
         return {
-            "access_blocked_title": _("Download limit reached"),
+            "access_blocked_title": _("Access limit reached"),
             "access_blocked_message": _(
-                "All available downloads for this transfer have been used. Contact the person who shared these files if you still need them."
+                "All available access for this transfer has been used. Contact the person who shared these files if you still need them."
             ),
         }
     if issue == ACCESS_UPLOAD_LIMIT:
@@ -336,6 +336,12 @@ async def _grant_transfer_session(
     if not await try_reserve_download_slot(db, transfer.id, max_downloads=transfer.max_downloads):
         return False
 
+    await log_transfer_download(
+        db,
+        transfer_id=transfer.id,
+        ip_address=get_client_ip(request),
+        download_type="access",
+    )
     await db.refresh(transfer)
     grant_transfer_download(request.session, token)
     return True

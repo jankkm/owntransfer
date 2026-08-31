@@ -15,7 +15,7 @@ REASON_UPLOAD_LIMIT = "upload_limit"
 _REASON_LABELS = {
     REASON_DISABLED: lambda: _("Link disabled"),
     REASON_EXPIRED: lambda: _("Expired"),
-    REASON_DOWNLOAD_LIMIT: lambda: _("Download limit reached"),
+    REASON_DOWNLOAD_LIMIT: lambda: _("Access limit reached"),
     REASON_UPLOAD_LIMIT: lambda: _("Upload limit reached"),
 }
 
