@@ -14,6 +14,7 @@ Built with **FastAPI**, server-rendered HTML, and SQLite or PostgreSQL.
   <a href="docs/screenshots/create-file-request.png"><img src="docs/screenshots/create-file-request.png" width="400" alt="Create file request"></a>
   <a href="docs/screenshots/file-requests.png"><img src="docs/screenshots/file-requests.png" width="400" alt="My file requests"></a>
   <a href="docs/screenshots/public-upload.png"><img src="docs/screenshots/public-upload.png" width="400" alt="Public upload"></a>
+  <a href="docs/screenshots/admin-settings.png"><img src="docs/screenshots/admin-settings.png" width="400" alt="Admin settings"></a>
   <a href="docs/screenshots/admin-shares.png"><img src="docs/screenshots/admin-shares.png" width="400" alt="Admin shares"></a>
   <a href="docs/screenshots/admin-users.png"><img src="docs/screenshots/admin-users.png" width="400" alt="Admin users"></a>
   <a href="docs/screenshots/admin-email-templates.png"><img src="docs/screenshots/admin-email-templates.png" width="400" alt="Admin email templates"></a>
