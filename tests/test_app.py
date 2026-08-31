@@ -462,3 +462,61 @@ async def test_disabled_request_not_security_logged(client: AsyncClient, caplog:
     assert "This link has been disabled" in response.text
     assert "file request" in response.text.lower()
     assert not any("event=invalid_request_link" in record.message for record in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_invalid_transfer_unlock_security_log(client: AsyncClient, caplog: pytest.LogCaptureFixture):
+    async with async_session() as session:
+        user = (await session.execute(select(User))).scalar_one()
+        session.add(
+            Transfer(
+                public_token="unlock-log-token",
+                created_by=user.id,
+                title="Secret",
+                password_hash=hash_password("letmein"),
+                expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            )
+        )
+        await session.commit()
+
+    token = await _csrf_token(client, "/d/unlock-log-token")
+    with caplog.at_level(logging.WARNING, logger=SECURITY_LOGGER_NAME):
+        response = await client.post(
+            "/d/unlock-log-token",
+            data={"password": "wrong", "csrf_token": token},
+        )
+    assert response.status_code == 401
+    assert any(
+        "event=invalid_unlock" in record.message and "kind=transfer" in record.message
+        for record in caplog.records
+    )
+
+
+@pytest.mark.asyncio
+async def test_invalid_request_unlock_security_log(client: AsyncClient, caplog: pytest.LogCaptureFixture):
+    async with async_session() as session:
+        user = (await session.execute(select(User))).scalar_one()
+        session.add(
+            FileRequest(
+                public_token="unlock-log-request",
+                created_by=user.id,
+                title="Upload here",
+                password_hash=hash_password("letmein"),
+                expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+                max_uploads=5,
+                max_total_bytes=10 * 1024 * 1024,
+            )
+        )
+        await session.commit()
+
+    token = await _csrf_token(client, "/r/unlock-log-request")
+    with caplog.at_level(logging.WARNING, logger=SECURITY_LOGGER_NAME):
+        response = await client.post(
+            "/r/unlock-log-request",
+            data={"password": "wrong", "unlock": "1", "csrf_token": token},
+        )
+    assert response.status_code == 401
+    assert any(
+        "event=invalid_unlock" in record.message and "kind=request" in record.message
+        for record in caplog.records
+    )

@@ -275,6 +275,7 @@ OwnTransfer writes structured `WARNING` lines to stdout for events that indicate
 | `invalid_login` | Failed local login |
 | `invalid_transfer_link` | Unknown `/d/{token}` |
 | `invalid_request_link` | Unknown `/r/{token}` |
+| `invalid_unlock` | Wrong password on `/d/{token}` or `/r/{token}` |
 
 Expired, disabled, or limit-reached links are **not** logged — the token exists; access is denied with 403/410.
 
@@ -288,7 +289,7 @@ Example log line:
 
 ```ini
 [Definition]
-failregex = ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} WARNING \[owntransfer\.security\] event=(invalid_login|invalid_transfer_link|invalid_request_link) ip=<HOST>.*$
+failregex = ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} WARNING \[owntransfer\.security\] event=(invalid_login|invalid_transfer_link|invalid_request_link|invalid_unlock) ip=<HOST>.*$
 ignoreregex =
 datepattern = ^%%Y-%%m-%%d %%H:%%M:%%S
 ```
