@@ -22,7 +22,14 @@ from app.auth.unlock_cookies import (
 from app.database import async_session, get_db
 from app.i18n import _, ngettext
 from app.http.client_ip import get_client_ip
-from app.http.uploads import RAW_UPLOAD_FILENAME_HEADER, decode_raw_upload_filename
+from app.http.uploads import (
+    RAW_UPLOAD_FILENAME_HEADER,
+    UPLOAD_BATCH_HEADER,
+    decode_raw_upload_filename,
+    decode_staged_file_ids,
+    new_upload_batch,
+    validate_upload_batch,
+)
 from app.limiter import limiter
 from app.models import FileRequest, Transfer, User
 from app.services.file_request import (
@@ -48,9 +55,10 @@ from app.services.staging import (
     add_staged_file,
     add_staged_stream,
     discard_staged_paths,
+    get_staged_files,
     remove_staged_file,
     restore_staged_files,
-    take_staged_files,
+    take_selected_staged_files,
 )
 from app.services.transfer import (
     ACCESS_DISABLED,
@@ -110,8 +118,15 @@ def _resolve_request(file_request: FileRequest | None, request: Request) -> File
     return file_request
 
 
-def _request_staging_scope(token: str) -> str:
-    return f"request_{token}"
+def _request_staging_scope(token: str, batch: str) -> str:
+    return f"request_{token}_{batch}"
+
+
+def _request_upload_batch(request: Request) -> str:
+    try:
+        return validate_upload_batch(request.headers.get(UPLOAD_BATCH_HEADER))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=_("Invalid upload batch")) from exc
 
 
 def _require_request_unlock(request: Request, token: str, *, password_required: bool) -> None:
@@ -255,6 +270,7 @@ def _render_upload_page(
     app_settings,
     *,
     status_code: int | None = None,
+    staging_batch: str | None = None,
     **context_kwargs,
 ) -> HTMLResponse:
     issue = request_access_issue(file_request)
@@ -266,6 +282,7 @@ def _render_upload_page(
         status_code = 200
     ctx = branding_context(app_settings)
     ctx["upload_max_total_mb"] = effective_request_max_total_bytes(file_request, app_settings) // (1024 * 1024)
+    ctx["staging_batch"] = staging_batch or new_upload_batch()
     ctx.update(_upload_page_context(request, file_request, token, **context_kwargs))
     return templates.TemplateResponse(
         request,
@@ -513,6 +530,38 @@ async def upload_page(token: str, request: Request, db: AsyncSession = Depends(g
     return _render_upload_page(request, file_request, token, app_settings)
 
 
+@router.get("/r/{token}/staging")
+@limiter.limit("60/minute")
+async def list_staged_request_files(
+    token: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    file_request = await lookup_request_by_token(db, token)
+    resolved = _resolve_request(file_request, request)
+    if isinstance(resolved, RedirectResponse):
+        return resolved
+    file_request = resolved
+    issue = request_access_issue(file_request)
+    if issue:
+        raise HTTPException(
+            status_code=_access_blocked_status(issue),
+            detail=_access_blocked_copy(issue, kind="request")["access_blocked_title"],
+        )
+    _require_request_unlock(request, token, password_required=bool(file_request.password_hash))
+    batch = _request_upload_batch(request)
+    return JSONResponse(
+        [
+            {
+                "id": file.id,
+                "name": file.original_name,
+                "size_bytes": file.size_bytes,
+            }
+            for file in get_staged_files(_request_staging_scope(token, batch))
+        ]
+    )
+
+
 @router.post("/r/{token}/staging")
 @limiter.limit("60/minute")
 async def stage_request_file(
@@ -534,7 +583,8 @@ async def stage_request_file(
             )
         limits = StagingLimits.from_settings(app_settings)
         max_total_bytes = effective_request_max_total_bytes(file_request, app_settings)
-        scope = _request_staging_scope(token)
+        batch = _request_upload_batch(request)
+        scope = _request_staging_scope(token, batch)
     _require_request_unlock(request, token, password_required=bool(file_request.password_hash))
     content_type = request.headers.get("content-type", "")
     if content_type.startswith("multipart/form-data"):
@@ -597,7 +647,8 @@ async def delete_staged_request_file(
             detail=_access_blocked_copy(issue, kind="request")["access_blocked_title"],
         )
     _require_request_unlock(request, token, password_required=bool(file_request.password_hash))
-    await remove_staged_file(_request_staging_scope(token), file_id)
+    batch = _request_upload_batch(request)
+    await remove_staged_file(_request_staging_scope(token, batch), file_id)
     return JSONResponse({"ok": True})
 
 
@@ -611,6 +662,8 @@ async def upload_handler(
     unlock: str = Form(""),
     uploader_name: str = Form(""),
     uploader_email: str = Form(""),
+    staging_batch: str = Form(""),
+    staged_file_ids: str = Form(""),
     db: AsyncSession = Depends(get_db),
 ):
     app_settings = await get_app_settings(db)
@@ -658,8 +711,43 @@ async def upload_handler(
     if not creator:
         return RedirectResponse(f"/r/{token}", status_code=303)
 
-    scope = _request_staging_scope(token)
-    staged_files = await take_staged_files(scope)
+    try:
+        staging_batch = validate_upload_batch(staging_batch)
+    except ValueError:
+        return _render_upload_page(
+            request,
+            file_request,
+            token,
+            app_settings,
+            status_code=400,
+            error=_("Invalid upload batch"),
+        )
+    try:
+        selected_ids = decode_staged_file_ids(staged_file_ids)
+    except ValueError:
+        return _render_upload_page(
+            request,
+            file_request,
+            token,
+            app_settings,
+            status_code=400,
+            staging_batch=staging_batch,
+            error=_("Invalid staged file selection"),
+        )
+
+    scope = _request_staging_scope(token, staging_batch)
+    try:
+        staged_files = await take_selected_staged_files(scope, selected_ids)
+    except HTTPException as exc:
+        return _render_upload_page(
+            request,
+            file_request,
+            token,
+            app_settings,
+            status_code=exc.status_code,
+            staging_batch=staging_batch,
+            error=exc.detail if isinstance(exc.detail, str) else _("Upload failed"),
+        )
     try:
         upload = await begin_request_upload(
             db,
@@ -678,6 +766,7 @@ async def upload_handler(
             token,
             app_settings,
             status_code=exc.status_code,
+            staging_batch=staging_batch,
             error=exc.detail if isinstance(exc.detail, str) else _("Upload failed"),
         )
 

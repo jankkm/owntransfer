@@ -116,12 +116,19 @@
     const uploadUrl = root.dataset.uploadUrl;
     const deleteUrlTemplate = root.dataset.deleteUrlTemplate;
     const clearAllUrl = root.dataset.clearAllUrl || "";
+    const stagingBatch = root.dataset.stagingBatch || "";
     const restoreStaged = root.dataset.restoreStaged === "true";
+    if (root.dataset.persistBatchInUrl === "true" && stagingBatch) {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set("batch", stagingBatch);
+      window.history.replaceState({}, "", currentUrl);
+    }
     const input = root.querySelector("[data-file-input]");
     const list = root.querySelector("[data-file-list]");
     const dropzone = root.querySelector("[data-dropzone]");
     const emptyState = root.querySelector("[data-empty-state]");
     const errorEl = root.querySelector("[data-file-error]");
+    const stagedFileIdsInput = root.querySelector("[data-staged-file-ids]");
     const restoreHint = root.querySelector("[data-restore-hint]");
     const clearAllBtn = root.querySelector("[data-clear-all]");
     const form = root.closest("form");
@@ -173,6 +180,13 @@
     function notifyChange() {
       const hasReady = [...files.values()].some((entry) => entry.status === "done");
       if (hasReady) setError("");
+      if (stagedFileIdsInput) {
+        stagedFileIdsInput.value = JSON.stringify(
+          [...files.values()]
+            .filter((entry) => entry.status === "done" && entry.serverId)
+            .map((entry) => entry.serverId)
+        );
+      }
       updateClearAllState();
       updateRestoreHint();
       root.dispatchEvent(new CustomEvent("filepicker:change", { bubbles: true }));
@@ -359,6 +373,7 @@
         xhr.open("POST", uploadUrl);
         xhr.withCredentials = true;
         xhr.setRequestHeader("X-CSRF-Token", csrfToken());
+        xhr.setRequestHeader("X-Upload-Batch", stagingBatch);
         xhr.setRequestHeader("X-Upload-Filename", encodeURIComponent(file.name));
         xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
         xhr.send(file);
@@ -385,7 +400,10 @@
         await fetch(deleteUrl, {
           method: "DELETE",
           credentials: "same-origin",
-          headers: { "X-CSRF-Token": csrfToken() },
+          headers: {
+            "X-CSRF-Token": csrfToken(),
+            "X-Upload-Batch": stagingBatch,
+          },
         });
       }
       files.delete(clientId);
@@ -401,7 +419,10 @@
         await fetch(clearAllUrl, {
           method: "DELETE",
           credentials: "same-origin",
-          headers: { "X-CSRF-Token": csrfToken() },
+          headers: {
+            "X-CSRF-Token": csrfToken(),
+            "X-Upload-Batch": stagingBatch,
+          },
         });
       } else {
         await Promise.all([...files.keys()].map((clientId) => removeEntry(clientId)));
@@ -439,7 +460,10 @@
     async function loadExistingStaged() {
       if (!restoreStaged) return;
       try {
-        const resp = await fetch(uploadUrl, { credentials: "same-origin" });
+        const resp = await fetch(uploadUrl, {
+          credentials: "same-origin",
+          headers: { "X-Upload-Batch": stagingBatch },
+        });
         if (!resp.ok) return;
         const existing = await resp.json();
         if (!Array.isArray(existing) || existing.length === 0) return;

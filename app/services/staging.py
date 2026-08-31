@@ -341,6 +341,22 @@ async def take_staged_files(scope: str) -> list[StagedFile]:
     return await _with_manifest_lock(scope, lambda staged: ([], list(staged)))
 
 
+async def take_selected_staged_files(scope: str, file_ids: list[str]) -> list[StagedFile]:
+    def updater(staged: list[StagedFile]) -> tuple[list[StagedFile], list[StagedFile]]:
+        by_id = {file.id: file for file in staged}
+        if any(file_id not in by_id for file_id in file_ids):
+            raise HTTPException(
+                status_code=400,
+                detail=_("The selected files changed. Reload the page and try again."),
+            )
+        selected = [by_id[file_id] for file_id in file_ids]
+        selected_ids = set(file_ids)
+        remaining = [file for file in staged if file.id not in selected_ids]
+        return remaining, selected
+
+    return await _with_manifest_lock(scope, updater)
+
+
 async def restore_staged_files(scope: str, files: list[StagedFile]) -> None:
     if not files:
         return
@@ -358,15 +374,8 @@ async def discard_staged_paths(files: list[StagedFile]) -> None:
         return
 
     storage = get_storage()
-    scopes: set[str] = set()
     for staged in files:
-        parts = staged.storage_path.split("/")
-        if len(parts) >= 3 and parts[0] == "staging":
-            scopes.add(parts[1])
         await storage.delete_file(staged.storage_path)
-
-    for scope in scopes:
-        await storage.delete_directory(f"staging/{scope}")
 
 
 def _purge_stale_staging_sync(max_age_hours: int = 24) -> int:
@@ -418,7 +427,11 @@ def _purge_stale_staging_sync(max_age_hours: int = 24) -> int:
     for path in staging_root.rglob("*"):
         if not path.is_file():
             continue
-        if path.name in {MANIFEST_FILENAME, ".manifest.lock"}:
+        if path.name == MANIFEST_FILENAME:
+            continue
+        if path.name == ".manifest.lock":
+            if not (path.parent / MANIFEST_FILENAME).exists() and path.stat().st_mtime < cutoff:
+                path.unlink(missing_ok=True)
             continue
         if path.resolve() in referenced_paths:
             continue

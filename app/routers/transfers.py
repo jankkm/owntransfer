@@ -15,7 +15,14 @@ from app.auth.passwords import is_share_password_valid, share_password_too_short
 from app.database import async_session, get_db
 from app.i18n import _
 from app.http.client_ip import get_client_ip
-from app.http.uploads import RAW_UPLOAD_FILENAME_HEADER, decode_raw_upload_filename
+from app.http.uploads import (
+    RAW_UPLOAD_FILENAME_HEADER,
+    UPLOAD_BATCH_HEADER,
+    decode_raw_upload_filename,
+    decode_staged_file_ids,
+    new_upload_batch,
+    validate_upload_batch,
+)
 from app.limiter import limiter
 from app.models import User
 from app.services.archive import load_transfer_activity
@@ -31,6 +38,7 @@ from app.services.staging import (
     get_staged_files,
     remove_staged_file,
     restore_staged_files,
+    take_selected_staged_files,
     take_staged_files,
 )
 from app.services.transfer import (
@@ -50,8 +58,15 @@ from app.templating import branding_context, templates
 router = APIRouter(prefix="/transfers", tags=["transfers"])
 
 
-def _transfer_staging_scope(user_id: uuid.UUID) -> str:
-    return f"transfer_{user_id}"
+def _transfer_staging_scope(user_id: uuid.UUID, batch: str) -> str:
+    return f"transfer_{user_id}_{batch}"
+
+
+def _request_upload_batch(request: Request) -> str:
+    try:
+        return validate_upload_batch(request.headers.get(UPLOAD_BATCH_HEADER))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=_("Invalid upload batch")) from exc
 
 
 @router.get("/staging")
@@ -60,7 +75,8 @@ async def list_staged_transfer_files(
     request: Request,
     user_id: uuid.UUID = Depends(require_user_id),
 ):
-    staged = get_staged_files(_transfer_staging_scope(user_id))
+    batch = _request_upload_batch(request)
+    staged = get_staged_files(_transfer_staging_scope(user_id, batch))
     return JSONResponse(
         [
             {
@@ -79,7 +95,8 @@ async def clear_staged_transfer_files(
     request: Request,
     user_id: uuid.UUID = Depends(require_user_id),
 ):
-    await clear_staged_files(_transfer_staging_scope(user_id))
+    batch = _request_upload_batch(request)
+    await clear_staged_files(_transfer_staging_scope(user_id, batch))
     return JSONResponse({"ok": True})
 
 
@@ -92,7 +109,8 @@ async def stage_transfer_file(
     async with async_session() as db:
         app_settings = await get_app_settings(db)
         limits = StagingLimits.from_settings(app_settings)
-    scope = _transfer_staging_scope(user_id)
+    batch = _request_upload_batch(request)
+    scope = _transfer_staging_scope(user_id, batch)
     content_type = request.headers.get("content-type", "")
     if content_type.startswith("multipart/form-data"):
         form = await request.form()
@@ -135,7 +153,8 @@ async def delete_staged_transfer_file(
     request: Request,
     user_id: uuid.UUID = Depends(require_user_id),
 ):
-    await remove_staged_file(_transfer_staging_scope(user_id), file_id)
+    batch = _request_upload_batch(request)
+    await remove_staged_file(_transfer_staging_scope(user_id, batch), file_id)
     return JSONResponse({"ok": True})
 
 
@@ -177,12 +196,23 @@ async def list_transfers(
 @router.get("/new", response_class=HTMLResponse)
 async def new_transfer(
     request: Request,
+    batch: str = "",
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    try:
+        batch = validate_upload_batch(batch)
+    except ValueError:
+        batch = new_upload_batch()
+
+    legacy_scope = f"transfer_{user.id}"
+    legacy_files = await take_staged_files(legacy_scope)
+    if legacy_files:
+        await restore_staged_files(_transfer_staging_scope(user.id, batch), legacy_files)
+
     app_settings = await get_app_settings(db)
     ctx = branding_context(app_settings)
-    ctx["user"] = user
+    ctx.update({"user": user, "staging_batch": batch})
     return templates.TemplateResponse(request, "transfers_new.html", ctx)
 
 
@@ -198,10 +228,17 @@ async def create_transfer_route(
     max_downloads: int = Form(...),
     notify_on_download: str = Form(""),
     recipient_emails: str = Form(""),
+    staging_batch: str = Form(...),
+    staged_file_ids: str = Form(...),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     app_settings = await get_app_settings(db)
+    try:
+        staging_batch = validate_upload_batch(staging_batch)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=_("Invalid upload batch")) from exc
+
     emails = [e.strip() for e in recipient_emails.split(",") if e.strip()]
     if not app_settings.allow_user_share_emails:
         emails = []
@@ -209,6 +246,7 @@ async def create_transfer_route(
         ctx = branding_context(app_settings)
         ctx.update({
             "user": user,
+            "staging_batch": staging_batch,
             "error": _("Enter a password to enable protection"),
         })
         return templates.TemplateResponse(request, "transfers_new.html", ctx, status_code=400)
@@ -217,11 +255,23 @@ async def create_transfer_route(
         ctx = branding_context(app_settings)
         ctx.update({
             "user": user,
+            "staging_batch": staging_batch,
             "error": share_password_too_short_message(app_settings.share_password_length),
         })
         return templates.TemplateResponse(request, "transfers_new.html", ctx, status_code=400)
-    scope = _transfer_staging_scope(user.id)
-    staged_files = await take_staged_files(scope)
+    scope = _transfer_staging_scope(user.id, staging_batch)
+    try:
+        selected_ids = decode_staged_file_ids(staged_file_ids)
+        staged_files = await take_selected_staged_files(scope, selected_ids)
+    except (ValueError, HTTPException) as exc:
+        detail = exc.detail if isinstance(exc, HTTPException) else _("Invalid staged file selection")
+        ctx = branding_context(app_settings)
+        ctx.update({
+            "user": user,
+            "staging_batch": staging_batch,
+            "error": detail,
+        })
+        return templates.TemplateResponse(request, "transfers_new.html", ctx, status_code=400)
     try:
         transfer = await create_transfer(
             db,
@@ -242,6 +292,7 @@ async def create_transfer_route(
         ctx = branding_context(app_settings)
         ctx.update({
             "user": user,
+            "staging_batch": staging_batch,
             "error": exc.detail if isinstance(exc.detail, str) else _("Could not create transfer"),
         })
         return templates.TemplateResponse(request, "transfers_new.html", ctx, status_code=exc.status_code)

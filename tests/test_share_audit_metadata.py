@@ -110,7 +110,7 @@ async def test_update_transfer_audit_records_field_changes():
 
 @pytest.mark.asyncio
 async def test_create_transfer_via_post_audit_has_files(client: AsyncClient):
-    from app.services.staging import add_staged_file
+    from app.services.staging import add_staged_file, get_staged_files
     from starlette.datastructures import UploadFile as StarletteUploadFile
     from io import BytesIO
 
@@ -132,6 +132,8 @@ async def test_create_transfer_via_post_audit_has_files(client: AsyncClient):
 
     new_page = await client.get("/transfers/new")
     csrf = re.search(r'name="csrf-token" content="([^"]+)"', new_page.text).group(1)
+    batch = re.search(r'data-staging-batch="([^"]+)"', new_page.text).group(1)
+    staged_id = get_staged_files(f"transfer_{user.id}_{batch}")[0].id
     expiry = (datetime.now(timezone.utc) + timedelta(days=7)).strftime("%Y-%m-%d")
     response = await client.post(
         "/transfers/new",
@@ -140,6 +142,8 @@ async def test_create_transfer_via_post_audit_has_files(client: AsyncClient):
             "expires_at": expiry,
             "max_downloads": "5",
             "csrf_token": csrf,
+            "staging_batch": batch,
+            "staged_file_ids": json.dumps([staged_id]),
         },
         follow_redirects=False,
     )

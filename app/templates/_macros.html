@@ -349,10 +349,12 @@
 <button type="button" data-show-confirm="{{ panel_id }}" class="{{ button_class }}">{{ label }}</button>
 {%- endmacro %}
 
-{% macro file_picker(upload_url, delete_url_template, require_files=true, required_files_message=none, upload_concurrency=5, file_type_blocklist=none, max_file_size_bytes=none, restore_staged=false, clear_all_url=none) -%}
+{% macro file_picker(upload_url, delete_url_template, require_files=true, required_files_message=none, upload_concurrency=5, file_type_blocklist=none, max_file_size_bytes=none, staging_batch=none, persist_batch_in_url=false, restore_staged=false, clear_all_url=none) -%}
 <div data-file-picker
      data-upload-url="{{ upload_url }}"
      data-delete-url-template="{{ delete_url_template }}"
+     data-staging-batch="{{ staging_batch or '' }}"
+     data-persist-batch-in-url="{{ 'true' if persist_batch_in_url else 'false' }}"
      data-require-files="{{ 'true' if require_files else 'false' }}"
      data-upload-concurrency="{{ upload_concurrency }}"
      data-file-type-blocklist='{{ (file_type_blocklist or []) | tojson }}'
@@ -361,6 +363,8 @@
      {% if clear_all_url %}data-clear-all-url="{{ clear_all_url }}"{% endif %}
      data-required-message="{{ required_files_message or _('Add at least one file') }}"
      class="space-y-3">
+  <input type="hidden" name="staging_batch" value="{{ staging_batch or '' }}">
+  <input type="hidden" name="staged_file_ids" value="[]" data-staged-file-ids>
   <label class="block text-sm font-medium text-slate-700">{{ _('Files') }}</label>
   <div data-dropzone
        class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-slate-400 transition-colors">
