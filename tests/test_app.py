@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
 import pytest
+from fastapi import HTTPException
 from httpx import AsyncClient
 from sqlalchemy import select
 
@@ -174,6 +175,45 @@ async def test_concurrent_staging_adds_all_files():
     staged = get_staged_files(scope)
     assert len(staged) == 4
     assert {f.original_name for f in staged} == {"a.txt", "b.txt", "c.txt", "d.txt"}
+
+
+@pytest.mark.asyncio
+async def test_staging_per_file_limit_does_not_limit_combined_size():
+    from starlette.datastructures import UploadFile as StarletteUploadFile
+
+    from app.services.staging import StagingLimits, add_staged_file, get_staged_files
+
+    scope = "per-file-limit"
+    limits = StagingLimits(max_file_size_bytes=6)
+    await add_staged_file(scope, StarletteUploadFile(filename="a.txt", file=BytesIO(b"aaaaaa")), limits)
+    await add_staged_file(scope, StarletteUploadFile(filename="b.txt", file=BytesIO(b"bbbbbb")), limits)
+
+    staged = get_staged_files(scope)
+    assert len(staged) == 2
+    assert sum(file.size_bytes for file in staged) == 12
+
+
+@pytest.mark.asyncio
+async def test_staging_explicit_total_limit_is_still_enforced():
+    from starlette.datastructures import UploadFile as StarletteUploadFile
+
+    from app.services.staging import StagingLimits, add_staged_file
+
+    scope = "explicit-total-limit"
+    limits = StagingLimits(max_file_size_bytes=6)
+    await add_staged_file(
+        scope,
+        StarletteUploadFile(filename="a.txt", file=BytesIO(b"aaaaaa")),
+        limits,
+        max_total_bytes=10,
+    )
+    with pytest.raises(HTTPException, match="Total upload exceeds"):
+        await add_staged_file(
+            scope,
+            StarletteUploadFile(filename="b.txt", file=BytesIO(b"bbbbbb")),
+            limits,
+            max_total_bytes=10,
+        )
 
 
 @pytest.mark.asyncio

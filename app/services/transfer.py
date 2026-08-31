@@ -66,15 +66,20 @@ async def create_transfer(
     if staged_files is not None:
         if not staged_files:
             raise HTTPException(status_code=400, detail=_("Add at least one file"))
-        total_size = 0
         for staged in staged_files:
             if is_extension_blocked(staged.original_name, blocklist):
                 raise HTTPException(
                     status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": staged.original_name}
                 )
-            total_size += staged.size_bytes
-            if total_size > app_settings.max_file_size_bytes:
-                raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
+            if staged.size_bytes > app_settings.max_file_size_bytes:
+                raise HTTPException(
+                    status_code=400,
+                    detail=_("File exceeds maximum size (%(max_mb)s MB): %(filename)s")
+                    % {
+                        "max_mb": app_settings.max_file_size_bytes // (1024 * 1024),
+                        "filename": staged.original_name,
+                    },
+                )
 
     transfer = Transfer(
         public_token=generate_public_token(),
@@ -99,7 +104,6 @@ async def create_transfer(
 
     # Direct upload path (non-staged): process synchronously
     storage = get_storage()
-    total_size = 0
     saved_count = 0
     saved_files: list[dict] = []
 
@@ -110,9 +114,15 @@ async def create_transfer(
             if is_extension_blocked(upload.filename, blocklist):
                 raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": upload.filename})
             content = await upload.read()
-            total_size += len(content)
-            if total_size > app_settings.max_file_size_bytes:
-                raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
+            if len(content) > app_settings.max_file_size_bytes:
+                raise HTTPException(
+                    status_code=400,
+                    detail=_("File exceeds maximum size (%(max_mb)s MB): %(filename)s")
+                    % {
+                        "max_mb": app_settings.max_file_size_bytes // (1024 * 1024),
+                        "filename": upload.filename,
+                    },
+                )
             rel_path = f"transfers/{transfer.id}/{uuid4()}/{_safe_filename(upload.filename)}"
             await storage.save_file(rel_path, content)
             db.add(
@@ -382,10 +392,6 @@ def _unique_zip_name(name: str, used: dict[str, int]) -> str:
     return f"{path.stem}_{used[name]}{path.suffix}"
 
 
-def _transfer_total_bytes(transfer: Transfer) -> int:
-    return sum(f.size_bytes for f in transfer.files)
-
-
 async def add_transfer_file(
     db: AsyncSession,
     *,
@@ -405,13 +411,7 @@ async def add_transfer_file(
     file_id = uuid4()
     safe_name = _safe_filename(upload.filename)
     rel_path = f"transfers/{transfer.id}/{file_id}/{safe_name}"
-    storage = get_storage()
     size_bytes = await _save_upload(rel_path, upload, app_settings.max_file_size_bytes)
-
-    total_size = _transfer_total_bytes(transfer) + size_bytes
-    if total_size > app_settings.max_file_size_bytes:
-        await storage.delete_file(rel_path)
-        raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum file size"))
 
     transfer_file = TransferFile(
         id=file_id,

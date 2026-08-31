@@ -85,6 +85,7 @@
      data-upload-url="{{ files_upload_url or ('/transfers/' ~ transfer.id ~ '/files') }}"
      data-delete-url-template="{{ files_delete_url_template or ('/transfers/' ~ transfer.id ~ '/files/{id}') }}"
      data-upload-concurrency="{{ upload_concurrency }}"
+     data-max-file-size-bytes="{{ max_file_size_bytes }}"
      data-file-type-blocklist='{{ file_type_blocklist | default([]) | tojson }}'>
   <div class="flex items-center justify-between gap-3 mb-1">
     <p class="text-sm font-medium text-slate-700" data-files-title>{{ _('Files (%(count)s)') % {'count': transfer.files|length} }}</p>

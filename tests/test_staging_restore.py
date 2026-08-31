@@ -136,6 +136,7 @@ async def test_transfers_new_page_enables_staged_restore(client: AsyncClient):
     assert response.status_code == 200
     assert 'data-restore-staged="true"' in response.text
     assert 'data-clear-all-url="/transfers/staging"' in response.text
+    assert 'data-max-file-size-bytes="10485760"' in response.text
 
 
 @pytest.mark.asyncio

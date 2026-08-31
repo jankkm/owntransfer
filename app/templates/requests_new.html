@@ -22,7 +22,7 @@
              class="w-full border border-slate-300 rounded-lg px-3 py-2" required>
     </div>
   </div>
-  {{ f.text_input("max_total_mb", _("Max total size per upload (MB)"), max_file_size_mb, type="number", required=true, min=1, max=max_file_size_mb, hint=_("Cannot exceed the system limit of %(max)s MB.") % {'max': max_file_size_mb}) }}
+  {{ f.text_input("max_total_mb", _("Max total size per upload (MB)"), max_file_size_mb, type="number", required=true, min=1) }}
   {{ f.password_protection_fields(false, share_password_length) }}
   <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2">{{ _('Create file request') }}</button>
 </form>

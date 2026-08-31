@@ -108,6 +108,7 @@ def branding_context(app_settings: AppSettings) -> dict:
         "favicon_type": favicon_type(app_settings),
         "has_custom_logo": has_custom_logo(app_settings),
         "base_url": settings.base_url,
+        "max_file_size_bytes": app_settings.max_file_size_bytes,
         "max_file_size_mb": app_settings.max_file_size_bytes // (1024 * 1024),
         "default_expiry_days": app_settings.default_expiry_days,
         "default_expiry_date": default_expiry_date(app_settings.default_expiry_days),

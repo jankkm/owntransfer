@@ -86,6 +86,11 @@
     }
   }
 
+  function readMaxFileSize(root) {
+    const value = Number(root.dataset.maxFileSizeBytes);
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
   function fileExtension(filename) {
     const base = String(filename || "").split(/[/\\]/).pop() || "";
     const dot = base.lastIndexOf(".");
@@ -99,6 +104,12 @@
 
   function blockedFileMessage(filename) {
     return t("File type not allowed: %(filename)s", { filename });
+  }
+
+  function oversizedFileMessage(maxFileSizeBytes) {
+    return t("File exceeds maximum size (%(max_mb)s MB)", {
+      max_mb: Math.floor(maxFileSizeBytes / (1024 * 1024)),
+    });
   }
 
   function initFilePicker(root) {
@@ -119,6 +130,7 @@
     const requiredMessage = root.dataset.requiredMessage || t("Add at least one file");
     const concurrency = readConcurrency(root, DEFAULT_CONCURRENCY);
     const blocklist = readBlocklist(root);
+    const maxFileSize = readMaxFileSize(root);
     const uploadQueue = createUploadQueue(concurrency);
     const files = new Map();
     let restoredFromServer = false;
@@ -232,10 +244,15 @@
     function queueUpload(clientId) {
       const entry = files.get(clientId);
       if (!entry || !entry.file) return;
-      if (isExtensionBlocked(entry.name, blocklist)) {
+      const validationError = isExtensionBlocked(entry.name, blocklist)
+        ? blockedFileMessage(entry.name)
+        : maxFileSize !== null && entry.size > maxFileSize
+          ? oversizedFileMessage(maxFileSize)
+          : null;
+      if (validationError) {
         entry.status = "error";
         entry.blocked = true;
-        entry.error = blockedFileMessage(entry.name);
+        entry.error = validationError;
         entry.progress = 0;
         entry.cancelQueue = null;
         renderEntry(clientId, entry);
@@ -253,7 +270,12 @@
     }
 
     function uploadEntry(clientId, file) {
-      const blocked = isExtensionBlocked(file.name, blocklist);
+      const validationError = isExtensionBlocked(file.name, blocklist)
+        ? blockedFileMessage(file.name)
+        : maxFileSize !== null && file.size > maxFileSize
+          ? oversizedFileMessage(maxFileSize)
+          : null;
+      const blocked = validationError !== null;
       const entry = {
         file,
         name: file.name,
@@ -261,7 +283,7 @@
         status: blocked ? "error" : "queued",
         progress: 0,
         serverId: null,
-        error: blocked ? blockedFileMessage(file.name) : null,
+        error: validationError,
         blocked,
         xhr: null,
         aborted: false,

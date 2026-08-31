@@ -38,6 +38,7 @@ JS_MESSAGE_KEYS = (
     "Remove",
     "Network error",
     "File type not allowed: %(filename)s",
+    "File exceeds maximum size (%(max_mb)s MB)",
     "Sending…",
     "Could not remove file",
     "Could not show confirmation dialog.",

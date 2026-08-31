@@ -14,7 +14,7 @@ from app.database import async_session
 from app.models import FileRequest, RequestUpload, Transfer, TransferFile, UploadFile, User
 from app.services.file_request import begin_request_upload, finalize_request_upload_files
 from app.services.settings import generate_public_token, get_app_settings
-from app.services.staging import add_staged_file, get_staged_files
+from app.services.staging import StagedFile, add_staged_file, get_staged_files
 from app.services.transfer import create_transfer, finalize_transfer_files
 
 
@@ -72,6 +72,48 @@ async def test_create_transfer_with_staged_files_marks_preparing():
             select(func.count()).select_from(TransferFile).where(TransferFile.transfer_id == transfer.id)
         )
         assert file_count == 0
+
+
+@pytest.mark.asyncio
+async def test_create_transfer_allows_combined_size_above_per_file_limit():
+    async with async_session() as db:
+        user = (await db.execute(select(User))).scalar_one()
+        app_settings = await get_app_settings(db)
+        per_file_size = 6 * 1024 * 1024
+        staged = [
+            StagedFile(
+                id="first",
+                original_name="first.bin",
+                storage_path="staging/test/first.bin",
+                size_bytes=per_file_size,
+                content_type="application/octet-stream",
+            ),
+            StagedFile(
+                id="second",
+                original_name="second.bin",
+                storage_path="staging/test/second.bin",
+                size_bytes=per_file_size,
+                content_type="application/octet-stream",
+            ),
+        ]
+
+        transfer = await create_transfer(
+            db,
+            user=user,
+            title="Multiple large files",
+            message=None,
+            password=None,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            max_downloads=5,
+            notify_on_download=False,
+            recipient_emails=[],
+            app_settings=app_settings,
+            ip_address="127.0.0.1",
+            staged_files=staged,
+        )
+
+        assert sum(file.size_bytes for file in staged) > app_settings.max_file_size_bytes
+        assert transfer.is_preparing is True
 
 
 @pytest.mark.asyncio
@@ -228,6 +270,7 @@ async def test_public_request_upload_page_has_staging_endpoint(client: AsyncClie
 
     page = await client.get(f"/r/{token}")
     assert re.search(rf'/r/{re.escape(token)}/staging', page.text)
+    assert 'data-max-file-size-bytes="10485760"' in page.text
 
 
 @pytest.mark.asyncio

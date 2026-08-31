@@ -38,16 +38,15 @@ def _safe_filename(name: str) -> str:
     return re.sub(r"[^\w.\- ()]", "_", base) or "file"
 
 
-def effective_request_max_total_bytes(req: FileRequest, app_settings: AppSettings) -> int:
-    return min(req.max_total_bytes, app_settings.max_file_size_bytes)
+def effective_request_max_total_bytes(req: FileRequest, _app_settings: AppSettings) -> int:
+    return req.max_total_bytes
 
 
-def ensure_max_total_within_limit(max_total_bytes: int, app_settings: AppSettings) -> None:
-    if max_total_bytes > app_settings.max_file_size_bytes:
+def ensure_max_total_is_positive(max_total_bytes: int) -> None:
+    if max_total_bytes <= 0:
         raise HTTPException(
             status_code=400,
-            detail=_("Max total size cannot exceed the system limit (%(max_mb)s MB)")
-            % {"max_mb": app_settings.max_file_size_bytes // (1024 * 1024)},
+            detail=_("Max total size must be greater than zero"),
         )
 
 
@@ -66,7 +65,7 @@ async def create_file_request(
     ip_address: str | None,
 ) -> FileRequest:
     ensure_expiry_within_limit(expires_at, app_settings.max_share_expiry_days)
-    ensure_max_total_within_limit(max_total_bytes, app_settings)
+    ensure_max_total_is_positive(max_total_bytes)
     req = FileRequest(
         public_token=generate_public_token(),
         created_by=user.id,
@@ -550,7 +549,7 @@ async def update_file_request(
     now = _utcnow()
     if app_settings:
         ensure_expiry_within_limit(expires_at, app_settings.max_share_expiry_days)
-        ensure_max_total_within_limit(max_total_bytes, app_settings)
+    ensure_max_total_is_positive(max_total_bytes)
     if max_uploads != 0 and max_uploads < req.upload_count:
         raise HTTPException(
             status_code=400,

@@ -210,11 +210,9 @@ async def add_staged_file(
     storage = get_storage()
     size_bytes = await _save_upload(storage_path, upload, limits.max_file_size_bytes)
 
-    total_limit = max_total_bytes if max_total_bytes is not None else limits.max_file_size_bytes
-
     def updater(staged: list[StagedFile]) -> tuple[list[StagedFile], StagedFile]:
         total_size = sum(f.size_bytes for f in staged) + size_bytes
-        if total_size > total_limit:
+        if max_total_bytes is not None and total_size > max_total_bytes:
             raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum allowed size"))
 
         staged_file = StagedFile(

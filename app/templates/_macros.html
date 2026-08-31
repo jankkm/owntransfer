@@ -349,13 +349,14 @@
 <button type="button" data-show-confirm="{{ panel_id }}" class="{{ button_class }}">{{ label }}</button>
 {%- endmacro %}
 
-{% macro file_picker(upload_url, delete_url_template, require_files=true, required_files_message=none, upload_concurrency=5, file_type_blocklist=none, restore_staged=false, clear_all_url=none) -%}
+{% macro file_picker(upload_url, delete_url_template, require_files=true, required_files_message=none, upload_concurrency=5, file_type_blocklist=none, max_file_size_bytes=none, restore_staged=false, clear_all_url=none) -%}
 <div data-file-picker
      data-upload-url="{{ upload_url }}"
      data-delete-url-template="{{ delete_url_template }}"
      data-require-files="{{ 'true' if require_files else 'false' }}"
      data-upload-concurrency="{{ upload_concurrency }}"
      data-file-type-blocklist='{{ (file_type_blocklist or []) | tojson }}'
+     {% if max_file_size_bytes %}data-max-file-size-bytes="{{ max_file_size_bytes }}"{% endif %}
      data-restore-staged="{{ 'true' if restore_staged else 'false' }}"
      {% if clear_all_url %}data-clear-all-url="{{ clear_all_url }}"{% endif %}
      data-required-message="{{ required_files_message or _('Add at least one file') }}"
