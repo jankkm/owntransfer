@@ -6,13 +6,18 @@ Built with **FastAPI**, server-rendered HTML, and SQLite or PostgreSQL.
 
 ## Screenshots
 
-<!-- Add screenshots here before publishing, e.g.:
-![Dashboard](docs/screenshots/dashboard.png)
-![Public download page](docs/screenshots/public-download.png)
-![Admin panel](docs/screenshots/admin.png)
--->
-
-_Screenshots coming soon._
+<p>
+  <a href="docs/screenshots/login.png"><img src="docs/screenshots/login.png" width="400" alt="Login"></a>
+  <a href="docs/screenshots/dashboard.png"><img src="docs/screenshots/dashboard.png" width="400" alt="Dashboard"></a>
+  <a href="docs/screenshots/create-transfer.png"><img src="docs/screenshots/create-transfer.png" width="400" alt="Create transfer"></a>
+  <a href="docs/screenshots/transfers.png"><img src="docs/screenshots/transfers.png" width="400" alt="My transfers"></a>
+  <a href="docs/screenshots/create-file-request.png"><img src="docs/screenshots/create-file-request.png" width="400" alt="Create file request"></a>
+  <a href="docs/screenshots/file-requests.png"><img src="docs/screenshots/file-requests.png" width="400" alt="My file requests"></a>
+  <a href="docs/screenshots/public-upload.png"><img src="docs/screenshots/public-upload.png" width="400" alt="Public upload"></a>
+  <a href="docs/screenshots/admin-shares.png"><img src="docs/screenshots/admin-shares.png" width="400" alt="Admin shares"></a>
+  <a href="docs/screenshots/admin-users.png"><img src="docs/screenshots/admin-users.png" width="400" alt="Admin users"></a>
+  <a href="docs/screenshots/admin-email-templates.png"><img src="docs/screenshots/admin-email-templates.png" width="400" alt="Admin email templates"></a>
+</p>
 
 ## Features
 
