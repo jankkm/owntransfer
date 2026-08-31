@@ -5,6 +5,7 @@ import uuid
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from app.auth.download_grants import (
     grant_transfer_download,
@@ -21,6 +22,7 @@ from app.auth.unlock_cookies import (
 from app.database import async_session, get_db
 from app.i18n import _, ngettext
 from app.http.client_ip import get_client_ip
+from app.http.uploads import RAW_UPLOAD_FILENAME_HEADER, decode_raw_upload_filename
 from app.limiter import limiter
 from app.models import FileRequest, Transfer, User
 from app.services.file_request import (
@@ -44,6 +46,7 @@ from app.services.download_limits import try_reserve_download_slot
 from app.services.staging import (
     StagingLimits,
     add_staged_file,
+    add_staged_stream,
     discard_staged_paths,
     remove_staged_file,
     restore_staged_files,
@@ -515,7 +518,6 @@ async def upload_page(token: str, request: Request, db: AsyncSession = Depends(g
 async def stage_request_file(
     token: str,
     request: Request,
-    file: UploadFile = File(...),
 ):
     async with async_session() as db:
         app_settings = await get_app_settings(db)
@@ -534,12 +536,38 @@ async def stage_request_file(
         max_total_bytes = effective_request_max_total_bytes(file_request, app_settings)
         scope = _request_staging_scope(token)
     _require_request_unlock(request, token, password_required=bool(file_request.password_hash))
-    staged = await add_staged_file(
-        scope,
-        file,
-        limits,
-        max_total_bytes=max_total_bytes,
-    )
+    content_type = request.headers.get("content-type", "")
+    if content_type.startswith("multipart/form-data"):
+        form = await request.form()
+        file = form.get("file")
+        if not isinstance(file, StarletteUploadFile):
+            raise HTTPException(status_code=400, detail=_("Missing filename"))
+        staged = await add_staged_file(
+            scope,
+            file,
+            limits,
+            max_total_bytes=max_total_bytes,
+        )
+    else:
+        try:
+            filename = decode_raw_upload_filename(
+                request.headers.get(RAW_UPLOAD_FILENAME_HEADER)
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=_("Invalid filename")) from exc
+        try:
+            expected_size = int(request.headers["content-length"])
+        except (KeyError, ValueError):
+            expected_size = None
+        staged = await add_staged_stream(
+            scope,
+            request.stream(),
+            filename,
+            content_type or None,
+            limits,
+            expected_size=expected_size,
+            max_total_bytes=max_total_bytes,
+        )
     return JSONResponse(
         {
             "id": staged.id,

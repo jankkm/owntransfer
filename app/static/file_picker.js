@@ -309,8 +309,6 @@
       return new Promise((resolve) => {
         const file = entry.file;
         const xhr = new XMLHttpRequest();
-        const formData = new FormData();
-        formData.append("file", file, file.name);
         entry.xhr = xhr;
 
         xhr.upload.addEventListener("progress", (event) => {
@@ -361,7 +359,9 @@
         xhr.open("POST", uploadUrl);
         xhr.withCredentials = true;
         xhr.setRequestHeader("X-CSRF-Token", csrfToken());
-        xhr.send(formData);
+        xhr.setRequestHeader("X-Upload-Filename", encodeURIComponent(file.name));
+        xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+        xhr.send(file);
       });
     }
 

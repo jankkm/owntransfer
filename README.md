@@ -197,17 +197,15 @@ http:
           - url: "http://owntransfer-app-1:8080"
         responseForwarding:
           flushInterval: 100ms
-  middlewares:
-    owntransfer-timeouts:
-      buffering:
-        maxRequestBodyBytes: 0  # disable buffering for large uploads
   routers:
     owntransfer:
       rule: "Host(`your-domain`)"
       service: owntransfer
-      middlewares:
-        - owntransfer-timeouts
 ```
+
+Do not attach Traefik's `buffering` middleware to upload routes. OwnTransfer streams
+request bodies directly into staging storage; proxy buffering would reintroduce a
+full-body wait and temporary-disk requirement.
 
 For Traefik v2/v3, set transport timeouts on the serversTransport (or per-service in newer versions):
 

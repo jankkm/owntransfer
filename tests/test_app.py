@@ -217,6 +217,56 @@ async def test_staging_explicit_total_limit_is_still_enforced():
 
 
 @pytest.mark.asyncio
+async def test_streaming_staging_rejects_known_oversized_body_before_reading():
+    from app.services.staging import StagingLimits, add_staged_stream
+
+    stream_started = False
+
+    async def chunks():
+        nonlocal stream_started
+        stream_started = True
+        yield b"too large"
+
+    with pytest.raises(HTTPException, match="File exceeds maximum size"):
+        await add_staged_stream(
+            "known-oversized-stream",
+            chunks(),
+            "large.bin",
+            "application/octet-stream",
+            StagingLimits(max_file_size_bytes=5),
+            expected_size=9,
+        )
+
+    assert stream_started is False
+
+
+@pytest.mark.asyncio
+async def test_streaming_staging_enforces_actual_size_and_removes_partial_file():
+    from app.services.staging import StagingLimits, add_staged_stream, get_staged_files
+    from app.services.storage import get_storage
+
+    scope = "oversized-stream"
+
+    async def chunks():
+        yield b"aaa"
+        yield b"bbb"
+
+    with pytest.raises(HTTPException, match="File exceeds maximum size"):
+        await add_staged_stream(
+            scope,
+            chunks(),
+            "large.bin",
+            "application/octet-stream",
+            StagingLimits(max_file_size_bytes=5),
+            expected_size=4,
+        )
+
+    assert get_staged_files(scope) == []
+    scope_path = get_storage().absolute_path(f"staging/{scope}")
+    assert not list(scope_path.rglob("*.part"))
+
+
+@pytest.mark.asyncio
 async def test_invalid_login_security_log(client: AsyncClient, caplog: pytest.LogCaptureFixture):
     token = await _csrf_token(client)
     with caplog.at_level(logging.WARNING, logger=SECURITY_LOGGER_NAME):

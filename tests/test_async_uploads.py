@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
+from urllib.parse import quote
 
 import pytest
 from httpx import AsyncClient
@@ -11,6 +12,7 @@ from sqlalchemy.orm import selectinload
 from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from app.database import async_session
+from app.http.uploads import decode_raw_upload_filename
 from app.models import FileRequest, RequestUpload, Transfer, TransferFile, UploadFile, User
 from app.services.file_request import begin_request_upload, finalize_request_upload_files
 from app.services.settings import generate_public_token, get_app_settings
@@ -40,6 +42,17 @@ async def _stage_file(scope: str, name: str, content: bytes) -> None:
         app_settings = await get_app_settings(db)
     upload_file = StarletteUploadFile(filename=name, file=BytesIO(content))
     await add_staged_file(scope, upload_file, app_settings)
+
+
+def test_decode_raw_upload_filename_preserves_unicode():
+    filename = "résumé 日本語.pdf"
+    assert decode_raw_upload_filename(quote(filename, safe="~()*!.'-")) == filename
+
+
+@pytest.mark.parametrize("value", [None, "", "bad%name", "%FF", "a" * 256])
+def test_decode_raw_upload_filename_rejects_invalid_values(value: str | None):
+    with pytest.raises(ValueError, match="Invalid encoded filename"):
+        decode_raw_upload_filename(value)
 
 
 @pytest.mark.asyncio
@@ -252,7 +265,7 @@ async def test_finalize_request_upload_files_moves_staged_files():
 
 
 @pytest.mark.asyncio
-async def test_public_request_upload_page_has_staging_endpoint(client: AsyncClient):
+async def test_public_request_upload_page_and_raw_staging_endpoint(client: AsyncClient):
     async with async_session() as db:
         user = (await db.execute(select(User))).scalar_one()
         token = generate_public_token()
@@ -271,6 +284,21 @@ async def test_public_request_upload_page_has_staging_endpoint(client: AsyncClie
     page = await client.get(f"/r/{token}")
     assert re.search(rf'/r/{re.escape(token)}/staging', page.text)
     assert 'data-max-file-size-bytes="10485760"' in page.text
+
+    csrf = re.search(r'name="csrf-token" content="([^"]+)"', page.text).group(1)
+    response = await client.post(
+        f"/r/{token}/staging",
+        content=b"direct request upload",
+        headers={
+            "Content-Type": "text/plain",
+            "X-CSRF-Token": csrf,
+            "X-Upload-Filename": "direct.txt",
+        },
+    )
+    assert response.status_code == 200
+    staged = get_staged_files(f"request_{token}")
+    assert len(staged) == 1
+    assert staged[0].original_name == "direct.txt"
 
 
 @pytest.mark.asyncio

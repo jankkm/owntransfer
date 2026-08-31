@@ -8,8 +8,9 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, TypeVar
+from typing import AsyncIterator, Callable, TypeVar
 
+import aiofiles
 from fastapi import HTTPException, UploadFile
 
 from app.i18n import _
@@ -229,6 +230,93 @@ async def add_staged_file(
         return await _with_manifest_lock(scope, updater)
     except HTTPException:
         await storage.delete_file(storage_path)
+        raise
+
+
+async def add_staged_stream(
+    scope: str,
+    chunks: AsyncIterator[bytes],
+    filename: str,
+    content_type: str | None,
+    limits: StagingLimits | AppSettings,
+    *,
+    expected_size: int | None = None,
+    max_total_bytes: int | None = None,
+) -> StagedFile:
+    """Stream one raw request body directly into staging storage."""
+    if not isinstance(limits, StagingLimits):
+        limits = StagingLimits.from_settings(limits)
+
+    if not filename:
+        raise HTTPException(status_code=400, detail=_("Missing filename"))
+
+    blocklist = parse_blocklist(limits.file_type_blocklist)
+    if is_extension_blocked(filename, blocklist):
+        raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": filename})
+
+    if expected_size is not None:
+        if expected_size <= 0:
+            raise HTTPException(status_code=400, detail=_("Empty file"))
+        if expected_size > limits.max_file_size_bytes:
+            raise HTTPException(
+                status_code=400,
+                detail=_("File exceeds maximum size (%(max_mb)s MB)")
+                % {"max_mb": limits.max_file_size_bytes // (1024 * 1024)},
+            )
+        if max_total_bytes is not None:
+            staged_size = sum(file.size_bytes for file in get_staged_files(scope))
+            if staged_size + expected_size > max_total_bytes:
+                raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum allowed size"))
+
+    file_id = str(uuid.uuid4())
+    safe_name = _safe_filename(filename)
+    storage_path = f"staging/{scope}/{file_id}/{safe_name}"
+    storage = get_storage()
+    final_path = storage.absolute_path(storage_path)
+    partial_path = final_path.with_name(f"{final_path.name}.part")
+    final_path.parent.mkdir(parents=True, exist_ok=True)
+    size = 0
+
+    try:
+        async with aiofiles.open(partial_path, "wb") as out:
+            async for chunk in chunks:
+                if not chunk:
+                    continue
+                size += len(chunk)
+                if size > limits.max_file_size_bytes:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=_("File exceeds maximum size (%(max_mb)s MB)")
+                        % {"max_mb": limits.max_file_size_bytes // (1024 * 1024)},
+                    )
+                await out.write(chunk)
+
+        if size == 0:
+            raise HTTPException(status_code=400, detail=_("Empty file"))
+        await asyncio.to_thread(partial_path.replace, final_path)
+
+        staged_file = StagedFile(
+            id=file_id,
+            original_name=filename,
+            storage_path=storage_path,
+            size_bytes=size,
+            content_type=content_type,
+        )
+
+        def updater(staged: list[StagedFile]) -> tuple[list[StagedFile], StagedFile]:
+            if max_total_bytes is not None:
+                total_size = sum(file.size_bytes for file in staged) + size
+                if total_size > max_total_bytes:
+                    raise HTTPException(status_code=400, detail=_("Total upload exceeds maximum allowed size"))
+            staged.append(staged_file)
+            return staged, staged_file
+
+        return await _with_manifest_lock(scope, updater)
+    except BaseException:
+        if partial_path.exists():
+            partial_path.unlink()
+        if final_path.exists():
+            final_path.unlink()
         raise
 
 

@@ -81,6 +81,57 @@ async def test_clear_staged_transfer_files(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_raw_upload_streams_directly_to_transfer_staging(client: AsyncClient):
+    async with async_session() as db:
+        user = (await db.execute(select(User))).scalar_one()
+        scope = f"transfer_{user.id}"
+
+    await _login(client)
+    page = await client.get("/transfers/new")
+    csrf_token = re.search(r'name="csrf-token" content="([^"]+)"', page.text).group(1)
+    content = b"streamed directly"
+
+    response = await client.post(
+        "/transfers/staging",
+        content=content,
+        headers={
+            "Content-Type": "text/plain",
+            "X-CSRF-Token": csrf_token,
+            "X-Upload-Filename": "direct.txt",
+        },
+    )
+
+    assert response.status_code == 200
+    staged = get_staged_files(scope)
+    assert len(staged) == 1
+    assert staged[0].original_name == "direct.txt"
+    assert staged[0].content_type == "text/plain"
+    assert get_storage().absolute_path(staged[0].storage_path).read_bytes() == content
+
+    legacy_response = await client.post(
+        "/transfers/staging",
+        files={"file": ("legacy.txt", b"multipart compatibility", "text/plain")},
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    assert legacy_response.status_code == 200
+    assert {file.original_name for file in get_staged_files(scope)} == {
+        "direct.txt",
+        "legacy.txt",
+    }
+
+    missing_name_response = await client.post(
+        "/transfers/staging",
+        content=b"unnamed",
+        headers={
+            "Content-Type": "application/octet-stream",
+            "X-CSRF-Token": csrf_token,
+        },
+    )
+    assert missing_name_response.status_code == 400
+    assert missing_name_response.json()["detail"] == "Invalid filename"
+
+
+@pytest.mark.asyncio
 async def test_purge_stale_staging_removes_old_keeps_fresh():
     storage = get_storage()
     old_scope = "test_purge_old"
