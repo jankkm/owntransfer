@@ -1,8 +1,8 @@
 (function () {
   const CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*";
 
-  function t(key) {
-    return window.__(key);
+  function t(key, vars) {
+    return window.__(key, vars);
   }
 
   function generatePassword(length) {
@@ -31,6 +31,7 @@
     const visibilityBtn = root.querySelector("[data-password-visibility-btn]");
     const hasPassword = root.dataset.hasPassword === "true";
     const passwordLength = parseInt(root.dataset.passwordLength, 10) || 16;
+    const requiredLength = Math.max(8, passwordLength);
     const form = root.closest("form");
 
     function sync() {
@@ -69,15 +70,30 @@
       });
     }
 
+    if (passwordInput) {
+      passwordInput.addEventListener("input", () => {
+        passwordInput.setCustomValidity("");
+      });
+    }
+
     if (form && passwordInput) {
       form.addEventListener("submit", (event) => {
         if (!checkbox.checked) {
           passwordInput.setCustomValidity("");
           return;
         }
-        if (!hasPassword && !passwordInput.value.trim()) {
+        const value = passwordInput.value.trim();
+        if (!hasPassword && !value) {
           event.preventDefault();
           passwordInput.setCustomValidity(t("Enter a password to enable protection"));
+          passwordInput.reportValidity();
+          return;
+        }
+        if (value && value.length < requiredLength) {
+          event.preventDefault();
+          passwordInput.setCustomValidity(
+            t("Password must be at least %(n)s characters", { n: String(requiredLength) })
+          );
           passwordInput.reportValidity();
           return;
         }

@@ -24,6 +24,7 @@ JS_MESSAGE_KEYS = (
     "Yes, remove file",
     "Cancel",
     "Enter a password to enable protection",
+    "Password must be at least %(n)s characters",
     "Show password",
     "Hide password",
     "Drop files here or click to browse",
