@@ -2508,6 +2508,110 @@ msgstr ""
 #~ msgid "Downloads"
 #~ msgstr ""
 
+#: app/routers/admin.py app/services/oauth_linking.py
+msgid "This account is already linked to an identity provider"
+msgstr "This account is already linked to an identity provider"
+
+#: app/services/oauth_linking.py
+msgid "One or more providers are not configured"
+msgstr "One or more providers are not configured"
+
+#: app/services/oauth_linking.py
+msgid "This identity provider account is already linked to another user"
+msgstr "This identity provider account is already linked to another user"
+
+#: app/services/oauth_linking.py
+msgid "This account is not active"
+msgstr "This account is not active"
+
+#: app/routers/admin.py
+msgid "OAuth link permissions saved."
+msgstr "OAuth link permissions saved."
+
+#: app/routers/admin.py
+msgid "SSO unlinked."
+msgstr "SSO unlinked."
+
+#: app/templates/admin.html
+msgid "Allow SSO linking:"
+msgstr "Allow SSO linking:"
+
+#: app/templates/admin.html
+msgid "Save SSO permissions"
+msgstr "Save SSO permissions"
+
+#: app/templates/admin.html
+msgid "Linked to %(provider)s"
+msgstr "Linked to %(provider)s"
+
+#: app/templates/admin.html
+msgid "Unlink SSO"
+msgstr "Unlink SSO"
+
+#: app/templates/admin.html
+msgid "Unlink SSO?"
+msgstr "Unlink SSO?"
+
+#: app/templates/admin.html
+msgid "The user will no longer be able to sign in with this identity provider."
+msgstr "The user will no longer be able to sign in with this identity provider."
+
+#: app/templates/admin.html
+msgid "They can still sign in with their local password."
+msgstr "They can still sign in with their local password."
+
+#: app/templates/admin.html
+msgid "This account has no local password. The user will be unable to sign in until you set a password or allow SSO linking again."
+msgstr "This account has no local password. The user will be unable to sign in until you set a password or allow SSO linking again."
+
+#: app/templates/admin.html
+msgid "Yes, unlink SSO"
+msgstr "Yes, unlink SSO"
+
+#: app/templates/profile.html
+msgid "Connected to %(provider)s for sign-in."
+msgstr "Connected to %(provider)s for sign-in."
+
+#: app/routers/admin.py
+msgid "You cannot unlink your own SSO while local login is disabled."
+msgstr "You cannot unlink your own SSO while local login is disabled."
+
+#: app/templates/admin_users.html
+msgid "Active accounts"
+msgstr "Active accounts"
+
+#: app/templates/admin_users.html
+msgid "SSO providers"
+msgstr "SSO providers"
+
+#: app/templates/admin_users.html
+msgid "Grant SSO linking per user before their first sign-in."
+msgstr "Grant SSO linking per user before their first sign-in."
+
+#: app/templates/admin_users.html
+msgid "Create a local account. Optionally allow SSO linking so the user can sign in with your identity provider on first login."
+msgstr "Create a local account. Optionally allow SSO linking so the user can sign in with your identity provider on first login."
+
+#: app/templates/admin_users.html
+msgid "All users"
+msgstr "All users"
+
+#: app/templates/admin_users.html
+msgid "Sign-in"
+msgstr "Sign-in"
+
+#: app/templates/admin_users.html
+msgid "Local password"
+msgstr "Local password"
+
+#: app/templates/admin_users.html
+msgid "Allow SSO linking"
+msgstr "Allow SSO linking"
+
+#: app/templates/profile.html
+msgid "Password and two-factor settings are managed by your identity provider."
+msgstr "Password and two-factor settings are managed by your identity provider."
+
 #~ msgid "Cannot exceed the system limit of %(max)s MB."
 #~ msgstr ""
 

@@ -84,88 +84,54 @@
     </div>
     <button class="btn-primary text-white rounded px-4 py-2 text-sm">{{ _('Save legal pages') }}</button>
   </form>
-  <div class="bg-white border rounded-xl p-6 md:col-span-2">
-    <h2 class="font-semibold text-lg mb-4">{{ _('Users') }}</h2>
-    <form method="post" action="/admin/users" class="grid md:grid-cols-4 gap-3 items-end mb-6 pb-6 border-b border-slate-200">
-      {{ csrf_input() }}
-      {{ f.text_input("email", _("Email"), type="email", required=true) }}
-      {{ f.text_input("password", _("Password"), type="password", required=true) }}
-      <div class="flex items-end pb-1">
-        {{ f.checkbox_input("is_admin", _("Admin")) }}
-      </div>
-      <button type="submit" class="btn-primary text-white rounded px-4 py-2 text-sm h-[42px]">{{ _('Add user') }}</button>
-    </form>
-    <ul class="space-y-3 text-sm">
-      {% for u in users %}
-      {% set c = user_counts.get(u.id) %}
-      <li class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b border-slate-100 pb-3">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="font-medium">{{ u.email }}</span>
-            {% if u.is_admin %}<span class="text-xs text-primary font-medium">{{ _('admin') }}</span>{% endif %}
-          </div>
-          <p class="text-xs text-slate-500 mt-1">
-            <a href="/admin/shares?tab=transfers&user={{ u.id }}" class="hover:text-primary">{{ _('%(count)s transfers') % {'count': c.transfers if c else 0} }}</a>
-            ·
-            <a href="/admin/shares?tab=requests&user={{ u.id }}" class="hover:text-primary">{{ _('%(count)s requests') % {'count': c.requests if c else 0} }}</a>
-          </p>
-        </div>
-        <div class="flex items-center gap-3 shrink-0">
-          <form method="post" action="/admin/users/{{ u.id }}/password" class="text-right">
-            {{ csrf_input() }}
-            {{ f.confirm_trigger("password-user-" ~ loop.index, _("Set password"), "text-xs hover:underline") }}
-            <div id="password-user-{{ loop.index }}" class="hidden mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-left w-56">
-              <p class="text-xs font-medium text-slate-700 mb-2">{{ _('New password for %(email)s') % {'email': u.email} }}</p>
-              <input type="password" name="password" required autocomplete="new-password"
-                     class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm mb-2">
-              <div class="flex gap-2">
-                <button type="submit" class="rounded-lg px-3 py-1.5 text-white text-xs btn-primary">{{ _('Save') }}</button>
-                <button type="button" data-cancel-for="password-user-{{ loop.index }}"
-                        class="rounded-lg px-3 py-1.5 border border-slate-300 bg-white text-xs hover:bg-slate-50">{{ _('Cancel') }}</button>
-              </div>
-            </div>
-          </form>
-          {% if not u.is_admin %}
-          <form method="post" action="/admin/users/{{ u.id }}/promote">
-            {{ csrf_input() }}
-            <button type="submit" class="text-xs text-primary hover:underline">{{ _('Promote') }}</button>
-          </form>
-          {% elif u.id != user.id %}
-          <form method="post" action="/admin/users/{{ u.id }}/demote">
-            {{ csrf_input() }}
-            <button type="submit" class="text-xs text-slate-600 hover:underline">{{ _('Demote') }}</button>
-          </form>
-          {% endif %}
-          {% if u.id != user.id %}
-          <form method="post" action="/admin/users/{{ u.id }}/delete" class="text-right">
-            {{ csrf_input() }}
-            {{ f.confirm_trigger("delete-user-" ~ loop.index, _("Delete"), "text-xs text-red-600 hover:underline") }}
-            {{ f.confirm_panel(
-              "delete-user-" ~ loop.index,
-              _("Delete this user?"),
-              _("The account will be deactivated and can no longer sign in. Their transfers and file requests remain."),
-              _("Yes, delete user"),
-              variant="red"
-            ) }}
-          </form>
-          {% endif %}
-        </div>
-      </li>
-      {% else %}
-      <li class="text-slate-500">{{ _('No users yet.') }}</li>
-      {% endfor %}
-    </ul>
-  </div>
 </div>
 <div class="mt-6 bg-white border rounded-xl p-6">
   <h2 class="font-semibold text-lg mb-1">{{ _('System audit log') }}</h2>
   <p class="text-xs text-slate-500 mb-3">{{ _('Share activity is shown on each transfer or file request and in the archive.') }}</p>
   <div class="overflow-x-auto text-sm">
     <table class="w-full">
-      <thead><tr class="text-left border-b"><th class="py-2">{{ _('Time') }}</th><th>{{ _('Action') }}</th><th>{{ _('Resource') }}</th><th>{{ _('IP') }}</th></tr></thead>
+      <thead>
+        <tr class="text-left border-b text-slate-500">
+          <th class="py-2 w-8"></th>
+          <th class="py-2 pr-3">{{ _('Time') }}</th>
+          <th class="py-2 pr-3">{{ _('Action') }}</th>
+          <th class="py-2 pr-3">{{ _('Resource') }}</th>
+          <th class="py-2">{{ _('IP') }}</th>
+        </tr>
+      </thead>
       <tbody>
-        {% for log in audit_logs %}
-        <tr class="border-b"><td class="py-2">{{ log.created_at|format_datetime }}</td><td>{{ log.action }}</td><td>{{ log.resource_type }}</td><td>{{ log.ip_address or '-' }}</td></tr>
+        {% for row in audit_log_rows %}
+        {% set log = row.log %}
+        <tr class="border-b border-slate-100{% if row.details %} hover:bg-slate-50/50{% endif %}">
+          <td class="py-2 align-top">
+            {% if row.details %}
+            <button type="button"
+                    class="audit-expand text-slate-400 hover:text-slate-600 w-6 h-6 inline-flex items-center justify-center transition-transform"
+                    aria-expanded="false"
+                    aria-controls="audit-detail-{{ loop.index }}"
+                    aria-label="{{ _('Show details') }}">
+              ▶
+            </button>
+            {% endif %}
+          </td>
+          <td class="py-2 pr-3 whitespace-nowrap text-slate-700">{{ log.created_at|format_datetime }}</td>
+          <td class="py-2 pr-3 font-mono text-xs text-slate-800">{{ log.action }}</td>
+          <td class="py-2 pr-3 text-slate-600">{{ log.resource_type }}</td>
+          <td class="py-2 font-mono text-xs text-slate-500">{{ log.ip_address or '—' }}</td>
+        </tr>
+        {% if row.details %}
+        <tr id="audit-detail-{{ loop.index }}" class="hidden border-b border-slate-100 bg-slate-50/70">
+          <td></td>
+          <td colspan="4" class="py-3 pr-4">
+            <dl class="grid sm:grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs max-w-3xl">
+              {% for label, value in row.details %}
+              <dt class="text-slate-500">{{ label }}</dt>
+              <dd class="text-slate-700 break-all">{{ value }}</dd>
+              {% endfor %}
+            </dl>
+          </td>
+        </tr>
+        {% endif %}
         {% endfor %}
       </tbody>
     </table>
@@ -174,6 +140,19 @@
 {% endblock %}
 {% block scripts %}
 <script>
+(() => {
+  document.querySelectorAll(".audit-expand").forEach((button) => {
+    const panel = document.getElementById(button.getAttribute("aria-controls") || "");
+    if (!panel) return;
+    button.addEventListener("click", () => {
+      const open = button.getAttribute("aria-expanded") === "true";
+      button.setAttribute("aria-expanded", open ? "false" : "true");
+      button.classList.toggle("rotate-90", !open);
+      panel.classList.toggle("hidden", open);
+    });
+  });
+})();
+
 (() => {
   const form = document.getElementById("branding-form");
   const status = document.getElementById("branding-form-status");

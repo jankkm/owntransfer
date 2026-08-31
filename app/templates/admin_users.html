@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% import "_macros.html" as f %}
+{% block title %}{{ _('Users') }} — {{ _('Admin') }} — {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">{{ _('Admin') }}</h1>
+{% set active = 'users' %}
+{% include "_admin_nav.html" %}
+
+<div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+  <div class="bg-white border rounded-xl p-4">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">{{ _('Users') }}</p>
+    <p class="text-2xl font-bold mt-1">{{ total_users }}</p>
+    <p class="text-xs text-slate-500 mt-1">{{ _('Active accounts') }}</p>
+  </div>
+  {% if oauth_providers %}
+  <div class="bg-white border rounded-xl p-4 md:col-span-2">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">{{ _('SSO providers') }}</p>
+    <p class="text-sm font-medium mt-2 text-slate-800">{{ oauth_providers|map(attribute='name')|join(', ') }}</p>
+    <p class="text-xs text-slate-500 mt-1">{{ _('Grant SSO linking per user before their first sign-in.') }}</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="bg-white border rounded-xl p-6 mb-6">
+  <h2 class="font-semibold text-lg mb-1">{{ _('Add user') }}</h2>
+  <p class="text-xs text-slate-500 mb-4">{{ _('Create a local account. Optionally allow SSO linking so the user can sign in with your identity provider on first login.') }}</p>
+  <form method="post" action="/admin/users" class="space-y-4">
+    {{ csrf_input() }}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+      {{ f.text_input("display_name", _("Name")) }}
+      {{ f.text_input("email", _("Email"), type="email", required=true) }}
+      {{ f.text_input("password", _("Password"), type="password", required=true) }}
+      <div>
+        <span class="block text-sm font-medium mb-1 invisible" aria-hidden="true">{{ _('Admin') }}</span>
+        <div class="flex items-center h-[42px]">
+          {{ f.checkbox_input("is_admin", _("Admin")) }}
+        </div>
+      </div>
+      <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm h-[42px] w-full sm:w-auto">{{ _('Add user') }}</button>
+    </div>
+    {% if oauth_providers %}
+    <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+      <p class="text-xs font-medium text-slate-700 mb-2">{{ _('Allow SSO linking') }}</p>
+      <div class="flex flex-wrap gap-4">
+        {% for provider in oauth_providers %}
+        <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" name="create_grant_{{ provider.key }}" value="1" class="rounded border-slate-300 text-primary focus:ring-[var(--primary)]">
+          <span>{{ provider.name }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </form>
+</div>
+
+<div class="bg-white border rounded-xl overflow-hidden">
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 px-4 py-3 border-b border-slate-200 bg-slate-50">
+    <div>
+      <h2 class="font-semibold text-sm text-slate-800">{{ _('All users') }}</h2>
+      {% if users_filter_active %}
+      <p class="text-xs text-slate-500 mt-0.5">{{ _('Showing %(count)s of %(total)s users') % {'count': users|length, 'total': total_users} }}</p>
+      {% endif %}
+    </div>
+    <form method="get" class="flex flex-wrap items-end gap-2 pb-0 w-full lg:w-auto">
+      <div class="flex-1 min-w-[10rem] lg:flex-initial lg:w-48">
+        <label for="user-search" class="block text-xs font-medium text-slate-600 mb-1">{{ _('Search') }}</label>
+        <input type="search" id="user-search" name="q" value="{{ search_q }}"
+               placeholder="{{ _('Name or email') }}"
+               autocomplete="off"
+               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+      </div>
+      <div class="flex-1 min-w-[10rem] lg:flex-initial lg:w-40">
+        <label for="sign-in-filter" class="block text-xs font-medium text-slate-600 mb-1">{{ _('Sign-in') }}</label>
+        <select id="sign-in-filter" name="sign_in" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option value="all" {% if sign_in_filter == 'all' %}selected{% endif %}>{{ _('All') }}</option>
+          <option value="admin" {% if sign_in_filter == 'admin' %}selected{% endif %}>{{ _('Admins') }}</option>
+          <option value="local" {% if sign_in_filter == 'local' %}selected{% endif %}>{{ _('Local password') }}</option>
+          <option value="sso" {% if sign_in_filter == 'sso' %}selected{% endif %}>{{ _('SSO linked') }}</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary text-white rounded-lg px-4 py-2 text-sm h-[38px]">{{ _('Apply') }}</button>
+      {% if users_filter_active %}
+      <a href="/admin/users" class="text-sm text-slate-500 hover:text-primary h-[38px] inline-flex items-center px-1">{{ _('Clear') }}</a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if users %}
+  <div class="hidden lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_8rem_9rem] gap-4 px-4 py-2 border-b border-slate-100 text-xs font-medium uppercase tracking-wide text-slate-500">
+    <span>{{ _('User') }}</span>
+    <span>{{ _('Sign-in') }}</span>
+    <span>{{ _('Activity') }}</span>
+    <span class="text-right">{{ _('Actions') }}</span>
+  </div>
+
+  {% for u in users %}
+  {% set c = user_counts.get(u.id) %}
+  {% set grants = user_oauth_grants[u.id] %}
+  <div class="border-b border-slate-100 last:border-0" data-user-row>
+    <div class="grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_8rem_9rem] gap-4 px-4 py-4 items-start">
+      <div class="min-w-0">
+        <p class="font-medium text-slate-900 truncate">{{ u.display_name or u.email.split('@')[0] }}</p>
+        <p class="text-xs text-slate-500 truncate mt-0.5">{{ u.email }}</p>
+        <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+          {% if u.is_admin %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ _('Admin') }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="min-w-0 space-y-2">
+        <p class="lg:hidden text-xs font-medium text-slate-500 uppercase tracking-wide">{{ _('Sign-in') }}</p>
+        <div class="flex flex-wrap gap-1.5">
+          {% if u.password_hash %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ _('Local password') }}</span>
+          {% endif %}
+          {% if u.totp_enabled %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-50 text-violet-800 border border-violet-100">{{ _('Two-factor') }}</span>
+          {% endif %}
+          {% if u.oauth_provider %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-100">
+            {{ _('Linked to %(provider)s') % {'provider': oauth_provider_label(u.oauth_provider)} }}
+          </span>
+          {% endif %}
+        </div>
+        {% if not u.oauth_provider and oauth_providers %}
+        <form method="post" action="/admin/users/{{ u.id }}/oauth-grants" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 space-y-2">
+          {{ csrf_input() }}
+          <p class="text-xs font-medium text-slate-600">{{ _('Allow SSO linking') }}</p>
+          <div class="flex flex-wrap gap-x-3 gap-y-1">
+            {% for provider in oauth_providers %}
+            <label class="inline-flex items-center gap-1.5 text-xs text-slate-700">
+              <input type="checkbox" name="grant_{{ provider.key }}" value="1" class="rounded border-slate-300"{% if provider.key in grants %} checked{% endif %}>
+              <span>{{ provider.name }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          <button type="submit" class="text-xs font-medium text-primary hover:underline">{{ _('Save') }}</button>
+        </form>
+        {% elif not u.password_hash and not u.totp_enabled and not u.oauth_provider %}
+        <span class="text-xs text-slate-400">—</span>
+        {% endif %}
+      </div>
+
+      <div class="text-xs text-slate-500 lg:text-sm space-y-0.5">
+        <p class="lg:hidden text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">{{ _('Activity') }}</p>
+        <a href="/admin/shares?tab=transfers&user={{ u.id }}" class="block hover:text-primary">{{ _('%(count)s transfers') % {'count': c.transfers if c else 0} }}</a>
+        <a href="/admin/shares?tab=requests&user={{ u.id }}" class="block hover:text-primary">{{ _('%(count)s requests') % {'count': c.requests if c else 0} }}</a>
+      </div>
+
+      <div class="flex flex-wrap lg:flex-col lg:items-end gap-1.5">
+        <p class="w-full lg:hidden text-xs font-medium text-slate-500 uppercase tracking-wide mb-0.5">{{ _('Actions') }}</p>
+        {{ f.confirm_trigger("name-user-" ~ loop.index, _("Edit name"), "text-xs px-2.5 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700") }}
+        {{ f.confirm_trigger("password-user-" ~ loop.index, _("Set password"), "text-xs px-2.5 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700") }}
+        {% if u.totp_enabled %}
+        {{ f.confirm_trigger("remove-totp-" ~ loop.index, _("Remove 2FA"), "text-xs px-2.5 py-1 rounded-md border border-red-200 bg-white hover:bg-red-50 text-red-700") }}
+        {% endif %}
+        {% if u.oauth_provider and not (u.id == user.id and not app_settings.allow_local_login) %}
+        {{ f.confirm_trigger("unlink-oauth-" ~ loop.index, _("Unlink SSO"), "text-xs px-2.5 py-1 rounded-md border border-red-200 bg-white hover:bg-red-50 text-red-700") }}
+        {% endif %}
+        {% if not u.is_admin %}
+        <form method="post" action="/admin/users/{{ u.id }}/promote">
+          {{ csrf_input() }}
+          <button type="submit" class="text-xs px-2.5 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-primary">{{ _('Promote') }}</button>
+        </form>
+        {% elif u.id != user.id %}
+        <form method="post" action="/admin/users/{{ u.id }}/demote">
+          {{ csrf_input() }}
+          <button type="submit" class="text-xs px-2.5 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-600">{{ _('Demote') }}</button>
+        </form>
+        {% endif %}
+        {% if u.id != user.id %}
+        {{ f.confirm_trigger("delete-user-" ~ loop.index, _("Delete"), "text-xs px-2.5 py-1 rounded-md border border-red-200 bg-white hover:bg-red-50 text-red-700") }}
+        {% endif %}
+      </div>
+    </div>
+
+    {% if u.oauth_provider and not (u.id == user.id and not app_settings.allow_local_login) %}
+    <form method="post" action="/admin/users/{{ u.id }}/oauth/unlink" class="px-4 pb-4">
+      {{ csrf_input() }}
+      {{ f.confirm_panel(
+        "unlink-oauth-" ~ loop.index,
+        _("Unlink SSO?"),
+        _("The user will no longer be able to sign in with this identity provider.") ~ " "
+        ~ (_("They can still sign in with their local password.") if u.password_hash else _("This account has no local password. The user will be unable to sign in until you set a password or allow SSO linking again.")),
+        _("Yes, unlink SSO"),
+        variant="red"
+      ) }}
+    </form>
+    {% endif %}
+    <form method="post" action="/admin/users/{{ u.id }}/display-name" class="px-4 pb-4">
+      {{ csrf_input() }}
+      <div id="name-user-{{ loop.index }}" class="hidden w-full rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <p class="text-sm font-medium text-slate-800 mb-1">{{ _('Name for %(email)s') % {'email': u.email} }}</p>
+        {% if u.oauth_provider %}
+        <p class="text-xs text-slate-500 mb-3">{{ _('SSO provides the name on first sign-in. Admin edits are kept on later sign-ins.') }}</p>
+        {% endif %}
+        <div class="flex flex-col sm:flex-row sm:items-end gap-3 max-w-lg">
+          <input type="text" name="display_name" value="{{ u.display_name or '' }}"
+                 placeholder="{{ _('Name') }}"
+                 autocomplete="name"
+                 class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          <div class="flex gap-2 shrink-0">
+            <button type="submit" class="rounded-lg px-4 py-2 text-white text-sm btn-primary">{{ _('Save') }}</button>
+            <button type="button" data-cancel-for="name-user-{{ loop.index }}"
+                    class="rounded-lg px-4 py-2 border border-slate-300 bg-white text-sm hover:bg-slate-50">{{ _('Cancel') }}</button>
+          </div>
+        </div>
+      </div>
+    </form>
+    <form method="post" action="/admin/users/{{ u.id }}/password" class="px-4 pb-4">
+      {{ csrf_input() }}
+      <div id="password-user-{{ loop.index }}" class="hidden w-full rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <p class="text-sm font-medium text-slate-800 mb-3">{{ _('New password for %(email)s') % {'email': u.email} }}</p>
+        <div class="flex flex-col sm:flex-row sm:items-end gap-3 max-w-lg">
+          <input type="password" name="password" required autocomplete="new-password"
+                 class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          <div class="flex gap-2 shrink-0">
+            <button type="submit" class="rounded-lg px-4 py-2 text-white text-sm btn-primary">{{ _('Save') }}</button>
+            <button type="button" data-cancel-for="password-user-{{ loop.index }}"
+                    class="rounded-lg px-4 py-2 border border-slate-300 bg-white text-sm hover:bg-slate-50">{{ _('Cancel') }}</button>
+          </div>
+        </div>
+      </div>
+    </form>
+    {% if u.totp_enabled %}
+    <form method="post" action="/admin/users/{{ u.id }}/totp/remove" class="px-4 pb-4">
+      {{ csrf_input() }}
+      {{ f.confirm_panel(
+        "remove-totp-" ~ loop.index,
+        _("Remove two-factor authentication?"),
+        _("The user will be able to sign in with their password only. They can set up 2FA again from their profile."),
+        _("Yes, remove 2FA"),
+        variant="red"
+      ) }}
+    </form>
+    {% endif %}
+    {% if u.id != user.id %}
+    <form method="post" action="/admin/users/{{ u.id }}/delete" class="px-4 pb-4">
+      {{ csrf_input() }}
+      {{ f.confirm_panel(
+        "delete-user-" ~ loop.index,
+        _("Delete this user?"),
+        _("The account will be deactivated and can no longer sign in. Their transfers and file requests remain."),
+        _("Yes, delete user"),
+        variant="red"
+      ) }}
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  {% elif total_users %}
+  <div class="px-4 py-12 text-center text-sm text-slate-500">{{ _('No users match your search.') }}</div>
+  {% else %}
+  <div class="px-4 py-12 text-center text-sm text-slate-500">{{ _('No users yet.') }}</div>
+  {% endif %}
+</div>
+{% endblock %}

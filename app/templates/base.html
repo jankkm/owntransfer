@@ -218,7 +218,15 @@
     document.querySelectorAll('[data-show-confirm]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const panel = document.getElementById(btn.dataset.showConfirm);
-        if (panel) panel.classList.remove('hidden');
+        if (!panel) return;
+        const row = btn.closest('[data-user-row]') || btn.closest('li') || btn.closest('form');
+        if (row) {
+          row.querySelectorAll('[data-show-confirm]').forEach((trigger) => {
+            const other = document.getElementById(trigger.dataset.showConfirm);
+            if (other) other.classList.add('hidden');
+          });
+        }
+        panel.classList.remove('hidden');
       });
     });
     document.querySelectorAll('[data-cancel-for]').forEach((btn) => {

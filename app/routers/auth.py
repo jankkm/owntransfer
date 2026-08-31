@@ -30,6 +30,7 @@ from app.http.external_url import external_url
 from app.limiter import limiter
 from app.services.audit import log_audit
 from app.services.security_log import log_invalid_login, log_invalid_totp
+from app.services.oauth_linking import OAuthLinkError, resolve_oauth_user
 from app.services.settings import get_app_settings
 from app.templating import branding_context, templates
 
@@ -219,48 +220,30 @@ async def oauth_callback(provider: str, request: Request, db: AsyncSession = Dep
     if email_verified is False or str(email_verified).strip().lower() == "false":
         raise HTTPException(status_code=403, detail=_("Your email address is not verified with the identity provider"))
 
-    # Match on the stable provider + subject identifier first.
-    result = await db.execute(
-        select(User).where(User.oauth_provider == provider, User.oauth_sub == sub)
-    )
-    user = result.scalar_one_or_none()
-    if user:
-        if display_name:
-            user.display_name = display_name
-        if user.email != email:
-            user.email = email
-    else:
-        result = await db.execute(select(User).where(User.email == email))
-        existing = result.scalar_one_or_none()
-        if existing:
-            # Never silently link an OAuth identity to a pre-existing local
-            # (password) account or an account owned via a different provider —
-            # that would allow account takeover by anyone who can assert the email.
-            if existing.oauth_provider != provider:
-                raise HTTPException(
-                    status_code=403,
-                    detail=_(
-                        "An account with this email already exists. Sign in with your "
-                        "existing method, or ask an administrator to link your account."
-                    ),
-                )
-            user = existing
-            user.oauth_sub = sub
-            if display_name:
-                user.display_name = display_name
-        else:
-            user = User(
-                email=email,
-                oauth_provider=provider,
-                oauth_sub=sub,
-                display_name=display_name,
-                is_admin=False,
-                is_active=True,
-            )
-            db.add(user)
+    try:
+        user, linked_now = await resolve_oauth_user(
+            db,
+            provider=provider,
+            sub=sub,
+            email=email,
+            display_name=display_name,
+        )
+    except OAuthLinkError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+
     await db.commit()
     await db.refresh(user)
 
+    if linked_now:
+        await log_audit(
+            db,
+            action="user.oauth_linked",
+            resource_type="user",
+            resource_id=str(user.id),
+            actor_id=user.id,
+            ip_address=get_client_ip(request),
+            metadata={"provider": provider},
+        )
     await log_audit(db, action="user.oauth_login", resource_type="user", actor_id=user.id, ip_address=get_client_ip(request), metadata={"provider": provider})
     return _login_response(request, user)
 

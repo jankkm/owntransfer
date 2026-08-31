@@ -14,8 +14,11 @@
       <h2 class="text-lg font-semibold text-slate-900 truncate">{{ user.display_name }}</h2>
       {% endif %}
       <p class="text-sm text-slate-600 truncate">{{ user.email }}</p>
-      {% if not uses_local_auth %}
-      <p class="text-xs text-slate-500 pt-1">{{ _('Signed in with %(provider)s. Password and two-factor settings are managed by your identity provider.') % {'provider': user.oauth_provider} }}</p>
+      {% if user.oauth_provider %}
+      <p class="text-xs text-slate-500 pt-1">{{ _('Connected to %(provider)s for sign-in.') % {'provider': oauth_provider_label(user.oauth_provider)} }}</p>
+      {% endif %}
+      {% if not uses_local_auth and user.oauth_provider %}
+      <p class="text-xs text-slate-500 pt-1">{{ _('Password and two-factor settings are managed by your identity provider.') }}</p>
       {% endif %}
     </div>
   </div>

@@ -46,9 +46,10 @@ _Screenshots coming soon._
 ### Authentication
 
 - **OAuth2** — Microsoft Entra ID out of the box (extensible to more providers)
-- **Local login** — email/password backup on the login screen (can be disabled)
+- **Local login** — email/password backup on the login screen (can be disabled); password and TOTP profile settings remain available for hybrid accounts even when local login is disabled globally
 - First-boot setup wizard creates the initial admin account
-- OAuth users are auto-provisioned on first login (matched by email)
+- OAuth users are auto-provisioned on first login when no local account exists for that email
+- **OAuth link grants** — admins can allow SSO linking per user and per configured provider; pre-created local users link on first OAuth sign-in when granted; linked accounts keep their local password/TOTP as break-glass; admins can unlink SSO with confirmation
 
 ### Admin panel
 
@@ -59,7 +60,7 @@ _Screenshots coming soon._
 | **SMTP** | Outbound mail for share links and notifications |
 | **Email templates** | Editable Jinja2 subjects and HTML bodies for all notification types |
 | **Shares** | Overview of transfers, file requests, and **archive** across users; edit or delete any share; reassign ownership; per-tab counts and user filter |
-| **Users** | Create users, promote/demote admins, reset passwords, delete accounts |
+| **Users** | Create users, promote/demote admins, reset passwords, allow SSO linking per provider, unlink SSO, delete accounts (Admin → Users tab) |
 | **Impressum** | Optional legal notice page (Markdown) |
 | **System audit log** | Recent admin and app-level actions (user management, settings changes). Per-share activity lives on each share’s edit page and in the archive |
 

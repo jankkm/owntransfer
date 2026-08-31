@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-31 12:57+0200\n"
+"POT-Creation-Date: 2026-08-31 15:57+0200\n"
 "PO-Revision-Date: 2026-06-24 16:10+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -31,77 +31,93 @@ msgstr "No autenticado"
 msgid "Password must be at least %(n)s characters"
 msgstr "La contraseña debe tener al menos %(n)s caracteres"
 
-#: app/routers/admin.py:99 app/services/file_request.py:597
+#: app/routers/admin.py:108 app/services/file_request.py:581
 #: app/services/transfer.py:687
 msgid "Invalid owner"
 msgstr "Propietario no válido"
 
-#: app/routers/admin.py:124
+#: app/routers/admin.py:189
 msgid "Branding saved."
 msgstr "Marca guardada."
 
-#: app/routers/admin.py:126
+#: app/routers/admin.py:191
 msgid "File upload settings saved."
 msgstr "Configuración de subida de archivos guardada."
 
-#: app/routers/admin.py:128
+#: app/routers/admin.py:193
 msgid "Share settings saved."
 msgstr "Configuración de uso compartido guardada."
 
-#: app/routers/admin.py:130
+#: app/routers/admin.py:195
 msgid "Access settings saved."
 msgstr "Configuración de acceso guardada."
 
-#: app/routers/admin.py:132
+#: app/routers/admin.py:197
 msgid "Legal pages saved."
 msgstr "Páginas legales guardadas."
 
-#: app/routers/admin.py:134
+#: app/routers/admin.py:236
 msgid "User added."
 msgstr "Usuario añadido."
 
-#: app/routers/admin.py:136
+#: app/routers/admin.py:238
 msgid "User deleted."
 msgstr "Usuario eliminado."
 
-#: app/routers/admin.py:138
+#: app/routers/admin.py:240
 msgid "User promoted to admin."
 msgstr "Usuario promovido a administrador."
 
-#: app/routers/admin.py:140
+#: app/routers/admin.py:242
 msgid "User demoted from admin."
 msgstr "Privilegios de administrador retirados."
 
-#: app/routers/admin.py:142 app/routers/profile.py:28
+#: app/routers/admin.py:244 app/routers/profile.py:28
 msgid "Password updated."
 msgstr "Contraseña actualizada."
 
-#: app/routers/admin.py:193
+#: app/routers/admin.py:246
+msgid "Name updated."
+msgstr "Nombre actualizado."
+
+#: app/routers/admin.py:248
+msgid "Two-factor authentication removed."
+msgstr "Autenticación de dos factores eliminada."
+
+#: app/routers/admin.py:250
+msgid "OAuth link permissions saved."
+msgstr "Permisos de vinculación SSO guardados."
+
+#: app/routers/admin.py:252
+msgid "SSO unlinked."
+msgstr "SSO desvinculado."
+
+#: app/routers/admin.py:303
 msgid "Transfer updated."
 msgstr "Transferencia actualizada."
 
-#: app/routers/admin.py:195
+#: app/routers/admin.py:305
 msgid "File request updated."
 msgstr "Solicitud de archivos actualizada."
 
-#: app/routers/admin.py:197 app/routers/transfers.py:193
+#: app/routers/admin.py:307 app/routers/transfers.py:193
 msgid "Transfer deleted."
 msgstr "Transferencia eliminada."
 
-#: app/routers/admin.py:199 app/routers/requests.py:73
+#: app/routers/admin.py:309 app/routers/requests.py:73
 msgid "File request deleted."
 msgstr "Solicitud de archivos eliminada."
 
-#: app/routers/admin.py:201
+#: app/routers/admin.py:311
 msgid "Archive record deleted."
 msgstr "Registro de archivo eliminado."
 
-#: app/routers/admin.py:238 app/routers/admin.py:506
+#: app/routers/admin.py:348 app/routers/admin.py:616
 #: app/routers/requests.py:166 app/routers/transfers.py:337
 msgid "Share link regenerated. The old link no longer works."
 msgstr "Enlace de uso compartido regenerado. El enlace anterior ya no funciona."
 
-#: app/routers/admin.py:327 app/routers/public.py:600
+#: app/routers/admin.py:437 app/routers/public.py:600
 #: app/routers/transfers.py:120 app/routers/transfers.py:362
 #: app/services/staging.py:151 app/services/staging.py:202
 #: app/services/staging.py:251 app/services/transfer.py:407
@@ -109,122 +125,129 @@ msgstr "Enlace de uso compartido regenerado. El enlace anterior ya no funciona."
 msgid "Missing filename"
 msgstr "Falta el nombre del archivo"
 
-#: app/routers/admin.py:342 app/routers/public.py:613
+#: app/routers/admin.py:452 app/routers/public.py:613
 #: app/routers/transfers.py:128 app/routers/transfers.py:377
 #, fuzzy
 msgid "Invalid filename"
 msgstr "Propietario no válido"
 
-#: app/routers/admin.py:439 app/routers/admin.py:471
+#: app/routers/admin.py:549 app/routers/admin.py:581
 msgid "Archive record not found"
 msgstr "Registro de archivo no encontrado"
 
-#: app/routers/admin.py:599 app/routers/requests.py:255
+#: app/routers/admin.py:709 app/routers/requests.py:255
 msgid "Could not update file request"
 msgstr "No se pudo actualizar la solicitud de archivos"
 
-#: app/routers/admin.py:679
+#: app/routers/admin.py:789
 msgid "Color scheme must be a hex color like #2563eb"
 msgstr "El esquema de color debe ser un color hexadecimal como #2563eb"
 
-#: app/routers/admin.py:759
+#: app/routers/admin.py:869
 msgid "Share link (outbound transfer)"
 msgstr "Enlace de uso compartido (transferencia saliente)"
 
-#: app/routers/admin.py:760
+#: app/routers/admin.py:870
 msgid "File request link"
 msgstr "Enlace de solicitud de archivos"
 
-#: app/routers/admin.py:761
+#: app/routers/admin.py:871
 msgid "Upload received notification"
 msgstr "Notificación de subida recibida"
 
-#: app/routers/admin.py:762
+#: app/routers/admin.py:872
 msgid "Download notification"
 msgstr "Notificación de descarga"
 
-#: app/routers/admin.py:763
+#: app/routers/admin.py:873
 msgid "Expired without activity"
 msgstr "Caducado sin actividad"
 
-#: app/routers/admin.py:764
+#: app/routers/admin.py:874
 msgid "Deletion reminder before purge"
 msgstr "Recordatorio de eliminación antes del borrado"
 
-#: app/routers/admin.py:777
+#: app/routers/admin.py:887
 msgid "Email templates saved."
 msgstr "Plantillas de correo guardadas."
 
-#: app/routers/admin.py:865
+#: app/routers/admin.py:975
 #, python-format
 msgid "Test email sent to %(email)s."
 msgstr "Correo de prueba enviado a %(email)s."
 
-#: app/routers/admin.py:899
+#: app/routers/admin.py:1010
 msgid "Email and password are required"
 msgstr "Se requieren correo y contraseña"
 
-#: app/routers/admin.py:902 app/routers/admin.py:1000 app/routers/profile.py:76
-#: app/routers/setup.py:63
+#: app/routers/admin.py:1012 app/routers/admin.py:1140
+#: app/routers/profile.py:76 app/routers/setup.py:63
 msgid "Password must be at least 8 characters"
 msgstr "La contraseña debe tener al menos 8 caracteres"
 
-#: app/routers/admin.py:908 app/routers/setup.py:72
+#: app/routers/admin.py:1016 app/routers/setup.py:72
 msgid "User already exists"
 msgstr "El usuario ya existe"
 
-#: app/routers/admin.py:962
+#: app/routers/admin.py:1103
 msgid "You cannot demote your own account"
 msgstr "No puede degradar su propia cuenta"
 
-#: app/routers/admin.py:972
+#: app/routers/admin.py:1113
 msgid "Cannot demote the last admin"
 msgstr "No se puede degradar al último administrador"
 
-#: app/routers/admin.py:997
+#: app/routers/admin.py:1138
 msgid "Password is required"
 msgstr "Se requiere contraseña"
 
-#: app/routers/admin.py:1031
+#: app/routers/admin.py:1172
+msgid "Two-factor authentication is not enabled for this user"
+msgstr "La autenticación de dos factores no está activada para este usuario."
+
+#: app/routers/admin.py:1232
+#, fuzzy
+msgid "This account is not linked to an identity provider"
+msgstr "Esta cuenta ya está vinculada a un proveedor de identidad"
+
+#: app/routers/admin.py:1238
+msgid "You cannot unlink your own SSO while local login is disabled."
+msgstr ""
+"No puede desvincular su propio SSO mientras el inicio de sesión local "
+"esté desactivado."
+
+#: app/routers/admin.py:1263
 msgid "You cannot delete your own account"
 msgstr "No puede eliminar su propia cuenta"
 
-#: app/routers/admin.py:1042
+#: app/routers/admin.py:1274
 msgid "Cannot delete the last admin"
 msgstr "No se puede eliminar el último administrador"
 
-#: app/routers/auth.py:115
+#: app/routers/auth.py:116
 msgid "Local login disabled"
 msgstr "Inicio de sesión local desactivado"
 
-#: app/routers/auth.py:122
+#: app/routers/auth.py:123
 msgid "Invalid credentials"
 msgstr "Credenciales no válidas"
 
-#: app/routers/auth.py:173 app/routers/profile.py:123
+#: app/routers/auth.py:174 app/routers/profile.py:123
 #: app/routers/profile.py:152
 msgid "Invalid authentication code"
 msgstr "Código de autenticación no válido"
 
-#: app/routers/auth.py:184 app/routers/auth.py:193
+#: app/routers/auth.py:185 app/routers/auth.py:194
 msgid "Provider not configured"
 msgstr "Proveedor no configurado"
 
-#: app/routers/auth.py:214
+#: app/routers/auth.py:215
 msgid "OAuth provider did not return an email address"
 msgstr "El proveedor OAuth no devolvió una dirección de correo"
 
-#: app/routers/auth.py:220
+#: app/routers/auth.py:221
 msgid "Your email address is not verified with the identity provider"
 msgstr "Su dirección de correo no está verificada con el proveedor de identidad"
-
-#: app/routers/auth.py:243
-msgid ""
-"An account with this email already exists. Sign in with your existing "
-"method, or ask an administrator to link your account."
-msgstr ""
-"Ya existe una cuenta con este correo. Inicie sesión con su método "
-"existente o pida a un administrador que vincule su cuenta."
 
 #: app/routers/branding.py:46 app/templates/admin.html:76
 #: app/templates/base.html:201
@@ -393,7 +416,7 @@ msgid "File request created successfully."
 msgstr "Solicitud de archivos creada correctamente."
 
 #: app/routers/requests.py:111 app/routers/transfers.py:251
-#: app/services/file_request.py:578 app/services/transfer.py:668
+#: app/services/file_request.py:562 app/services/transfer.py:668
 #: app/static/password_toggle.js:80
 msgid "Enter a password to enable protection"
 msgstr "Introduzca una contraseña para activar la protección"
@@ -417,6 +440,60 @@ msgstr "Transferencia creada correctamente."
 #: app/routers/transfers.py:297
 msgid "Could not create transfer"
 msgstr "No se pudo crear la transferencia"
+
+#: app/services/audit.py:160 app/services/share_audit_metadata.py:32
+msgid "Yes"
+msgstr "Sí"
+
+#: app/services/audit.py:160 app/services/share_audit_metadata.py:32
+msgid "No"
+msgstr "No"
+
+#: app/services/audit.py:163
+#, fuzzy
+msgid "None"
+msgstr "Hecho"
+
+#: app/services/audit.py:181
+msgid "Actor"
+msgstr "Actor"
+
+#: app/services/audit.py:183 app/templates/admin_users.html:91
+msgid "User"
+msgstr "Usuario"
+
+#: app/services/audit.py:185
+msgid "Resource ID"
+msgstr "ID del recurso"
+
+#: app/services/audit.py:188 app/templates/admin_users.html:31
+#: app/templates/login.html:10 app/templates/login.html:33
+msgid "Email"
+msgstr "Correo"
+
+#: app/services/audit.py:189 app/templates/admin_users.html:30
+#: app/templates/admin_users.html:201
+msgid "Name"
+msgstr "Nombre"
+
+#: app/services/audit.py:190 app/templates/admin.html:3
+#: app/templates/admin.html:5 app/templates/admin_archive_detail.html:3
+#: app/templates/admin_email.html:3 app/templates/admin_email.html:5
+#: app/templates/admin_shares.html:3 app/templates/admin_shares.html:5
+#: app/templates/admin_users.html:3 app/templates/admin_users.html:5
+#: app/templates/admin_users.html:34 app/templates/admin_users.html:36
+#: app/templates/admin_users.html:107 app/templates/base.html:149
+#: app/templates/base.html:177
+msgid "Admin"
+msgstr "Administración"
+
+#: app/services/audit.py:191 app/services/audit.py:192
+msgid "SSO grants"
+msgstr "Permisos SSO"
+
+#: app/services/audit.py:193
+msgid "Provider"
+msgstr "Proveedor"
 
 #: app/services/branding.py:61
 msgid "No file selected"
@@ -453,14 +530,14 @@ msgstr "%(when)s %(tz)s"
 msgid "Expiry cannot be more than %(max_days)s days in the future"
 msgstr "La fecha de caducidad no puede ser más de %(max_days)s días en el futuro"
 
-#: app/services/download_limits.py:55
+#: app/services/download_limits.py:22
 #, python-format
 msgid "%(count)s / ∞"
 msgstr "%(count)s / ∞"
 
-#: app/services/download_limits.py:56
-#, python-format
-msgid "%(count)s/%(max)s"
+#: app/services/download_limits.py:23
+#, fuzzy, python-format
+msgid "%(count)s / %(max)s"
 msgstr "%(count)s/%(max)s"
 
 #: app/services/email.py:175
@@ -621,41 +698,58 @@ msgstr "Seleccione al menos un archivo para subir"
 msgid "File exceeds maximum size (%(max_mb)s MB): %(filename)s"
 msgstr "El archivo supera el tamaño máximo (%(max_mb)s MB): %(filename)s"
 
-#: app/services/file_request.py:410 app/services/file_request.py:432
+#: app/services/file_request.py:410 app/services/file_request.py:449
 #: app/services/transfer.py:381
 msgid "File not found"
 msgstr "Archivo no encontrado"
 
-#: app/services/file_request.py:496 app/services/file_request.py:518
+#: app/services/file_request.py:480 app/services/file_request.py:502
 msgid "No files to download"
 msgstr "No hay archivos para descargar"
 
-#: app/services/file_request.py:504
+#: app/services/file_request.py:488
 msgid "Upload not found"
 msgstr "Subida no encontrada"
 
-#: app/services/file_request.py:509
+#: app/services/file_request.py:493
 msgid "Upload is still being prepared"
 msgstr "La subida aún se está preparando"
 
-#: app/services/file_request.py:556
+#: app/services/file_request.py:540
 #, python-format
 msgid "Max uploads cannot be less than current count (%(count)s)"
 msgstr ""
 "Las subidas máximas no pueden ser menores que el recuento actual "
 "(%(count)s)"
 
+#: app/services/oauth_linking.py:62
+msgid "This account is already linked to an identity provider"
+msgstr "Esta cuenta ya está vinculada a un proveedor de identidad"
+
+#: app/services/oauth_linking.py:68
+msgid "One or more providers are not configured"
+msgstr "Uno o más proveedores no están configurados"
+
+#: app/services/oauth_linking.py:150 app/services/oauth_linking.py:163
+msgid "This account is not active"
+msgstr "Esta cuenta no está activa"
+
+#: app/services/oauth_linking.py:154 app/services/oauth_linking.py:178
+#: app/services/oauth_linking.py:197 app/services/oauth_linking.py:207
+msgid "This identity provider account is already linked to another user"
+msgstr "Esta cuenta del proveedor de identidad ya está vinculada a otro usuario"
+
+#: app/services/oauth_linking.py:169 app/services/oauth_linking.py:189
+msgid ""
+"An account with this email already exists. Sign in with your existing "
+"method, or ask an administrator to link your account."
+msgstr ""
+"Ya existe una cuenta con este correo. Inicie sesión con su método "
+"existente o pida a un administrador que vincule su cuenta."
+
 #: app/services/share_audit_metadata.py:27
 msgid "(empty)"
 msgstr "(vacío)"
-
-#: app/services/share_audit_metadata.py:32
-msgid "Yes"
-msgstr "Sí"
-
-#: app/services/share_audit_metadata.py:32
-msgid "No"
-msgstr "No"
 
 #: app/services/share_audit_metadata.py:36
 msgid "Protected"
@@ -850,20 +944,20 @@ msgstr "Descarga de archivo"
 msgid "(unknown)"
 msgstr ""
 
-#: app/services/share_timeline.py:106 app/services/share_timeline.py:153
+#: app/services/share_timeline.py:106 app/services/share_timeline.py:157
 msgid "Link unlocked"
 msgstr "Enlace desbloqueado"
 
-#: app/services/share_timeline.py:110 app/services/share_timeline.py:158
+#: app/services/share_timeline.py:110 app/services/share_timeline.py:162
 msgid "All files (ZIP)"
 msgstr "Todos los archivos (ZIP)"
 
-#: app/services/share_timeline.py:115 app/services/share_timeline.py:163
+#: app/services/share_timeline.py:115 app/services/share_timeline.py:167
 #, python-format
 msgid "%(type)s: %(file)s"
 msgstr "%(type)s: %(file)s"
 
-#: app/services/share_timeline.py:136 app/services/share_timeline.py:193
+#: app/services/share_timeline.py:140 app/services/share_timeline.py:197
 #, python-format
 msgid "Files uploaded (%(count)s)"
 msgstr "Archivos subidos (%(count)s)"
@@ -952,13 +1046,13 @@ msgstr "Listo"
 
 #: app/static/file_picker.js:255 app/static/transfer_files.js:240
 #: app/static/transfer_files.js:247 app/templates/_macros.html:328
-#: app/templates/admin.html:124
+#: app/templates/admin_users.html:207 app/templates/admin_users.html:222
 msgid "Cancel"
 msgstr "Cancelar"
 
 #: app/static/file_picker.js:255 app/static/transfer_files.js:215
 #: app/static/transfer_files.js:255 app/static/transfer_files.js:262
-#: app/templates/requests_edit.html:129 app/templates/transfers_edit.html:111
+#: app/templates/requests_edit.html:136 app/templates/transfers_edit.html:111
 msgid "Remove"
 msgstr "Eliminar"
 
@@ -1045,7 +1139,12 @@ msgstr "Configuración"
 msgid "Shares & requests"
 msgstr "Usos compartidos y solicitudes"
 
-#: app/templates/_admin_nav.html:12 app/templates/admin_email.html:3
+#: app/templates/_admin_nav.html:12 app/templates/admin_users.html:3
+#: app/templates/admin_users.html:11
+msgid "Users"
+msgstr "Usuarios"
+
+#: app/templates/_admin_nav.html:16 app/templates/admin_email.html:3
 msgid "Email templates"
 msgstr "Plantillas de correo"
 
@@ -1054,7 +1153,7 @@ msgstr "Plantillas de correo"
 msgid "Disabled"
 msgstr "Desactivado"
 
-#: app/templates/_macros.html:77 app/templates/requests_edit.html:107
+#: app/templates/_macros.html:77 app/templates/requests_edit.html:114
 #: app/templates/transfers_edit.html:17
 msgid "Preparing"
 msgstr "Preparando"
@@ -1065,7 +1164,7 @@ msgid "Limit reached"
 msgstr "Límite alcanzado"
 
 #: app/templates/_macros.html:98 app/templates/_macros.html:137
-#: app/templates/admin.html:92 app/templates/login.html:34
+#: app/templates/admin_users.html:32 app/templates/login.html:34
 #: app/templates/public_download.html:20 app/templates/public_upload.html:23
 msgid "Password"
 msgstr "Contraseña"
@@ -1092,7 +1191,7 @@ msgstr ""
 "Amplíe la fecha de caducidad a continuación para conservar este uso "
 "compartido."
 
-#: app/templates/_macros.html:135 app/templates/profile.html:30
+#: app/templates/_macros.html:135 app/templates/profile.html:33
 msgid "New password"
 msgstr "Nueva contraseña"
 
@@ -1132,9 +1231,9 @@ msgstr "Los archivos se están preparando…"
 msgid "Edit"
 msgstr "Editar"
 
-#: app/templates/_macros.html:271 app/templates/admin.html:142
-#: app/templates/admin_shares.html:129 app/templates/admin_shares.html:218
-#: app/templates/admin_shares.html:292
+#: app/templates/_macros.html:271 app/templates/admin_shares.html:129
+#: app/templates/admin_shares.html:218 app/templates/admin_shares.html:292
+#: app/templates/admin_users.html:174
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1154,7 +1253,7 @@ msgstr ""
 msgid "Yes, delete"
 msgstr "Sí, eliminar"
 
-#: app/templates/_macros.html:288
+#: app/templates/_macros.html:288 app/templates/admin_users.html:67
 msgid "Search"
 msgstr "Buscar"
 
@@ -1202,11 +1301,13 @@ msgstr "Título A–Z"
 msgid "Title Z–A"
 msgstr "Título Z–A"
 
-#: app/templates/_macros.html:317 app/templates/admin_shares.html:37
+#: app/templates/_macros.html:317 app/templates/admin_shares.html:54
+#: app/templates/admin_users.html:82
 msgid "Apply"
 msgstr "Aplicar"
 
-#: app/templates/_macros.html:319 app/templates/admin_shares.html:39
+#: app/templates/_macros.html:319 app/templates/admin_shares.html:56
+#: app/templates/admin_users.html:84
 msgid "Clear"
 msgstr "Limpiar"
 
@@ -1292,7 +1393,7 @@ msgid "Type"
 msgstr "Tipo"
 
 #: app/templates/_share_activity_summary.html:13
-#: app/templates/_share_timeline.html:92
+#: app/templates/_share_timeline.html:93
 msgid "File"
 msgstr "Archivo"
 
@@ -1323,29 +1424,29 @@ msgid_plural "%(count)s events"
 msgstr[0] "%(count)s evento"
 msgstr[1] "%(count)s eventos"
 
-#: app/templates/_share_timeline.html:47
+#: app/templates/_share_timeline.html:48
 msgid "By"
 msgstr "Por"
 
-#: app/templates/_share_timeline.html:50 app/templates/admin.html:165
-#: app/templates/requests_edit.html:106
+#: app/templates/_share_timeline.html:51 app/templates/admin.html:99
+#: app/templates/requests_edit.html:113
 msgid "IP"
 msgstr "IP"
 
-#: app/templates/_share_timeline.html:65 app/templates/requests_edit.html:14
+#: app/templates/_share_timeline.html:66 app/templates/requests_edit.html:14
 #: app/templates/transfers_edit.html:14
 msgid "Share link"
 msgstr "Enlace de uso compartido"
 
-#: app/templates/_share_timeline.html:73
+#: app/templates/_share_timeline.html:74
 msgid "Old share link"
 msgstr "Enlace de uso compartido anterior"
 
-#: app/templates/_share_timeline.html:79
+#: app/templates/_share_timeline.html:80
 msgid "New share link"
 msgstr "Nuevo enlace de uso compartido"
 
-#: app/templates/_share_timeline.html:87 app/templates/requests_edit.html:83
+#: app/templates/_share_timeline.html:88 app/templates/requests_edit.html:89
 #: app/templates/transfers_list.html:32
 #, python-format
 msgid "%(count)s file"
@@ -1353,17 +1454,14 @@ msgid_plural "%(count)s files"
 msgstr[0] "%(count)s archivo"
 msgstr[1] "%(count)s archivos"
 
-#: app/templates/_share_timeline.html:120
+#: app/templates/_share_timeline.html:105
+#, fuzzy
+msgid "removed"
+msgstr "Eliminar"
+
+#: app/templates/_share_timeline.html:124
 msgid "No activity recorded yet."
 msgstr "Aún no hay actividad registrada."
-
-#: app/templates/admin.html:3 app/templates/admin.html:5
-#: app/templates/admin.html:94 app/templates/admin_archive_detail.html:3
-#: app/templates/admin_email.html:3 app/templates/admin_email.html:5
-#: app/templates/admin_shares.html:3 app/templates/admin_shares.html:5
-#: app/templates/base.html:149 app/templates/base.html:177
-msgid "Admin"
-msgstr "Administración"
 
 #: app/templates/admin.html:11
 msgid "Branding"
@@ -1616,79 +1714,11 @@ msgstr "Se muestra en /privacy cuando está activado."
 msgid "Save legal pages"
 msgstr "Guardar páginas legales"
 
-#: app/templates/admin.html:88
-msgid "Users"
-msgstr "Usuarios"
-
-#: app/templates/admin.html:91 app/templates/login.html:10
-#: app/templates/login.html:33
-msgid "Email"
-msgstr "Correo"
-
-#: app/templates/admin.html:96
-msgid "Add user"
-msgstr "Añadir usuario"
-
-#: app/templates/admin.html:105
-msgid "admin"
-msgstr "admin"
-
-#: app/templates/admin.html:108
-#, python-format
-msgid "%(count)s transfers"
-msgstr "%(count)s transferencias"
-
-#: app/templates/admin.html:110
-#, python-format
-msgid "%(count)s requests"
-msgstr "%(count)s solicitudes"
-
-#: app/templates/admin.html:116
-msgid "Set password"
-msgstr "Establecer contraseña"
-
-#: app/templates/admin.html:118
-#, python-format
-msgid "New password for %(email)s"
-msgstr "Nueva contraseña para %(email)s"
-
-#: app/templates/admin.html:122
-msgid "Save"
-msgstr "Guardar"
-
-#: app/templates/admin.html:131
-msgid "Promote"
-msgstr "Hacer administrador"
-
-#: app/templates/admin.html:136
-msgid "Demote"
-msgstr "Quitar privilegios de administrador"
-
-#: app/templates/admin.html:145
-msgid "Delete this user?"
-msgstr "¿Eliminar este usuario?"
-
-#: app/templates/admin.html:146
-msgid ""
-"The account will be deactivated and can no longer sign in. Their "
-"transfers and file requests remain."
-msgstr ""
-"La cuenta se desactivará y ya no podrá iniciar sesión. Sus transferencias"
-" y solicitudes de archivos permanecen."
-
-#: app/templates/admin.html:147
-msgid "Yes, delete user"
-msgstr "Sí, eliminar usuario"
-
-#: app/templates/admin.html:155
-msgid "No users yet."
-msgstr "Aún no hay usuarios."
-
-#: app/templates/admin.html:161
+#: app/templates/admin.html:89
 msgid "System audit log"
 msgstr "Registro de auditoría del sistema"
 
-#: app/templates/admin.html:162
+#: app/templates/admin.html:90
 msgid ""
 "Share activity is shown on each transfer or file request and in the "
 "archive."
@@ -1696,17 +1726,21 @@ msgstr ""
 "La actividad de la compartición se muestra en cada transferencia o "
 "solicitud y en el archivo."
 
-#: app/templates/admin.html:165
+#: app/templates/admin.html:96
 msgid "Time"
 msgstr "Hora"
 
-#: app/templates/admin.html:165
+#: app/templates/admin.html:97
 msgid "Action"
 msgstr "Acción"
 
-#: app/templates/admin.html:165
+#: app/templates/admin.html:98
 msgid "Resource"
 msgstr "Recurso"
+
+#: app/templates/admin.html:112
+msgid "Show details"
+msgstr "Mostrar detalles"
 
 #: app/templates/admin_archive_detail.html:3 app/templates/admin_shares.html:21
 msgid "Archive"
@@ -1831,28 +1865,28 @@ msgstr "Solicitudes de archivos"
 msgid "Deleted shares"
 msgstr "Comparticiones eliminadas"
 
-#: app/templates/admin_shares.html:29
-msgid "Filter by user"
-msgstr "Filtrar por usuario"
-
-#: app/templates/admin_shares.html:31
-msgid "All users"
-msgstr "Todos los usuarios"
-
-#: app/templates/admin_shares.html:49
+#: app/templates/admin_shares.html:32
 #, python-format
 msgid "Transfers (%(count)s)"
 msgstr "Transferencias (%(count)s)"
 
-#: app/templates/admin_shares.html:53
+#: app/templates/admin_shares.html:36
 #, python-format
 msgid "File requests (%(count)s)"
 msgstr "Solicitudes de archivos (%(count)s)"
 
-#: app/templates/admin_shares.html:57
+#: app/templates/admin_shares.html:40
 #, python-format
 msgid "Archive (%(count)s)"
 msgstr "Archivo (%(count)s)"
+
+#: app/templates/admin_shares.html:46
+msgid "Filter by user"
+msgstr "Filtrar por usuario"
+
+#: app/templates/admin_shares.html:48 app/templates/admin_users.html:60
+msgid "All users"
+msgstr "Todos los usuarios"
 
 #: app/templates/admin_shares.html:76 app/templates/admin_shares.html:170
 #: app/templates/dashboard.html:60 app/templates/dashboard.html:117
@@ -1877,7 +1911,8 @@ msgid "Link"
 msgstr "Enlace"
 
 #: app/templates/admin_shares.html:87 app/templates/admin_shares.html:178
-#: app/templates/admin_shares.html:262 app/templates/dashboard.html:66
+#: app/templates/admin_shares.html:262 app/templates/admin_users.html:94
+#: app/templates/admin_users.html:153 app/templates/dashboard.html:66
 #: app/templates/dashboard.html:122
 msgid "Actions"
 msgstr "Acciones"
@@ -1896,13 +1931,13 @@ msgstr "No se encontraron transferencias."
 msgid "Uploads"
 msgstr "Subidas"
 
-#: app/templates/admin_shares.html:230 app/templates/requests_edit.html:158
-#: app/templates/requests_edit.html:172
+#: app/templates/admin_shares.html:230 app/templates/requests_edit.html:166
+#: app/templates/requests_edit.html:180
 msgid "Delete this file request?"
 msgstr "¿Eliminar esta solicitud de archivos?"
 
-#: app/templates/admin_shares.html:231 app/templates/requests_edit.html:159
-#: app/templates/requests_edit.html:173
+#: app/templates/admin_shares.html:231 app/templates/requests_edit.html:167
+#: app/templates/requests_edit.html:181
 msgid "All uploads will be permanently removed. This cannot be undone."
 msgstr ""
 "Todas las subidas se eliminarán permanentemente. Esta acción no se puede "
@@ -1913,6 +1948,7 @@ msgid "No file requests found."
 msgstr "No se encontraron solicitudes de archivos."
 
 #: app/templates/admin_shares.html:259 app/templates/admin_shares.html:282
+#: app/templates/admin_users.html:93 app/templates/admin_users.html:147
 msgid "Activity"
 msgstr "Actividad"
 
@@ -1931,6 +1967,200 @@ msgstr "¿Eliminar registro de archivo?"
 #: app/templates/admin_shares.html:313
 msgid "No archived shares found."
 msgstr "No se encontraron comparticiones archivadas."
+
+#: app/templates/admin_users.html:13
+msgid "Active accounts"
+msgstr "Cuentas activas"
+
+#: app/templates/admin_users.html:17
+msgid "SSO providers"
+msgstr "Proveedores SSO"
+
+#: app/templates/admin_users.html:19
+msgid "Grant SSO linking per user before their first sign-in."
+msgstr ""
+"Permita la vinculación SSO por usuario antes de su primer inicio de "
+"sesión."
+
+#: app/templates/admin_users.html:25 app/templates/admin_users.html:39
+msgid "Add user"
+msgstr "Añadir usuario"
+
+#: app/templates/admin_users.html:26
+msgid ""
+"Create a local account. Optionally allow SSO linking so the user can sign"
+" in with your identity provider on first login."
+msgstr ""
+"Cree una cuenta local. Opcionalmente permita la vinculación SSO para que "
+"el usuario pueda iniciar sesión con su proveedor de identidad en el "
+"primer acceso."
+
+#: app/templates/admin_users.html:43 app/templates/admin_users.html:130
+msgid "Allow SSO linking"
+msgstr "Permitir vinculación SSO"
+
+#: app/templates/admin_users.html:62
+#, python-format
+msgid "Showing %(count)s of %(total)s users"
+msgstr "Mostrando %(count)s de %(total)s usuarios"
+
+#: app/templates/admin_users.html:69
+msgid "Name or email"
+msgstr "Nombre o correo"
+
+#: app/templates/admin_users.html:74 app/templates/admin_users.html:92
+#: app/templates/admin_users.html:113
+msgid "Sign-in"
+msgstr "Inicio de sesión"
+
+#: app/templates/admin_users.html:76
+msgid "All"
+msgstr "Todos"
+
+#: app/templates/admin_users.html:77
+msgid "Admins"
+msgstr "Administradores"
+
+#: app/templates/admin_users.html:78 app/templates/admin_users.html:116
+msgid "Local password"
+msgstr "Contraseña local"
+
+#: app/templates/admin_users.html:79
+msgid "SSO linked"
+msgstr "SSO vinculado"
+
+#: app/templates/admin_users.html:119
+msgid "Two-factor"
+msgstr "Dos factores"
+
+#: app/templates/admin_users.html:123
+#, python-format
+msgid "Linked to %(provider)s"
+msgstr "Vinculado a %(provider)s"
+
+#: app/templates/admin_users.html:139 app/templates/admin_users.html:205
+#: app/templates/admin_users.html:220
+msgid "Save"
+msgstr "Guardar"
+
+#: app/templates/admin_users.html:148
+#, python-format
+msgid "%(count)s transfers"
+msgstr "%(count)s transferencias"
+
+#: app/templates/admin_users.html:149
+#, python-format
+msgid "%(count)s requests"
+msgstr "%(count)s solicitudes"
+
+#: app/templates/admin_users.html:154
+msgid "Edit name"
+msgstr "Editar nombre"
+
+#: app/templates/admin_users.html:155
+msgid "Set password"
+msgstr "Establecer contraseña"
+
+#: app/templates/admin_users.html:157
+msgid "Remove 2FA"
+msgstr "Quitar 2FA"
+
+#: app/templates/admin_users.html:160
+msgid "Unlink SSO"
+msgstr "Desvincular SSO"
+
+#: app/templates/admin_users.html:165
+msgid "Promote"
+msgstr "Hacer administrador"
+
+#: app/templates/admin_users.html:170
+msgid "Demote"
+msgstr "Quitar privilegios de administrador"
+
+#: app/templates/admin_users.html:184
+msgid "Unlink SSO?"
+msgstr "¿Desvincular SSO?"
+
+#: app/templates/admin_users.html:185
+msgid "The user will no longer be able to sign in with this identity provider."
+msgstr "El usuario ya no podrá iniciar sesión con este proveedor de identidad."
+
+#: app/templates/admin_users.html:186
+msgid "They can still sign in with their local password."
+msgstr "Aún puede iniciar sesión con su contraseña local."
+
+#: app/templates/admin_users.html:186
+msgid ""
+"This account has no local password. The user will be unable to sign in "
+"until you set a password or allow SSO linking again."
+msgstr ""
+"Esta cuenta no tiene contraseña local. El usuario no podrá iniciar sesión"
+" hasta que establezca una contraseña o permita de nuevo la vinculación "
+"SSO."
+
+#: app/templates/admin_users.html:187
+msgid "Yes, unlink SSO"
+msgstr "Sí, desvincular SSO"
+
+#: app/templates/admin_users.html:195
+#, python-format
+msgid "Name for %(email)s"
+msgstr "Nombre de %(email)s"
+
+#: app/templates/admin_users.html:197
+msgid ""
+"SSO provides the name on first sign-in. Admin edits are kept on later "
+"sign-ins."
+msgstr ""
+"El SSO proporciona el nombre en el primer inicio de sesión. Las "
+"modificaciones del administrador se conservan en los siguientes inicios "
+"de sesión."
+
+#: app/templates/admin_users.html:215
+#, python-format
+msgid "New password for %(email)s"
+msgstr "Nueva contraseña para %(email)s"
+
+#: app/templates/admin_users.html:232
+msgid "Remove two-factor authentication?"
+msgstr "¿Quitar la autenticación de dos factores?"
+
+#: app/templates/admin_users.html:233
+msgid ""
+"The user will be able to sign in with their password only. They can set "
+"up 2FA again from their profile."
+msgstr ""
+"El usuario podrá iniciar sesión solo con su contraseña. Puede volver a "
+"configurar 2FA desde su perfil."
+
+#: app/templates/admin_users.html:234
+msgid "Yes, remove 2FA"
+msgstr "Sí, quitar 2FA"
+
+#: app/templates/admin_users.html:244
+msgid "Delete this user?"
+msgstr "¿Eliminar este usuario?"
+
+#: app/templates/admin_users.html:245
+msgid ""
+"The account will be deactivated and can no longer sign in. Their "
+"transfers and file requests remain."
+msgstr ""
+"La cuenta se desactivará y ya no podrá iniciar sesión. Sus transferencias"
+" y solicitudes de archivos permanecen."
+
+#: app/templates/admin_users.html:246
+msgid "Yes, delete user"
+msgstr "Sí, eliminar usuario"
+
+#: app/templates/admin_users.html:255
+#, fuzzy
+msgid "No users match your search."
+msgstr "Ningún usuario coincide con su búsqueda."
+
+#: app/templates/admin_users.html:257
+msgid "No users yet."
+msgstr "Aún no hay usuarios."
 
 #: app/templates/base.html:92 app/templates/base.html:183
 #: app/templates/dashboard.html:3 app/templates/dashboard.html:5
@@ -2014,11 +2244,11 @@ msgstr "Cree su primera transferencia"
 msgid "View all %(count)s transfers"
 msgstr "Ver las %(count)s transferencias"
 
-#: app/templates/dashboard.html:152 app/templates/requests_list.html:97
+#: app/templates/dashboard.html:152 app/templates/requests_list.html:99
 msgid "No file requests yet."
 msgstr "Aún no hay solicitudes de archivos."
 
-#: app/templates/dashboard.html:153 app/templates/requests_list.html:98
+#: app/templates/dashboard.html:153 app/templates/requests_list.html:100
 msgid "Create your first file request"
 msgstr "Cree su primera solicitud de archivos"
 
@@ -2069,7 +2299,7 @@ msgid "Back to OAuth sign-in"
 msgstr "Volver al inicio de sesión con OAuth"
 
 #: app/templates/login_totp.html:3 app/templates/login_totp.html:6
-#: app/templates/profile.html:37
+#: app/templates/profile.html:40
 msgid "Two-factor authentication"
 msgstr "Autenticación de dos factores"
 
@@ -2077,8 +2307,8 @@ msgstr "Autenticación de dos factores"
 msgid "Enter the 6-digit code from your authenticator app."
 msgstr "Introduzca el código de 6 dígitos de su aplicación de autenticación."
 
-#: app/templates/login_totp.html:10 app/templates/profile.html:45
-#: app/templates/profile.html:54
+#: app/templates/login_totp.html:10 app/templates/profile.html:48
+#: app/templates/profile.html:57
 msgid "Authentication code"
 msgstr "Código de autenticación"
 
@@ -2096,60 +2326,62 @@ msgstr "Volver al inicio de sesión"
 
 #: app/templates/profile.html:18
 #, python-format
-msgid ""
-"Signed in with %(provider)s. Password and two-factor settings are managed"
-" by your identity provider."
-msgstr ""
-"Sesión iniciada con %(provider)s. La contraseña y la configuración de dos"
-" factores las gestiona su proveedor de identidad."
+msgid "Connected to %(provider)s for sign-in."
+msgstr "Conectado a %(provider)s para iniciar sesión."
 
-#: app/templates/profile.html:26
+#: app/templates/profile.html:21
+msgid "Password and two-factor settings are managed by your identity provider."
+msgstr ""
+"La contraseña y la configuración de dos factores las gestiona su "
+"proveedor de identidad."
+
+#: app/templates/profile.html:29
 msgid "Change password"
 msgstr "Cambiar contraseña"
 
-#: app/templates/profile.html:29 app/templates/profile.html:44
+#: app/templates/profile.html:32 app/templates/profile.html:47
 msgid "Current password"
 msgstr "Contraseña actual"
 
-#: app/templates/profile.html:30
+#: app/templates/profile.html:33
 msgid "At least 8 characters"
 msgstr "Al menos 8 caracteres"
 
-#: app/templates/profile.html:31
+#: app/templates/profile.html:34
 msgid "Confirm new password"
 msgstr "Confirmar nueva contraseña"
 
-#: app/templates/profile.html:32
+#: app/templates/profile.html:35
 msgid "Update password"
 msgstr "Actualizar contraseña"
 
-#: app/templates/profile.html:40
+#: app/templates/profile.html:43
 msgid "Two-factor authentication is"
 msgstr "La autenticación de dos factores está"
 
-#: app/templates/profile.html:40
+#: app/templates/profile.html:43
 msgid "enabled"
 msgstr "activada"
 
-#: app/templates/profile.html:40
+#: app/templates/profile.html:43
 msgid "for your account."
 msgstr "para su cuenta."
 
-#: app/templates/profile.html:43
+#: app/templates/profile.html:46
 msgid "Enter your password and a current authenticator code to disable 2FA."
 msgstr ""
 "Introduzca su contraseña y un código de autenticación actual para "
 "desactivar 2FA."
 
-#: app/templates/profile.html:45 app/templates/profile.html:54
+#: app/templates/profile.html:48 app/templates/profile.html:57
 msgid "6-digit code from your authenticator app"
 msgstr "Código de 6 dígitos de su aplicación de autenticación"
 
-#: app/templates/profile.html:46
+#: app/templates/profile.html:49
 msgid "Disable two-factor authentication"
 msgstr "Desactivar autenticación de dos factores"
 
-#: app/templates/profile.html:50
+#: app/templates/profile.html:53
 msgid ""
 "Scan this QR code with your authenticator app, then enter a code to "
 "finish setup."
@@ -2157,19 +2389,19 @@ msgstr ""
 "Escanee este código QR con su aplicación de autenticación y luego "
 "introduzca un código para completar la configuración."
 
-#: app/templates/profile.html:51
+#: app/templates/profile.html:54
 msgid "TOTP QR code"
 msgstr "Código QR TOTP"
 
-#: app/templates/profile.html:56
+#: app/templates/profile.html:59
 msgid "Enable 2FA"
 msgstr "Activar 2FA"
 
-#: app/templates/profile.html:57
+#: app/templates/profile.html:60
 msgid "Cancel setup"
 msgstr "Cancelar configuración"
 
-#: app/templates/profile.html:62
+#: app/templates/profile.html:65
 msgid ""
 "Add an extra layer of security with an authenticator app (Google "
 "Authenticator, 1Password, etc.)."
@@ -2177,12 +2409,12 @@ msgstr ""
 "Añada una capa extra de seguridad con una aplicación de autenticación "
 "(Google Authenticator, 1Password, etc.)."
 
-#: app/templates/profile.html:65
+#: app/templates/profile.html:68
 msgid "Set up two-factor authentication"
 msgstr "Configurar autenticación de dos factores"
 
 #: app/templates/public_download.html:3 app/templates/public_download.html:37
-#: app/templates/requests_edit.html:128 app/templates/requests_list.html:72
+#: app/templates/requests_edit.html:135 app/templates/requests_list.html:73
 msgid "Download"
 msgstr "Descargar"
 
@@ -2206,7 +2438,7 @@ msgstr ""
 "Las descargas están vinculadas a esta sesión del navegador y no se pueden"
 " compartir como enlaces directos."
 
-#: app/templates/public_download.html:44 app/templates/requests_edit.html:89
+#: app/templates/public_download.html:44 app/templates/requests_edit.html:95
 #: app/templates/requests_list.html:51
 msgid "Download all (ZIP)"
 msgstr "Descargar todo (ZIP)"
@@ -2306,51 +2538,51 @@ msgstr "Tamaño total máx. por subida (MB)"
 msgid "Save changes"
 msgstr "Guardar cambios"
 
-#: app/templates/requests_edit.html:80
+#: app/templates/requests_edit.html:88
 #, python-format
 msgid "Received uploads (%(uploads)s)"
 msgstr "Subidas recibidas (%(uploads)s)"
 
-#: app/templates/requests_edit.html:90 app/templates/transfers_edit.html:93
+#: app/templates/requests_edit.html:96 app/templates/transfers_edit.html:93
 msgid "Edit files"
 msgstr "Editar archivos"
 
-#: app/templates/requests_edit.html:91 app/templates/transfers_edit.html:94
+#: app/templates/requests_edit.html:97 app/templates/transfers_edit.html:94
 msgid "Done"
 msgstr "Hecho"
 
-#: app/templates/requests_edit.html:95
+#: app/templates/requests_edit.html:101
 msgid "File removals are saved immediately."
 msgstr "La eliminación de archivos se guarda inmediatamente."
 
-#: app/templates/requests_edit.html:97 app/templates/requests_list.html:88
+#: app/templates/requests_edit.html:103 app/templates/requests_list.html:90
 msgid "No uploads yet."
 msgstr "Aún no hay subidas."
 
-#: app/templates/requests_edit.html:111 app/templates/requests_list.html:66
+#: app/templates/requests_edit.html:118 app/templates/requests_list.html:67
 msgid "Download (ZIP)"
 msgstr "Descargar (ZIP)"
 
-#: app/templates/requests_edit.html:115
+#: app/templates/requests_edit.html:122
 msgid "Files are still being prepared for this upload."
 msgstr "Los archivos de esta subida aún se están preparando."
 
-#: app/templates/requests_edit.html:153 app/templates/requests_edit.html:167
+#: app/templates/requests_edit.html:161 app/templates/requests_edit.html:175
 #: app/templates/transfers_edit.html:134 app/templates/transfers_edit.html:148
 msgid "Danger zone"
 msgstr "Zona de peligro"
 
-#: app/templates/requests_edit.html:154 app/templates/requests_edit.html:168
+#: app/templates/requests_edit.html:162 app/templates/requests_edit.html:176
 msgid "Permanently delete this file request and all uploaded files."
 msgstr ""
 "Eliminar permanentemente esta solicitud de archivos y todos los archivos "
 "subidos."
 
-#: app/templates/requests_edit.html:155 app/templates/requests_edit.html:169
+#: app/templates/requests_edit.html:163 app/templates/requests_edit.html:177
 msgid "Delete file request"
 msgstr "Eliminar solicitud de archivos"
 
-#: app/templates/requests_edit.html:160 app/templates/requests_edit.html:174
+#: app/templates/requests_edit.html:168 app/templates/requests_edit.html:182
 msgid "Yes, delete file request"
 msgstr "Sí, eliminar solicitud de archivos"
 
@@ -2370,19 +2602,19 @@ msgstr "Archivos recibidos"
 msgid "Recent uploads"
 msgstr "Subidas recientes"
 
-#: app/templates/requests_list.html:83 app/templates/requests_list.html:85
+#: app/templates/requests_list.html:85 app/templates/requests_list.html:87
 msgid "Show all uploads"
 msgstr "Mostrar todas las subidas"
 
-#: app/templates/requests_list.html:84
+#: app/templates/requests_list.html:86
 msgid "Show less"
 msgstr "Mostrar menos"
 
-#: app/templates/requests_list.html:94
+#: app/templates/requests_list.html:96
 msgid "No file requests match your search or filters."
 msgstr "Ninguna solicitud de archivos coincide con su búsqueda o filtros."
 
-#: app/templates/requests_list.html:95 app/templates/transfers_list.html:52
+#: app/templates/requests_list.html:97 app/templates/transfers_list.html:52
 msgid "Clear filters"
 msgstr "Limpiar filtros"
 
@@ -2657,4 +2889,23 @@ msgstr "Crear transferencia"
 
 #~ msgid "No access recorded yet."
 #~ msgstr "Aún no hay accesos registrados."
+
+#~ msgid "admin"
+#~ msgstr "admin"
+
+#~ msgid ""
+#~ "Signed in with %(provider)s. Password "
+#~ "and two-factor settings are managed "
+#~ "by your identity provider."
+#~ msgstr ""
+#~ "Sesión iniciada con %(provider)s. La "
+#~ "contraseña y la configuración de dos "
+#~ "factores las gestiona su proveedor de"
+#~ " identidad."
+
+#~ msgid "Allow SSO linking:"
+#~ msgstr "Permitir vinculación SSO:"
+
+#~ msgid "Save SSO permissions"
+#~ msgstr "Guardar permisos SSO"
 

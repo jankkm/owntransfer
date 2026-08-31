@@ -32,6 +32,7 @@ from app.i18n import (
 from app.services import share_status
 from app.services.download_limits import format_download_limit, format_download_limit_short, format_upload_limit_short
 from app.auth.users import uses_local_auth, user_initials
+from app.services.oauth_linking import provider_label
 
 from app.services.share_lifecycle import (
     file_request_deletion_pending,
@@ -64,6 +65,7 @@ templates.env.filters["format_time"] = format_time
 templates.env.filters["input_date"] = input_date
 templates.env.filters["format_datetime_with_tz"] = format_datetime_with_tz
 templates.env.globals["user_uses_local_auth"] = uses_local_auth
+templates.env.globals["oauth_provider_label"] = provider_label
 templates.env.globals["transfer_is_active"] = share_status.transfer_is_active
 templates.env.globals["transfer_is_enabled"] = share_status.transfer_is_enabled
 templates.env.globals["transfer_is_expired"] = share_status.transfer_is_expired

@@ -4,7 +4,7 @@ from app.models import User
 
 
 def uses_local_auth(user: User) -> bool:
-    return not user.oauth_provider
+    return user.password_hash is not None
 
 
 def oauth_display_name(userinfo: dict) -> str | None:
@@ -19,6 +19,15 @@ def oauth_display_name(userinfo: dict) -> str | None:
     if given:
         return given[:255]
     return None
+
+
+def normalize_display_name(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    return cleaned[:255]
 
 
 def _name_tokens(text: str) -> list[str]:
@@ -54,4 +63,3 @@ def user_initials(label: str | None) -> str:
         if len(letters) == 2:
             return letters.upper()
     return _initials_from_tokens(_name_tokens(base))
-

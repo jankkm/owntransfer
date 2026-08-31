@@ -4,16 +4,19 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from app.auth.deps import get_current_admin
 from app.auth.passwords import hash_password, is_password_long_enough, is_share_password_valid, share_password_too_short_message
+from app.auth.users import normalize_display_name
+from app.config.oauth_providers import get_oauth_providers
 from app.database import get_db
 from app.i18n import _, normalize_locale, SUPPORTED_LOCALES
 from app.http.client_ip import get_client_ip
@@ -35,7 +38,7 @@ from app.services.admin_overview import (
     list_all_file_requests,
     list_all_transfers,
 )
-from app.services.audit import list_system_audit, log_audit
+from app.services.audit import build_system_audit_rows, list_system_audit, log_audit
 from app.services.archive import load_request_activity, load_transfer_activity
 from app.services.branding import apply_logo_upload, clear_logo, normalize_hex_color
 from app.services.datetime_display import parse_expiry_date
@@ -58,6 +61,12 @@ from app.services.file_request import (
 )
 from app.services.email import send_smtp_test_email
 from app.services.settings import get_app_settings
+from app.services.oauth_linking import (
+    configured_provider_keys,
+    get_grants_for_users,
+    set_user_grants,
+    unlink_oauth,
+)
 from app.services.transfer import (
     add_transfer_file,
     add_transfer_file_stream,
@@ -99,6 +108,67 @@ def _parse_new_owner_id(value: str) -> uuid.UUID | None:
         raise HTTPException(status_code=400, detail=_("Invalid owner")) from exc
 
 
+def _grant_keys_from_form(form, *, prefix: str = "grant_") -> set[str]:
+    configured = configured_provider_keys()
+    return {key for key in configured if form.get(f"{prefix}{key}")}
+
+
+def _users_url(**params: str) -> str:
+    filtered = {key: str(value) for key, value in params.items() if value}
+    if not filtered:
+        return "/admin/users"
+    return f"/admin/users?{urlencode(filtered)}"
+
+
+def _users_list_params_from_request(request: Request, form=None) -> dict[str, str]:
+    q = ""
+    sign_in = ""
+    if form is not None:
+        q = str(form.get("return_q", "")).strip()
+        sign_in = str(form.get("return_sign_in", "")).strip()
+    if not q and not sign_in:
+        q = request.query_params.get("q", "").strip()
+        sign_in = request.query_params.get("sign_in", "").strip()
+    referer = request.headers.get("referer", "")
+    if referer and not q and not sign_in:
+        parsed = urlparse(referer)
+        if parsed.path.rstrip("/") == "/admin/users":
+            query = parse_qs(parsed.query)
+            q = (query.get("q") or [""])[0].strip()
+            sign_in = (query.get("sign_in") or [""])[0].strip()
+    params: dict[str, str] = {}
+    if q:
+        params["q"] = q[:200]
+    if sign_in and sign_in != "all" and sign_in in ("admin", "local", "sso"):
+        params["sign_in"] = sign_in
+    return params
+
+
+def _users_redirect(request: Request, form=None, **flash: str) -> RedirectResponse:
+    params = {key: value for key, value in flash.items() if value}
+    params.update(_users_list_params_from_request(request, form))
+    return RedirectResponse(_users_url(**params), status_code=303)
+
+
+def _active_users_select(*, q: str = "", sign_in: str = "all"):
+    query = select(User).where(User.is_active.is_(True))
+    if q:
+        term = f"%{q.strip().lower()}%"
+        query = query.where(
+            or_(
+                func.lower(User.email).like(term),
+                func.lower(func.coalesce(User.display_name, "")).like(term),
+            )
+        )
+    if sign_in == "admin":
+        query = query.where(User.is_admin.is_(True))
+    elif sign_in == "local":
+        query = query.where(User.password_hash.isnot(None))
+    elif sign_in == "sso":
+        query = query.where(User.oauth_provider.isnot(None))
+    return query.order_by(User.created_at)
+
+
 @router.get("", response_class=HTMLResponse)
 async def admin_home(
     request: Request,
@@ -106,18 +176,13 @@ async def admin_home(
     user: User = Depends(get_current_admin),
 ):
     app_settings = await get_app_settings(db)
-    users = list(
-        (await db.execute(select(User).where(User.is_active.is_(True)).order_by(User.created_at))).scalars().all()
-    )
-    user_counts = await get_user_resource_counts(db)
     audit_logs = await list_system_audit(db, limit=50)
+    audit_log_rows = await build_system_audit_rows(db, audit_logs)
     ctx = branding_context(app_settings)
     ctx.update({
         "user": user,
         "app_settings": app_settings,
-        "users": users,
-        "user_counts": user_counts,
-        "audit_logs": audit_logs,
+        "audit_log_rows": audit_log_rows,
         "active": "settings",
     })
     if request.query_params.get("branding_saved"):
@@ -130,6 +195,43 @@ async def admin_home(
         ctx["success"] = _("Access settings saved.")
     if request.query_params.get("impressum_saved") or request.query_params.get("legal_saved"):
         ctx["success"] = _("Legal pages saved.")
+    error = request.query_params.get("error")
+    if error:
+        ctx["error"] = error
+    return templates.TemplateResponse(request, "admin.html", ctx)
+
+
+@router.get("/users", response_class=HTMLResponse)
+async def admin_users_page(
+    request: Request,
+    q: str = "",
+    sign_in: str = "all",
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_admin),
+):
+    app_settings = await get_app_settings(db)
+    search_q = q.strip()[:200]
+    sign_in_filter = sign_in if sign_in in ("admin", "local", "sso") else "all"
+    total_users = (
+        await db.scalar(select(func.count()).select_from(User).where(User.is_active.is_(True))) or 0
+    )
+    users = list((await db.execute(_active_users_select(q=search_q, sign_in=sign_in_filter))).scalars().all())
+    user_counts = await get_user_resource_counts(db)
+    user_oauth_grants = await get_grants_for_users(db, [u.id for u in users])
+    ctx = branding_context(app_settings)
+    ctx.update({
+        "user": user,
+        "app_settings": app_settings,
+        "users": users,
+        "user_counts": user_counts,
+        "user_oauth_grants": user_oauth_grants,
+        "oauth_providers": get_oauth_providers(),
+        "active": "users",
+        "search_q": search_q,
+        "sign_in_filter": sign_in_filter,
+        "total_users": total_users,
+        "users_filter_active": bool(search_q or sign_in_filter != "all"),
+    })
     if request.query_params.get("user_added"):
         ctx["success"] = _("User added.")
     if request.query_params.get("user_deleted"):
@@ -140,10 +242,18 @@ async def admin_home(
         ctx["success"] = _("User demoted from admin.")
     if request.query_params.get("user_password_set"):
         ctx["success"] = _("Password updated.")
+    if request.query_params.get("user_display_name_saved"):
+        ctx["success"] = _("Name updated.")
+    if request.query_params.get("user_totp_removed"):
+        ctx["success"] = _("Two-factor authentication removed.")
+    if request.query_params.get("oauth_grants_saved"):
+        ctx["success"] = _("OAuth link permissions saved.")
+    if request.query_params.get("oauth_unlinked"):
+        ctx["success"] = _("SSO unlinked.")
     error = request.query_params.get("error")
     if error:
         ctx["error"] = error
-    return templates.TemplateResponse(request, "admin.html", ctx)
+    return templates.TemplateResponse(request, "admin_users.html", ctx)
 
 
 @router.get("/shares", response_class=HTMLResponse)
@@ -888,34 +998,38 @@ async def save_legal_pages(
 @router.post("/users")
 async def create_user(
     request: Request,
-    email: str = Form(...),
-    password: str = Form(...),
-    is_admin: str = Form(""),
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin),
 ):
-    normalized_email = email.strip().lower()
+    form = await request.form()
+    normalized_email = str(form.get("email", "")).strip().lower()
+    password = str(form.get("password", ""))
+    is_admin = bool(form.get("is_admin"))
+    display_name = normalize_display_name(str(form.get("display_name", "")))
     if not normalized_email or not password:
-        return RedirectResponse("/admin?error=" + _("Email and password are required").replace(" ", "+"), status_code=303)
+        return _users_redirect(request, form, error=_("Email and password are required"))
     if not is_password_long_enough(password):
-        return RedirectResponse(
-            "/admin?error=" + _("Password must be at least 8 characters").replace(" ", "+"),
-            status_code=303,
-        )
+        return _users_redirect(request, form, error=_("Password must be at least 8 characters"))
 
     existing = await db.execute(select(User).where(User.email == normalized_email))
     if existing.scalar_one_or_none():
-        return RedirectResponse("/admin?error=" + _("User already exists").replace(" ", "+"), status_code=303)
+        return _users_redirect(request, form, error=_("User already exists"))
 
     user = User(
         email=normalized_email,
         password_hash=hash_password(password),
+        display_name=display_name,
         is_admin=bool(is_admin),
         is_active=True,
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
+
+    grant_keys = _grant_keys_from_form(form, prefix="create_grant_")
+    if grant_keys:
+        await set_user_grants(db, user, grant_keys, admin)
+        await db.commit()
 
     await log_audit(
         db,
@@ -924,9 +1038,36 @@ async def create_user(
         resource_id=str(user.id),
         actor_id=admin.id,
         ip_address=get_client_ip(request),
-        metadata={"email": normalized_email, "is_admin": bool(is_admin)},
+        metadata={"email": normalized_email, "is_admin": bool(is_admin), "oauth_grants": sorted(grant_keys)},
     )
-    return RedirectResponse("/admin?user_added=1", status_code=303)
+    return _users_redirect(request, form, user_added="1")
+
+
+@router.post("/users/{user_id}/display-name")
+async def set_user_display_name(
+    user_id: uuid.UUID,
+    request: Request,
+    display_name: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    user = await db.get(User, user_id)
+    if not user or not user.is_active:
+        return _users_redirect(request)
+
+    user.display_name = normalize_display_name(display_name)
+    await db.commit()
+
+    await log_audit(
+        db,
+        action="user.display_name_updated",
+        resource_type="user",
+        resource_id=str(user.id),
+        actor_id=admin.id,
+        ip_address=get_client_ip(request),
+        metadata={"email": user.email, "display_name": user.display_name},
+    )
+    return _users_redirect(request, user_display_name_saved="1")
 
 
 @router.post("/users/{user_id}/promote")
@@ -948,7 +1089,7 @@ async def promote_user(
             actor_id=admin.id,
             ip_address=get_client_ip(request),
         )
-    return RedirectResponse("/admin?user_promoted=1", status_code=303)
+    return _users_redirect(request, user_promoted="1")
 
 
 @router.post("/users/{user_id}/demote")
@@ -959,17 +1100,17 @@ async def demote_user(
     admin: User = Depends(get_current_admin),
 ):
     if user_id == admin.id:
-        return RedirectResponse("/admin?error=" + _("You cannot demote your own account").replace(" ", "+"), status_code=303)
+        return _users_redirect(request, error=_("You cannot demote your own account"))
 
     user = await db.get(User, user_id)
     if not user or not user.is_active or not user.is_admin:
-        return RedirectResponse("/admin", status_code=303)
+        return _users_redirect(request)
 
     admin_count = await db.scalar(
         select(func.count()).select_from(User).where(User.is_admin.is_(True), User.is_active.is_(True))
     )
     if admin_count and admin_count <= 1:
-        return RedirectResponse("/admin?error=" + _("Cannot demote the last admin").replace(" ", "+"), status_code=303)
+        return _users_redirect(request, error=_("Cannot demote the last admin"))
 
     user.is_admin = False
     await db.commit()
@@ -982,7 +1123,7 @@ async def demote_user(
         ip_address=get_client_ip(request),
         metadata={"email": user.email},
     )
-    return RedirectResponse("/admin?user_demoted=1", status_code=303)
+    return _users_redirect(request, user_demoted="1")
 
 
 @router.post("/users/{user_id}/password")
@@ -994,16 +1135,13 @@ async def set_user_password(
     admin: User = Depends(get_current_admin),
 ):
     if not password:
-        return RedirectResponse("/admin?error=" + _("Password is required").replace(" ", "+"), status_code=303)
+        return _users_redirect(request, error=_("Password is required"))
     if not is_password_long_enough(password):
-        return RedirectResponse(
-            "/admin?error=" + _("Password must be at least 8 characters").replace(" ", "+"),
-            status_code=303,
-        )
+        return _users_redirect(request, error=_("Password must be at least 8 characters"))
 
     user = await db.get(User, user_id)
     if not user or not user.is_active:
-        return RedirectResponse("/admin", status_code=303)
+        return _users_redirect(request)
 
     user.password_hash = hash_password(password)
     await db.commit()
@@ -1017,7 +1155,101 @@ async def set_user_password(
         ip_address=get_client_ip(request),
         metadata={"email": user.email},
     )
-    return RedirectResponse("/admin?user_password_set=1", status_code=303)
+    return _users_redirect(request, user_password_set="1")
+
+
+@router.post("/users/{user_id}/totp/remove")
+async def remove_user_totp(
+    user_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    user = await db.get(User, user_id)
+    if not user or not user.is_active:
+        return _users_redirect(request)
+    if not user.totp_enabled:
+        return _users_redirect(request, error=_("Two-factor authentication is not enabled for this user"))
+
+    user.totp_secret = None
+    user.totp_enabled = False
+    await db.commit()
+
+    await log_audit(
+        db,
+        action="user.totp_reset",
+        resource_type="user",
+        resource_id=str(user.id),
+        actor_id=admin.id,
+        ip_address=get_client_ip(request),
+        metadata={"email": user.email},
+    )
+    return _users_redirect(request, user_totp_removed="1")
+
+
+@router.post("/users/{user_id}/oauth-grants")
+async def save_user_oauth_grants(
+    request: Request,
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    user = await db.get(User, user_id)
+    if not user or not user.is_active:
+        return _users_redirect(request)
+
+    form = await request.form()
+    grant_keys = _grant_keys_from_form(form)
+    try:
+        await set_user_grants(db, user, grant_keys, admin)
+    except HTTPException as exc:
+        return _users_redirect(request, form, error=str(exc.detail))
+
+    await db.commit()
+    await log_audit(
+        db,
+        action="user.oauth_grants_updated",
+        resource_type="user",
+        resource_id=str(user.id),
+        actor_id=admin.id,
+        ip_address=get_client_ip(request),
+        metadata={"providers": sorted(grant_keys)},
+    )
+    return _users_redirect(request, form, oauth_grants_saved="1")
+
+
+@router.post("/users/{user_id}/oauth/unlink")
+async def unlink_user_oauth(
+    request: Request,
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    user = await db.get(User, user_id)
+    if not user or not user.is_active:
+        return _users_redirect(request)
+    if not user.oauth_provider:
+        return _users_redirect(request, error=_("This account is not linked to an identity provider"))
+
+    app_settings = await get_app_settings(db)
+    if user_id == admin.id and not app_settings.allow_local_login:
+        return _users_redirect(
+            request,
+            error=_("You cannot unlink your own SSO while local login is disabled."),
+        )
+
+    previous_provider = unlink_oauth(user)
+    await db.commit()
+    await log_audit(
+        db,
+        action="user.oauth_unlinked",
+        resource_type="user",
+        resource_id=str(user.id),
+        actor_id=admin.id,
+        ip_address=get_client_ip(request),
+        metadata={"provider": previous_provider},
+    )
+    return _users_redirect(request, oauth_unlinked="1")
 
 
 @router.post("/users/{user_id}/delete")
@@ -1028,18 +1260,18 @@ async def delete_user(
     admin: User = Depends(get_current_admin),
 ):
     if user_id == admin.id:
-        return RedirectResponse("/admin?error=" + _("You cannot delete your own account").replace(" ", "+"), status_code=303)
+        return _users_redirect(request, error=_("You cannot delete your own account"))
 
     user = await db.get(User, user_id)
     if not user:
-        return RedirectResponse("/admin", status_code=303)
+        return _users_redirect(request)
 
     if user.is_admin:
         admin_count = await db.scalar(
             select(func.count()).select_from(User).where(User.is_admin.is_(True), User.is_active.is_(True))
         )
         if admin_count and admin_count <= 1:
-            return RedirectResponse("/admin?error=" + _("Cannot delete the last admin").replace(" ", "+"), status_code=303)
+            return _users_redirect(request, error=_("Cannot delete the last admin"))
 
     user_email = user.email
     user_id_str = str(user.id)
@@ -1055,4 +1287,4 @@ async def delete_user(
         ip_address=get_client_ip(request),
         metadata={"email": user_email},
     )
-    return RedirectResponse("/admin?user_deleted=1", status_code=303)
+    return _users_redirect(request, user_deleted="1")

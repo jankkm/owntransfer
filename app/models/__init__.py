@@ -6,6 +6,7 @@ from .download_log import TransferDownloadLog
 from .file_request import FileRequest, RequestUpload, UploadFile
 from .transfer import Transfer, TransferFile
 from .user import User
+from .user_oauth_link_grant import UserOAuthLinkGrant
 
 __all__ = [
     "ArchivedShare",
@@ -19,4 +20,5 @@ __all__ = [
     "TransferFile",
     "UploadFile",
     "User",
+    "UserOAuthLinkGrant",
 ]

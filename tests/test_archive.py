@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 from app.database import async_session
 from app.models import ArchivedShare, AuditLog, FileRequest, RequestUpload, Transfer, TransferDownloadLog, TransferFile, UploadFile, User
 from app.services.admin_archive import purge_archived_shares
-from app.services.audit import list_system_audit
+from app.services.audit import build_system_audit_rows, list_system_audit, system_audit_detail_lines
 from app.services.archive import archive_share_before_delete
 from app.services.settings import get_app_settings
 from app.services.share_timeline import build_request_timeline, build_transfer_timeline
@@ -316,3 +316,47 @@ async def test_admin_archive_tab(client: AsyncClient):
     requests_tab = await client.get("/admin/shares?tab=requests")
     assert requests_tab.status_code == 200
     assert re.search(r"Archive\s*\(\s*1\s*\)", requests_tab.text)
+
+
+def test_system_audit_detail_lines_include_actor_and_metadata():
+    entry = AuditLog(
+        action="user.created",
+        resource_type="user",
+        resource_id="user-id",
+        actor_id=uuid.uuid4(),
+        metadata_json='{"email": "new@example.com", "is_admin": false, "oauth_grants": ["entra"]}',
+    )
+    lines = system_audit_detail_lines(
+        entry,
+        actor_email="admin@example.com",
+        target_email="new@example.com",
+    )
+    labels = [label for label, _ in lines]
+    assert "Actor" in labels or any("Actor" in label for label in labels)
+    assert any(value == "new@example.com" for _, value in lines)
+
+
+@pytest.mark.asyncio
+async def test_build_system_audit_rows_resolves_target_user():
+    async with async_session() as db:
+        admin = User(email="admin@example.com", password_hash="hash", is_admin=True, is_active=True)
+        target = User(email="target@example.com", password_hash="hash", is_active=True)
+        db.add_all([admin, target])
+        await db.commit()
+        await db.refresh(admin)
+        await db.refresh(target)
+
+        entry = AuditLog(
+            action="user.promoted",
+            resource_type="user",
+            resource_id=str(target.id),
+            actor_id=admin.id,
+        )
+        db.add(entry)
+        await db.commit()
+
+        rows = await build_system_audit_rows(db, [entry])
+        assert len(rows) == 1
+        values = [value for _, value in rows[0]["details"]]
+        assert "target@example.com" in values
+        assert "admin@example.com" in values
