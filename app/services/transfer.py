@@ -3,10 +3,12 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+from collections.abc import AsyncIterator
 from datetime import datetime
 from pathlib import Path
 from uuid import UUID, uuid4
 
+import aiofiles
 from fastapi import HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -436,6 +438,93 @@ async def add_transfer_file(
         metadata={"file_name": upload.filename},
     )
     return transfer_file
+
+
+async def add_transfer_file_stream(
+    db: AsyncSession,
+    *,
+    transfer: Transfer,
+    chunks: AsyncIterator[bytes],
+    filename: str,
+    content_type: str | None,
+    app_settings: AppSettings,
+    user: User,
+    ip_address: str | None,
+    expected_size: int | None = None,
+) -> TransferFile:
+    if not filename:
+        raise HTTPException(status_code=400, detail=_("Missing filename"))
+
+    blocklist = parse_blocklist(app_settings.file_type_blocklist)
+    if is_extension_blocked(filename, blocklist):
+        raise HTTPException(status_code=400, detail=_("File type not allowed: %(filename)s") % {"filename": filename})
+
+    if expected_size is not None:
+        if expected_size <= 0:
+            raise HTTPException(status_code=400, detail=_("Empty file"))
+        if expected_size > app_settings.max_file_size_bytes:
+            raise HTTPException(
+                status_code=400,
+                detail=_("File exceeds maximum size (%(max_mb)s MB)")
+                % {"max_mb": app_settings.max_file_size_bytes // (1024 * 1024)},
+            )
+
+    file_id = uuid4()
+    safe_name = _safe_filename(filename)
+    rel_path = f"transfers/{transfer.id}/{file_id}/{safe_name}"
+    storage = get_storage()
+    final_path = storage.absolute_path(rel_path)
+    partial_path = final_path.with_name(f"{final_path.name}.part")
+    final_path.parent.mkdir(parents=True, exist_ok=True)
+    size = 0
+
+    try:
+        async with aiofiles.open(partial_path, "wb") as out:
+            async for chunk in chunks:
+                if not chunk:
+                    continue
+                size += len(chunk)
+                if size > app_settings.max_file_size_bytes:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=_("File exceeds maximum size (%(max_mb)s MB)")
+                        % {"max_mb": app_settings.max_file_size_bytes // (1024 * 1024)},
+                    )
+                await out.write(chunk)
+
+        if size == 0:
+            raise HTTPException(status_code=400, detail=_("Empty file"))
+        await asyncio.to_thread(partial_path.replace, final_path)
+
+        transfer_file = TransferFile(
+            id=file_id,
+            transfer_id=transfer.id,
+            original_name=filename,
+            storage_path=rel_path,
+            size_bytes=size,
+            content_type=content_type,
+        )
+        db.add(transfer_file)
+        await db.commit()
+        await db.refresh(transfer_file)
+        transfer.files.append(transfer_file)
+
+        await log_audit(
+            db,
+            action="transfer.file_added",
+            resource_type="transfer",
+            resource_id=str(transfer.id),
+            actor_id=user.id,
+            ip_address=ip_address,
+            metadata={"file_name": filename},
+        )
+        return transfer_file
+    except BaseException:
+        if partial_path.exists():
+            partial_path.unlink()
+        if final_path.exists():
+            final_path.unlink()
+        raise
 
 
 async def delete_transfer_file(

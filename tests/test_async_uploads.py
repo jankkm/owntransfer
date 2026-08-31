@@ -477,3 +477,73 @@ async def test_public_request_upload_http_flow(client: AsyncClient):
         upload = result.scalar_one()
         assert upload.is_preparing is False
         assert len(upload.files) == 1
+
+
+@pytest.mark.asyncio
+async def test_add_transfer_file_accepts_raw_upload(client: AsyncClient):
+    async with async_session() as db:
+        user = (await db.execute(select(User))).scalar_one()
+
+    await _login(client)
+    new_page = await client.get("/transfers/new")
+    csrf_match = re.search(r'name="csrf-token" content="([^"]+)"', new_page.text)
+    assert csrf_match
+    csrf_token = csrf_match.group(1)
+    batch = _staging_batch(new_page.text)
+    scope = f"transfer_{user.id}_{batch}"
+
+    upload_file = StarletteUploadFile(filename="notes.pdf", file=BytesIO(b"%PDF-1.4"))
+    async with async_session() as db:
+        app_settings = await get_app_settings(db)
+    await add_staged_file(scope, upload_file, app_settings)
+    staged_id = get_staged_files(scope)[0].id
+
+    expiry = (datetime.now(timezone.utc) + timedelta(days=7)).strftime("%Y-%m-%d")
+    create_response = await client.post(
+        "/transfers/new",
+        data={
+            "title": "Editable transfer",
+            "message": "",
+            "expires_at": expiry,
+            "max_downloads": "5",
+            "csrf_token": csrf_token,
+            "staging_batch": batch,
+            "staged_file_ids": json.dumps([staged_id]),
+        },
+        follow_redirects=False,
+    )
+    assert create_response.status_code == 303
+
+    async with async_session() as db:
+        transfer = (
+            await db.execute(
+                select(Transfer)
+                .options(selectinload(Transfer.files))
+                .where(Transfer.title == "Editable transfer")
+            )
+        ).scalar_one()
+        transfer_id = transfer.id
+
+    response = await client.post(
+        f"/transfers/{transfer_id}/files",
+        content=b"extra file contents",
+        headers={
+            "Content-Type": "text/plain",
+            "X-CSRF-Token": csrf_token,
+            "X-Upload-Filename": "extra.txt",
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["name"] == "extra.txt"
+    assert payload["size_bytes"] == len(b"extra file contents")
+
+    async with async_session() as db:
+        transfer = (
+            await db.execute(
+                select(Transfer)
+                .options(selectinload(Transfer.files))
+                .where(Transfer.id == transfer_id)
+            )
+        ).scalar_one()
+        assert {file.original_name for file in transfer.files} == {"notes.pdf", "extra.txt"}

@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.datastructures import UploadFile as StarletteUploadFile
@@ -43,6 +43,7 @@ from app.services.staging import (
 )
 from app.services.transfer import (
     add_transfer_file,
+    add_transfer_file_stream,
     create_transfer,
     delete_transfer,
     delete_transfer_file,
@@ -345,7 +346,6 @@ async def edit_transfer_page(
 async def add_transfer_file_route(
     transfer_id: uuid.UUID,
     request: Request,
-    file: UploadFile = File(...),
     user_id: uuid.UUID = Depends(require_user_id),
 ):
     async with async_session() as db:
@@ -354,14 +354,42 @@ async def add_transfer_file_route(
         user = await db.get(User, user_id)
         if user is None:
             raise NotAuthenticated()
-        transfer_file = await add_transfer_file(
-            db,
-            transfer=transfer,
-            upload=file,
-            app_settings=app_settings,
-            user=user,
-            ip_address=get_client_ip(request),
-        )
+        content_type = request.headers.get("content-type", "")
+        if content_type.startswith("multipart/form-data"):
+            form = await request.form()
+            file = form.get("file")
+            if not isinstance(file, StarletteUploadFile):
+                raise HTTPException(status_code=400, detail=_("Missing filename"))
+            transfer_file = await add_transfer_file(
+                db,
+                transfer=transfer,
+                upload=file,
+                app_settings=app_settings,
+                user=user,
+                ip_address=get_client_ip(request),
+            )
+        else:
+            try:
+                filename = decode_raw_upload_filename(
+                    request.headers.get(RAW_UPLOAD_FILENAME_HEADER)
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=_("Invalid filename")) from exc
+            try:
+                expected_size = int(request.headers["content-length"])
+            except (KeyError, ValueError):
+                expected_size = None
+            transfer_file = await add_transfer_file_stream(
+                db,
+                transfer=transfer,
+                chunks=request.stream(),
+                filename=filename,
+                content_type=content_type or None,
+                app_settings=app_settings,
+                user=user,
+                ip_address=get_client_ip(request),
+                expected_size=expected_size,
+            )
     return JSONResponse(
         {
             "id": str(transfer_file.id),
